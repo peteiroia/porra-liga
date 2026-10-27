@@ -16,6 +16,7 @@ Porra online para pronosticar cada jornada de Primera los partidos del Real Madr
 - `api/porra.js` — servidor (Vercel) con base de datos Upstash Redis.
 - `sw.js` + `manifest.json` + `icons/` — app instalable y notificaciones.
 - `.github/workflows/avisos.yml` — cada 10 min lanza los avisos.
+- `data/calendario.json` — calendario oficial 2026-27 de Madrid, Barça, Depor y Celta (jornadas 11-38). Se carga solo en la app; al cambiar su `version` se actualizan horas y resultados. Los partidos con `tbc: true` tienen la hora por confirmar y no se abren hasta que se confirme.
 
 El **primer usuario que se registra es el administrador**: crea las jornadas, mete los resultados y gestiona jugadores.
 

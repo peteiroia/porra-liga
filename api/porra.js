@@ -3,6 +3,8 @@
 //   GET  /api/porra?avatar=k   foto del jugador
 //   GET  /api/porra?cron=1     envía avisos (lo llama GitHub Actions cada 10 min)
 const crypto = require("crypto");
+let CAL = null;
+try { CAL = require("../data/calendario.json"); } catch (e) { /* sin calendario */ }
 let webpush = null;
 try { webpush = require("web-push"); } catch (e) { /* sin avisos en local */ }
 
@@ -93,6 +95,7 @@ function currentJornadaId(jornadas, now) {
 function matchStatus(j, m, now, curId) {
   if (isLocked(m, now)) return "closed";
   if (j.id !== curId) return "next";
+  if (m.tbc) return "tbc"; // hora por confirmar: no se abre hasta saber la hora
   if (!m.kickoff || Date.parse(m.kickoff) - OPEN_BEFORE > now) return "soon";
   return "open";
 }
@@ -102,7 +105,33 @@ function goals(v) {
   return n;
 }
 
+// ---------- Calendario oficial (data/calendario.json) ----------
+// Se fusiona con lo guardado cada vez que cambia la versión del archivo:
+// crea jornadas y partidos que falten, actualiza horas y pone resultados.
+// Nunca borra partidos añadidos a mano por el administrador.
+const sameTeams = (a, b) => keyName(a.home) === keyName(b.home) && keyName(a.away) === keyName(b.away);
+async function syncCalendar(force) {
+  if (!CAL || !Array.isArray(CAL.jornadas)) return false;
+  if (!force && (await redis(["GET", P + "calver"])) === CAL.version) return false;
+  const jornadas = await getJSON(P + "jornadas", []);
+  for (const cj of CAL.jornadas) {
+    let j = jornadas.find((x) => x.num === cj.num);
+    if (!j) { j = { id: crypto.randomBytes(5).toString("hex"), num: cj.num, title: cj.title || "", matches: [] }; jornadas.push(j); }
+    for (const cm of cj.matches) {
+      let m = j.matches.find((x) => sameTeams(x, cm));
+      if (!m) { m = { id: crypto.randomBytes(5).toString("hex"), home: cm.home, away: cm.away }; j.matches.push(m); }
+      if (!m.manual) { m.kickoff = new Date(cm.kickoff).toISOString(); m.tbc = !!cm.tbc; }
+      if (cm.result && !m.result) m.result = { h: Number(cm.result.h), a: Number(cm.result.a) };
+    }
+    j.matches.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
+  }
+  await setJSON(P + "jornadas", jornadas);
+  await redis(["SET", P + "calver", CAL.version]);
+  return true;
+}
+
 async function loadAll() {
+  await syncCalendar();
   const [jornadas, predsRaw, userKeys] = await Promise.all([
     getJSON(P + "jornadas", []),
     redis(["HGETALL", P + "preds"]),
@@ -165,7 +194,7 @@ function buildState(me, data) {
       }
       const ko = m.kickoff ? Date.parse(m.kickoff) : null;
       return {
-        id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.result || null,
+        id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.result || null, tbc: !!m.tbc,
         locked, started, status: matchStatus(j, m, now, curId),
         opensAt: ko && ko - OPEN_BEFORE, closesAt: ko && ko - CLOSE_BEFORE,
         mine: (preds[myKey] || {})[m.id] || null, others,
@@ -421,14 +450,23 @@ async function handle(body) {
     if (j) {
       const old = Object.fromEntries(j.matches.map((m) => [m.id, m]));
       j.num = num; j.title = normName(body.title).slice(0, 40);
-      j.matches = matches.map((m) => (old[m.id] && old[m.id].result && !m.result ? { ...m, result: old[m.id].result } : m));
+      j.matches = matches.map((m) => {
+        const o = old[m.id];
+        const out = o && o.result && !m.result ? { ...m, result: o.result } : { ...m };
+        // si el admin cambia la hora, queda confirmada y el calendario automático ya no la toca
+        if (o && o.kickoff === m.kickoff) { out.tbc = !!o.tbc; out.manual = !!o.manual; }
+        else out.manual = true;
+        return out;
+      });
     } else {
-      j = { id: crypto.randomBytes(5).toString("hex"), num, title: normName(body.title).slice(0, 40), matches };
+      j = { id: crypto.randomBytes(5).toString("hex"), num, title: normName(body.title).slice(0, 40), matches: matches.map((m) => ({ ...m, manual: true })) };
       jornadas.push(j);
     }
     await setJSON(P + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
+
+  if (a === "syncCalendar") { await syncCalendar(true); return buildState(me, await loadAll()); }
 
   if (a === "deleteJornada") {
     const i = jornadas.findIndex((x) => x.id === body.id);

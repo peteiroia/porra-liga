@@ -614,7 +614,7 @@ function jornadaView() {
   return `
   <div class="jnav">
     <button class="btn" data-j="${idx - 1}" ${idx <= 0 ? "disabled" : ""} aria-label="Jornada anterior">‹</button>
-    <div class="jt"><b>Jornada ${j.num}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">en juego</span>` : ""}</small></div>
+    <div class="jt"><b>Jornada ${j.num}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
@@ -630,6 +630,7 @@ function matchCard(j, m, drafts) {
   if (st === "open") { const left = m.closesAt - now; chip = `<span class="chip ${left < 3 * 3600e3 ? "warn" : "open"}">⏱ Cierra en ${fmtLeft(left)}</span>`; }
   else if (st === "soon") chip = `<span class="chip">🔒 Abre ${new Date(m.opensAt).toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}</span>`;
   else if (st === "next") chip = `<span class="chip">🔒 Próximamente</span>`;
+  else if (st === "tbc") chip = `<span class="chip">🕒 Hora por confirmar</span>`;
   else if (st === "closed") chip = `<span class="chip warn">🔒 Cerrado</span>`;
   else if (st === "live") chip = `<span class="chip live">En juego</span>`;
   else chip = `<span class="chip done">Final</span>`;
@@ -646,7 +647,7 @@ function matchCard(j, m, drafts) {
   let foot = "";
   const mineTxt = m.mine ? `<span class="mypick muted">Tu pronóstico: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b></span>` : `<span class="muted">${st === "open" ? "Sin pronóstico todavía" : "No pronosticaste"}</span>`;
   if (st === "open") foot = `<div class="mfoot">${m.mine ? `<span class="muted">✅ Guardado: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b></span>` : `<span class="muted">Sin pronóstico todavía</span>`}<span class="lockmsg">👀 ${m.count} de ${S.data.users.length} lo han puesto</span></div>`;
-  else if (st === "soon" || st === "next") foot = `<div class="mfoot"><span class="lockmsg">${st === "soon" ? "Se podrá pronosticar 7 días antes del partido" : "Solo se puede pronosticar la jornada siguiente"}</span></div>`;
+  else if (st === "soon" || st === "next" || st === "tbc") foot = `<div class="mfoot"><span class="lockmsg">${st === "soon" ? "Se podrá pronosticar 7 días antes del partido" : st === "tbc" ? "Se abrirá cuando LaLiga confirme la hora" : "Solo se puede pronosticar la jornada siguiente"}</span></div>`;
   else {
     const p = m.result && m.mine ? ptsOf(m.mine, m.result) : m.result ? 0 : null;
     const nOthers = Object.keys(m.others || {}).length;
@@ -664,7 +665,7 @@ function matchCard(j, m, drafts) {
   }
 
   return `<div class="card match"><div class="stripe">${stripe}</div>
-    <div class="mhead"><span class="when">${m.kickoff ? fmtWhen(m.kickoff) : "Fecha por confirmar"}</span>${chip}</div>
+    <div class="mhead"><span class="when">${!m.kickoff ? "Fecha por confirmar" : m.tbc ? "Hacia el " + new Date(m.kickoff).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : fmtWhen(m.kickoff)}</span>${chip}</div>
     <div class="mbody">
       <div class="team ${homeC ? "fav" : ""}">${crest(m.home)}<span class="tn">${esc(m.home)}</span></div>
       ${center}
@@ -768,16 +769,19 @@ function adminView() {
   const now = serverNow();
   return `
   ${form}
-  ${!e ? `<button class="btn primary block" id="newJ">+ Nueva jornada</button>` : ""}
+  ${!e ? `<div class="row"><button class="btn primary" style="flex:1" id="newJ">+ Nueva jornada</button><button class="btn" id="syncCal" title="Volver a cargar el calendario oficial">🔄 Calendario</button></div>
+  <p class="dim" style="font-size:12px;margin:8px 2px 0">Los partidos de Madrid, Barça, Depor y Celta se cargan solos del calendario oficial. Puedes añadir partidos extra o cambiar horas editando una jornada.</p>` : ""}
   <h2 class="sec">Resultados</h2>
-  ${js.length ? js.slice().reverse().map((j) => `<div class="card">
+  ${js.length ? js.filter((j) => j.matches.some((m) => Date.parse(m.kickoff) <= now + 7 * 864e5)).reverse().map((j) => `<div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:4px"><b class="cond" style="font-size:20px;text-transform:uppercase">Jornada ${j.num}${j.title ? ` · <span class="muted">${esc(j.title)}</span>` : ""}</b><button class="btn small" data-editj="${j.id}">Editar</button></div>
     ${j.matches.map((m) => {
       const started = Date.parse(m.kickoff) <= now;
-      return `<div class="res-row"><div class="tm">${esc(m.home)} – ${esc(m.away)}<div class="dim" style="font-size:12px;text-transform:capitalize">${fmtWhen(m.kickoff)} · ${m.count} pronósticos</div></div>
+      return `<div class="res-row"><div class="tm">${esc(m.home)} – ${esc(m.away)}<div class="dim" style="font-size:12px;text-transform:capitalize">${m.tbc ? "Hora por confirmar" : fmtWhen(m.kickoff)} · ${m.count} pronósticos</div></div>
       ${started ? `<input type="number" inputmode="numeric" min="0" id="rh-${m.id}" value="${m.result ? m.result.h : ""}"><input type="number" inputmode="numeric" min="0" id="ra-${m.id}" value="${m.result ? m.result.a : ""}">
       <button class="btn small ${m.result ? "" : "gold"}" data-res="${j.id}|${m.id}">${m.result ? "✓" : "Poner"}</button>` : `<span class="chip">Sin empezar</span>`}</div>`;
     }).join("")}</div>`).join("") : `<div class="card muted">Crea una jornada para poder meter resultados.</div>`}
+  <h2 class="sec">Todas las jornadas</h2>
+  <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">Jornada ${j.num} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
   <h2 class="sec">Jugadores <span class="chip">${d.users.length}</span></h2>
   <div class="card">${d.users.map((u) => `<div class="urow">${avatar(u.name, u.photo, "sm")}<span class="nm">${esc(u.name)}${u.admin ? ` <span class="chip" style="color:var(--gold)">admin</span>` : ""}</span>
     <button class="btn small" data-upin="${esc(u.name)}" title="Cambiar contraseña">🔑</button>
@@ -988,6 +992,11 @@ function bindMain() {
   }));
   document.querySelectorAll("[data-delm]").forEach((b) => (b.onclick = () => { collectEdit(); S.editJ.matches.splice(+b.dataset.delm, 1); render(); }));
   document.querySelectorAll("[data-swap]").forEach((b) => (b.onclick = () => { collectEdit(); const m = S.editJ.matches[+b.dataset.swap]; [m.home, m.away] = [m.away, m.home]; render(); }));
+  const sc = $("#syncCal");
+  if (sc) sc.onclick = async () => {
+    sc.disabled = true;
+    try { setData(await api("syncCalendar")); render(); toast("Calendario actualizado"); } catch (err) { toast(err.message, true); sc.disabled = false; }
+  };
   const ec = $("#ejCancel"); if (ec) ec.onclick = () => { S.editJ = null; render(); };
   const es = $("#ejSave");
   if (es) es.onclick = async () => {

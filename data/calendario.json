@@ -1,0 +1,753 @@
+{
+ "version": "2026-10-28.1",
+ "season": "2026-27",
+ "note": "Horas oficiales hasta la jornada 13. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
+ "jornadas": [
+  {
+   "num": 11,
+   "matches": [
+    {
+     "home": "Rayo Vallecano",
+     "away": "Celta",
+     "kickoff": "2026-10-31T16:15:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "FC Barcelona",
+     "away": "Alavés",
+     "kickoff": "2026-10-31T21:00:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "Racing de Santander",
+     "away": "Real Madrid",
+     "kickoff": "2026-11-01T16:15:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "Deportivo",
+     "away": "Osasuna",
+     "kickoff": "2026-11-02T21:00:00+01:00",
+     "tbc": false
+    }
+   ]
+  },
+  {
+   "num": 12,
+   "matches": [
+    {
+     "home": "Espanyol",
+     "away": "Deportivo",
+     "kickoff": "2026-11-07T16:15:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "Valencia",
+     "away": "Real Madrid",
+     "kickoff": "2026-11-07T21:00:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "Celta",
+     "away": "Levante",
+     "kickoff": "2026-11-08T18:30:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "Atlético de Madrid",
+     "away": "FC Barcelona",
+     "kickoff": "2026-11-08T21:00:00+01:00",
+     "tbc": false
+    }
+   ]
+  },
+  {
+   "num": 13,
+   "matches": [
+    {
+     "home": "Alavés",
+     "away": "Deportivo",
+     "kickoff": "2026-11-21T14:00:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "Real Madrid",
+     "away": "Celta",
+     "kickoff": "2026-11-21T21:00:00+01:00",
+     "tbc": false
+    },
+    {
+     "home": "FC Barcelona",
+     "away": "Villarreal",
+     "kickoff": "2026-11-22T14:00:00+01:00",
+     "tbc": false
+    }
+   ]
+  },
+  {
+   "num": 14,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Alavés",
+     "kickoff": "2026-11-29T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Villarreal",
+     "kickoff": "2026-11-29T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "FC Barcelona",
+     "kickoff": "2026-11-29T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 15,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Celta",
+     "kickoff": "2026-12-06T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Athletic Club",
+     "away": "Real Madrid",
+     "kickoff": "2026-12-06T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Racing de Santander",
+     "away": "Deportivo",
+     "kickoff": "2026-12-06T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 16,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Osasuna",
+     "kickoff": "2026-12-13T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Athletic Club",
+     "kickoff": "2026-12-13T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Espanyol",
+     "away": "Celta",
+     "kickoff": "2026-12-13T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Málaga",
+     "away": "FC Barcelona",
+     "kickoff": "2026-12-13T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 17,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Real Sociedad",
+     "kickoff": "2026-12-20T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Atlético de Madrid",
+     "kickoff": "2026-12-20T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Real Madrid",
+     "kickoff": "2026-12-20T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 18,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Getafe",
+     "kickoff": "2027-01-03T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Deportivo",
+     "kickoff": "2027-01-03T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Espanyol",
+     "away": "FC Barcelona",
+     "kickoff": "2027-01-03T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 19,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Levante",
+     "kickoff": "2027-01-10T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Osasuna",
+     "away": "FC Barcelona",
+     "kickoff": "2027-01-10T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Rayo Vallecano",
+     "kickoff": "2027-01-10T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Sevilla",
+     "away": "Celta",
+     "kickoff": "2027-01-10T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 20,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Elche",
+     "kickoff": "2027-01-17T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Valencia",
+     "kickoff": "2027-01-17T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Málaga",
+     "away": "Real Madrid",
+     "kickoff": "2027-01-17T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Real Betis",
+     "away": "Deportivo",
+     "kickoff": "2027-01-17T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 21,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Real Betis",
+     "kickoff": "2027-01-24T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Atlético de Madrid",
+     "kickoff": "2027-01-24T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Racing de Santander",
+     "away": "Celta",
+     "kickoff": "2027-01-24T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Alavés",
+     "away": "FC Barcelona",
+     "kickoff": "2027-01-24T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 22,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Valencia",
+     "kickoff": "2027-01-31T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Rayo Vallecano",
+     "away": "Real Madrid",
+     "kickoff": "2027-01-31T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Getafe",
+     "kickoff": "2027-01-31T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Osasuna",
+     "away": "Deportivo",
+     "kickoff": "2027-01-31T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 23,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Atlético de Madrid",
+     "kickoff": "2027-02-07T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Alavés",
+     "away": "Celta",
+     "kickoff": "2027-02-07T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Málaga",
+     "kickoff": "2027-02-07T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Real Sociedad",
+     "away": "Real Madrid",
+     "kickoff": "2027-02-07T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 24,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Athletic Club",
+     "kickoff": "2027-02-14T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Rayo Vallecano",
+     "kickoff": "2027-02-14T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Villarreal",
+     "away": "FC Barcelona",
+     "kickoff": "2027-02-14T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Elche",
+     "away": "Deportivo",
+     "kickoff": "2027-02-14T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 25,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Levante",
+     "kickoff": "2027-02-21T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Athletic Club",
+     "away": "Celta",
+     "kickoff": "2027-02-21T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Real Sociedad",
+     "kickoff": "2027-02-21T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Sevilla",
+     "away": "Real Madrid",
+     "kickoff": "2027-02-21T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 26,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Valencia",
+     "kickoff": "2027-02-28T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Athletic Club",
+     "away": "FC Barcelona",
+     "kickoff": "2027-02-28T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Espanyol",
+     "kickoff": "2027-02-28T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Levante",
+     "away": "Deportivo",
+     "kickoff": "2027-02-28T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 27,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Real Betis",
+     "kickoff": "2027-03-07T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Getafe",
+     "kickoff": "2027-03-07T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Atlético de Madrid",
+     "away": "Celta",
+     "kickoff": "2027-03-07T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Villarreal",
+     "away": "Real Madrid",
+     "kickoff": "2027-03-07T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 28,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Deportivo",
+     "kickoff": "2027-03-14T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Real Madrid",
+     "away": "Espanyol",
+     "kickoff": "2027-03-14T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Osasuna",
+     "away": "Celta",
+     "kickoff": "2027-03-14T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 29,
+   "matches": [
+    {
+     "home": "Celta",
+     "away": "Real Madrid",
+     "kickoff": "2027-03-21T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Rayo Vallecano",
+     "away": "FC Barcelona",
+     "kickoff": "2027-03-21T21:00:00+01:00",
+     "tbc": true
+    },
+    {
+     "home": "Valencia",
+     "away": "Deportivo",
+     "kickoff": "2027-03-21T21:00:00+01:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 30,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Sevilla",
+     "kickoff": "2027-04-04T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Real Madrid",
+     "away": "Atlético de Madrid",
+     "kickoff": "2027-04-04T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Real Betis",
+     "away": "Celta",
+     "kickoff": "2027-04-04T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Villarreal",
+     "kickoff": "2027-04-04T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 31,
+   "matches": [
+    {
+     "home": "Osasuna",
+     "away": "Real Madrid",
+     "kickoff": "2027-04-11T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Racing de Santander",
+     "away": "FC Barcelona",
+     "kickoff": "2027-04-11T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Elche",
+     "kickoff": "2027-04-11T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Sevilla",
+     "away": "Deportivo",
+     "kickoff": "2027-04-11T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 32,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Espanyol",
+     "kickoff": "2027-04-18T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Celta",
+     "kickoff": "2027-04-18T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Getafe",
+     "away": "Real Madrid",
+     "kickoff": "2027-04-18T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 33,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Elche",
+     "kickoff": "2027-04-21T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Athletic Club",
+     "away": "Deportivo",
+     "kickoff": "2027-04-21T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "FC Barcelona",
+     "kickoff": "2027-04-21T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 34,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Osasuna",
+     "kickoff": "2027-05-02T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Racing de Santander",
+     "kickoff": "2027-05-02T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Sevilla",
+     "kickoff": "2027-05-02T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Levante",
+     "away": "Real Madrid",
+     "kickoff": "2027-05-02T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 35,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "FC Barcelona",
+     "kickoff": "2027-05-09T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Rayo Vallecano",
+     "away": "Deportivo",
+     "kickoff": "2027-05-09T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Villarreal",
+     "away": "Celta",
+     "kickoff": "2027-05-09T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 36,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Racing de Santander",
+     "kickoff": "2027-05-16T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Alavés",
+     "kickoff": "2027-05-16T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Málaga",
+     "away": "Celta",
+     "kickoff": "2027-05-16T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Real Sociedad",
+     "away": "FC Barcelona",
+     "kickoff": "2027-05-16T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 37,
+   "matches": [
+    {
+     "home": "FC Barcelona",
+     "away": "Málaga",
+     "kickoff": "2027-05-23T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Alavés",
+     "away": "Real Madrid",
+     "kickoff": "2027-05-23T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Celta",
+     "away": "Real Sociedad",
+     "kickoff": "2027-05-23T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Deportivo",
+     "away": "Espanyol",
+     "kickoff": "2027-05-23T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  },
+  {
+   "num": 38,
+   "matches": [
+    {
+     "home": "Real Madrid",
+     "away": "Deportivo",
+     "kickoff": "2027-05-30T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Getafe",
+     "away": "FC Barcelona",
+     "kickoff": "2027-05-30T21:00:00+02:00",
+     "tbc": true
+    },
+    {
+     "home": "Levante",
+     "away": "Celta",
+     "kickoff": "2027-05-30T21:00:00+02:00",
+     "tbc": true
+    }
+   ]
+  }
+ ]
+}
