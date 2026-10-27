@@ -11,7 +11,7 @@ try { webpush = require("web-push"); } catch (e) { /* sin avisos en local */ }
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 const P = "porra:";
-const SESSION_TTL = 60 * 60 * 24 * 365;
+const SESSION_TTL = 60 * 60 * 24 * 365 * 10; // la sesión no caduca (se renueva con cada uso)
 const CLOSE_BEFORE = 60 * 1000;             // se cierra 1 minuto antes del inicio
 const OPEN_BEFORE = 7 * 24 * 3600 * 1000;   // se abre como máximo 7 días antes
 const REMIND_BEFORE = 60 * 60 * 1000;       // aviso si falta 1 hora y no has pronosticado
@@ -68,6 +68,7 @@ async function auth(token) {
   if (!token || typeof token !== "string" || token.length > 100) throw new HttpError(401, "Inicia sesión");
   const k = await redis(["GET", P + "session:" + token]);
   if (!k) throw new HttpError(401, "Sesión caducada, vuelve a entrar");
+  redis(["EXPIRE", P + "session:" + token, String(SESSION_TTL)]).catch(() => {});
   const u = await getUser(k);
   if (!u) throw new HttpError(401, "Usuario no encontrado");
   return u;
@@ -297,14 +298,13 @@ async function handle(body) {
   const a = body.action;
 
   if (a === "register") {
-    const username = normName(body.username);
     const email = normEmail(body.email);
     const pass = String(body.pass || "");
-    if (!/^[a-zA-Z0-9._-]{3,20}$/.test(username)) bad("El usuario debe tener 3-20 caracteres: letras, números, punto o guion, sin espacios");
     if (!validEmail(email)) bad("Pon un correo válido");
+    const username = email; // se entra con el correo
     if (pass.length < 6) bad("La contraseña debe tener al menos 6 caracteres");
     const k = keyName(username);
-    if (await redis(["GET", P + "user:" + k])) bad("Ese usuario ya existe");
+    if (await redis(["GET", P + "user:" + k])) bad("Ese correo ya está registrado. Si olvidaste la contraseña, recupérala.");
     const okMail = await redis(["SET", P + "email:" + email, k, "NX"]);
     if (!okMail) bad("Ese correo ya está registrado. Si olvidaste la contraseña, recupérala.");
     const salt = crypto.randomBytes(12).toString("hex");
@@ -317,11 +317,11 @@ async function handle(body) {
   }
 
   if (a === "login") {
-    const id = String(body.username || "").trim();
+    const id = String(body.email || body.username || "").trim();
     let k = keyName(id);
     if (id.includes("@")) k = (await redis(["GET", P + "email:" + normEmail(id)])) || "";
     const u = k && (await getUser(k));
-    if (!u || hashPass(body.pass || "", u.salt) !== u.hash) bad("Usuario o contraseña incorrectos");
+    if (!u || hashPass(body.pass || "", u.salt) !== u.hash) bad("Correo o contraseña incorrectos");
     return { token: await newSession(u), admin: !!u.admin };
   }
 

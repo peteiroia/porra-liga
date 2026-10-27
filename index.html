@@ -492,11 +492,11 @@ function authView() {
   const m = S.authMode;
   let form;
   if (m === "register") form = `
-    <label class="field"><span>Usuario (para entrar)</span><input class="input" name="username" maxlength="20" autocomplete="username" autocapitalize="none" placeholder="Ej. pepe_lopez" required></label>
-    <label class="field"><span>Correo (para recuperar la contraseña)</span><input class="input" name="email" type="email" autocomplete="email" autocapitalize="none" placeholder="tucorreo@gmail.com" required></label>
+    <label class="field"><span>Correo</span><input class="input" name="email" type="email" autocomplete="email username" autocapitalize="none" placeholder="tucorreo@gmail.com" required></label>
     <label class="field"><span>Contraseña (mínimo 6)</span><input class="input" name="pass" type="password" minlength="6" autocomplete="new-password" required></label>
     <div class="err" id="authErr"></div>
-    <button class="btn primary block" type="submit">Crear cuenta</button>`;
+    <button class="btn primary block" type="submit">Crear cuenta</button>
+    <p class="dim" style="font-size:12px;text-align:center;margin:10px 0 0">Solo tendrás que entrar una vez: la app recuerda tu sesión.</p>`;
   else if (m === "forgot") form = S.resetEmail ? `
     <p class="muted" style="font-size:14px;margin:6px 0">Te hemos enviado un código de 6 cifras a <b style="color:#fff">${esc(S.resetEmail)}</b>. Mira también en spam.</p>
     <label class="field"><span>Código</span><input class="input pin" name="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></label>
@@ -509,7 +509,7 @@ function authView() {
     <div class="err" id="authErr"></div>
     <button class="btn primary block" type="submit">Enviarme el código</button>`;
   else form = `
-    <label class="field"><span>Usuario o correo</span><input class="input" name="username" autocomplete="username" autocapitalize="none" required></label>
+    <label class="field"><span>Correo</span><input class="input" name="email" type="email" autocomplete="email username" autocapitalize="none" required></label>
     <label class="field"><span>Contraseña</span><input class="input" name="pass" type="password" autocomplete="current-password" required></label>
     <div class="err" id="authErr"></div>
     <button class="btn primary block" type="submit">Entrar</button>
@@ -819,7 +819,7 @@ function profileSheet() {
       <h2 class="cond" style="margin:10px 0 2px;font-size:26px">${esc(d.me.name)}</h2>
       <p class="muted" style="margin:0 0 14px">${(() => { const r = d.table.find((x) => x.name === d.me.name); return r ? `${r.pos}º · ${r.pts} puntos · ${r.exact} exactos` : ""; })()}</p></div>
     <div class="row"><label class="btn" style="flex:1">📷 Cambiar foto<input type="file" accept="image/*" id="pfFile" hidden></label><button class="btn" style="flex:1" id="pfName">✏️ Cambiar nombre</button></div>
-    <p class="dim" style="font-size:12px;text-align:center;margin:8px 0 0">Usuario: ${esc(d.me.username)} · ${esc(d.me.email || "")}</p>
+    <p class="dim" style="font-size:12px;text-align:center;margin:8px 0 0">${esc(d.me.email || d.me.username)}</p>
     <div class="card" style="margin-top:12px;padding:14px">
       <b>🔔 Avisos</b><p class="muted" style="font-size:14px;margin:4px 0 10px">Te avisamos 1 hora antes de un partido si aún no has puesto tu resultado.</p>
       ${pushOk ? `<button class="btn ${pushOn ? "" : "primary"} block" id="pfPush">${pushOn ? "Avisos activados ✓ · Probar" : "Activar avisos"}</button>`
