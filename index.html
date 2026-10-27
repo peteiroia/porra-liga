@@ -194,19 +194,43 @@ table.tbl{width:100%;border-collapse:collapse;font-size:15px}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--mut);margin-top:10px}
 .legend span{display:flex;align-items:center;gap:6px}
 
-/* ---------- Estrellas ---------- */
-.stars{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;margin:0 -16px 14px;padding:2px 16px 6px;scrollbar-width:none}
-.stars::-webkit-scrollbar{display:none}
-.squad{flex:0 0 auto;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 10px 8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.squad-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.squad-h .crest span{font-size:9px}
-.squad-h b{font-family:"Barlow Condensed";font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.05em}
-.squad-p{display:flex;gap:6px}
-.shirt{display:flex;flex-direction:column;align-items:center;width:72px}
-.shirt svg{filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transition:transform .2s}
-.shirt:hover svg{transform:translateY(-3px) rotate(-3deg)}
-.shirt span{font-size:11px;font-weight:600;color:var(--mut);text-align:center;line-height:1.15;margin-top:2px}
-.auth-stars{max-width:760px;margin:0 auto 14px;padding:0 16px}
+/* ---------- Cracks: foto con focos de estadio ---------- */
+.cracks{position:relative;border-radius:22px;overflow:hidden;margin:0 0 16px;isolation:isolate;
+  border:1px solid rgba(255,214,102,.45);
+  box-shadow:0 0 0 1px rgba(0,0,0,.4),0 18px 40px rgba(0,0,0,.55),0 0 50px rgba(255,214,102,.22)}
+.cracks picture,.cracks img{display:block;width:100%;height:auto}
+.cracks img{aspect-ratio:1312/1199;object-fit:cover;filter:saturate(1.12) contrast(1.06) brightness(1.04);animation:kenburns 18s ease-in-out infinite alternate}
+.cracks.compact img{aspect-ratio:16/9;object-position:50% 22%}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.06) translateY(-1%)}}
+.cracks::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:
+    radial-gradient(40% 30% at 12% 0%,rgba(255,255,235,.55),transparent 70%),
+    radial-gradient(40% 30% at 88% 0%,rgba(255,255,235,.55),transparent 70%),
+    radial-gradient(120% 80% at 50% 120%,rgba(0,0,0,.75),transparent 55%),
+    radial-gradient(140% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.5));mix-blend-mode:normal}
+.cracks .beams{position:absolute;inset:0;z-index:3;pointer-events:none;mix-blend-mode:screen}
+.cracks .beams i{position:absolute;top:-30%;width:28%;height:150%;
+  background:linear-gradient(180deg,rgba(255,255,230,.55),rgba(255,255,230,0) 75%);filter:blur(6px);opacity:.55;transform-origin:50% 0;
+  clip-path:polygon(42% 0,58% 0,100% 100%,0 100%)}
+.cracks .beams i:nth-child(1){left:-4%;transform:rotate(-24deg);animation:sweep 7s ease-in-out infinite}
+.cracks .beams i:nth-child(2){left:16%;transform:rotate(-10deg);animation:sweep 9s ease-in-out infinite reverse;opacity:.35}
+.cracks .beams i:nth-child(3){right:16%;transform:rotate(10deg);animation:sweep 8s ease-in-out infinite;opacity:.35}
+.cracks .beams i:nth-child(4){right:-4%;transform:rotate(24deg);animation:sweep 6.5s ease-in-out infinite reverse}
+@keyframes sweep{0%,100%{rotate:0deg}50%{rotate:8deg}}
+.cracks .glare{position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 48%,transparent 60%);transform:translateX(-120%);animation:glare 6s ease-in-out infinite}
+@keyframes glare{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+.cracks .flare{position:absolute;top:-36px;z-index:4;width:120px;height:120px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,#fff 0 6%,rgba(255,250,220,.9) 10%,rgba(255,230,150,.35) 32%,transparent 66%);animation:pulse 3.2s ease-in-out infinite}
+.cracks .flare.l{left:-30px}.cracks .flare.r{right:-30px;animation-delay:1.6s}
+@keyframes pulse{50%{opacity:.7;transform:scale(.9)}}
+.cracks-cap{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:28px 16px 14px;text-align:center;
+  background:linear-gradient(transparent,rgba(0,0,0,.75))}
+.cracks-cap b{display:block;white-space:nowrap;font-family:"Barlow Condensed";font-weight:800;font-size:24px;letter-spacing:.06em;text-transform:uppercase;
+  color:#fff;text-shadow:0 0 18px rgba(255,214,102,.65),0 2px 4px rgba(0,0,0,.8)}
+.cracks-cap span{display:block;white-space:nowrap;font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.cracks.compact .cracks-cap{padding:20px 12px 10px}.cracks.compact .cracks-cap b{font-size:18px}
+.auth-stars{max-width:520px;margin:0 auto 14px;padding:0 16px}
 /* ---------- Normas ---------- */
 .rules li{margin:8px 0;line-height:1.45}
 .rules b{color:#fff}
@@ -272,12 +296,6 @@ const CLUBS = {
   depor:  { name: "Deportivo", short: "RCD", flag: "Depor", fg: "#0a3b86", stripes: ["#0068b3", "#ffffff", "#0068b3", "#ffffff", "#0068b3"], accent: [], fav: true },
   celta:  { name: "Celta", short: "CEL", flag: "Celta", fg: "#fff", stripes: ["#8ac6ee"], accent: ["#ffffff", "#e30613"], fav: true },
 };
-const STARS = {
-  madrid: ["Mbappé", "Bellingham", "Diomandé"],
-  barca: ["Lamine Yamal", "Raphinha", "Rodri"],
-  depor: ["Aubameyang", "Yeremay", "Villares"],
-  celta: ["Iago Aspas", "Borja Iglesias", "Marcos Alonso"],
-};
 const LIGA = ["Real Madrid", "FC Barcelona", "Deportivo", "Celta", "Atlético de Madrid", "Athletic Club", "Real Sociedad", "Villarreal", "Real Betis", "Sevilla",
   "Valencia", "Osasuna", "Getafe", "Rayo Vallecano", "Girona", "Mallorca", "Espanyol", "Alavés", "Levante", "Elche", "Real Oviedo", "Racing de Santander",
   "Almería", "Las Palmas", "Granada", "Valladolid", "Leganés", "Sporting de Gijón", "Málaga", "Eibar"];
@@ -338,32 +356,14 @@ function flagSVG(club, W, H) {
     <animateTransform attributeName="gradientTransform" type="translate" values="-.25 0;0 0;-.25 0" dur="${dur}" repeatCount="indefinite"/></linearGradient></defs>
     <g clip-path="url(#${id})">${fill}<rect x="0" y="${-pad}" width="${W}" height="${H + pad * 2}" fill="url(#${id}s)"/></g></svg>`;
 }
-// Camiseta de espaldas con el nombre del jugador, en los colores del club
-let shirtSeq = 0;
-function jersey(club, player, W = 66) {
-  const id = "js" + (++shirtSeq), H = W * 0.92;
-  const n = club.stripes.length, sw = 100 / n;
-  const stripes = club.stripes.map((c, i) => `<rect x="${i * sw}" y="0" width="${sw + .4}" height="100" fill="${c}"/>`).join("");
-  const trim = club === CLUBS.madrid ? "#3e2f8f" : club === CLUBS.barca ? "#edbb00" : club === CLUBS.celta ? "#e30613" : "#0a3b86";
-  const ink = club === CLUBS.barca ? "#ffd84a" : club === CLUBS.madrid ? "#1d2a6e" : club === CLUBS.depor ? "#0a3b86" : "#ffffff";
-  const surname = player.split(" ").length > 1 && !/^(Lamine|Iago|Borja|Marcos)/.test(player) ? player : player.split(" ").pop();
-  const fs = Math.min(14, 48 / (Math.max(4, surname.length) * 0.56));
-  return `<svg width="${W}" height="${H}" viewBox="0 0 100 92" role="img" aria-label="Camiseta de ${esc(player)}">
-    <defs><clipPath id="${id}"><path d="M30 4 L14 10 L0 30 L14 40 L22 32 L22 90 L78 90 L78 32 L86 40 L100 30 L86 10 L70 4 Q50 14 30 4Z"/></clipPath>
-    <linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs>
-    <g clip-path="url(#${id})">${stripes}<rect width="100" height="100" fill="url(#${id}g)"/>
-      <path d="M30 4 Q50 14 70 4" stroke="${trim}" stroke-width="5" fill="none"/>
-      <path d="M0 30 L14 40 M100 30 L86 40" stroke="${trim}" stroke-width="5"/></g>
-    <path d="M30 4 L14 10 L0 30 L14 40 L22 32 L22 90 L78 90 L78 32 L86 40 L100 30 L86 10 L70 4 Q50 14 30 4Z" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>
-    <text x="50" y="40" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="800" font-size="${fs.toFixed(1)}" fill="${ink}" stroke="rgba(0,0,0,${ink === "#ffffff" || ink === "#ffd84a" ? .35 : 0})" stroke-width=".6" letter-spacing=".5">${esc(surname.toUpperCase())}</text>
-    <text x="50" y="72" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="800" font-size="24" fill="${ink}" opacity=".9">★</text>
-  </svg>`;
-}
-const CLUB_KEYS = ["madrid", "barca", "depor", "celta"];
-function starsStrip() {
-  return `<div class="stars">${CLUB_KEYS.map((k) => { const c = CLUBS[k]; return `<div class="squad">
-    <div class="squad-h">${crest(c.name, true)}<b>${c.name}</b></div>
-    <div class="squad-p">${STARS[k].map((p) => `<div class="shirt">${jersey(c, p)}<span>${esc(p)}</span></div>`).join("")}</div></div>`; }).join("")}</div>`;
+// Banner de los cracks con focos de estadio
+function starsStrip(compact) {
+  return `<div class="cracks ${compact ? "compact" : ""}">
+    <div class="beams"><i></i><i></i><i></i><i></i></div>
+    <picture><source srcset="img/cracks.webp" type="image/webp"><img src="img/cracks.jpg" alt="Iago Aspas, Aubameyang, Mbappé y Lamine Yamal" loading="eager"></picture>
+    <div class="glare"></div><div class="flare l"></div><div class="flare r"></div>
+    <div class="cracks-cap"><b>Los cracks de La Porra</b><span>Celta · Depor · Madrid · Barça</span></div>
+  </div>`;
 }
 const FOUR = [CLUBS.madrid, CLUBS.barca, CLUBS.depor, CLUBS.celta];
 function heroFlags() {
@@ -601,7 +601,7 @@ function liveStatus(m) {
 }
 function jornadaView() {
   const d = S.data, js = d.jornadas;
-  if (!js.length) return starsStrip() + `<div class="card empty"><span class="ball">⚽</span><h2 class="cond" style="margin:4px 0;font-size:24px">Aún no hay jornadas</h2>
+  if (!js.length) return starsStrip(true) + `<div class="card empty"><span class="ball">⚽</span><h2 class="cond" style="margin:4px 0;font-size:24px">Aún no hay jornadas</h2>
     <p class="muted">${d.me.admin ? "Eres el administrador: crea la primera jornada en la pestaña <b>Admin</b>." : "El administrador todavía no ha creado la primera jornada. ¡Vuelve pronto!"}</p>
     ${d.me.admin ? `<button class="btn primary" data-go="admin">Crear jornada</button>` : ""}</div>`;
   const j = curJ(), idx = js.indexOf(j);
@@ -613,7 +613,7 @@ function jornadaView() {
   if (first) sub = (sub ? sub + " · " : "") + new Date(first).toLocaleDateString("es-ES", { day: "numeric", month: "long" });
 
   return `
-  ${starsStrip()}
+  ${starsStrip(true)}
   <div class="jnav">
     <button class="btn" data-j="${idx - 1}" ${idx <= 0 ? "disabled" : ""} aria-label="Jornada anterior">‹</button>
     <div class="jt"><b>Jornada ${j.num}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">en juego</span>` : ""}</small></div>
