@@ -26,7 +26,7 @@ El **primer usuario que se registra es el administrador**: crea las jornadas, me
    - `GMAIL_USER` = tu Gmail
    - `GMAIL_APP_PASSWORD` = una contraseña de aplicación de Google (myaccount.google.com → Seguridad → Contraseñas de aplicaciones)
 4. Redeploy.
-5. En GitHub: **Settings → Secrets and variables → Actions → Variables** crea `SITE_URL` con la dirección de la web (p. ej. `https://la-porra.vercel.app`) para que salgan los avisos.
+5. En GitHub: **Settings → Secrets and variables → Actions → Variables** crea `SITE_URL` con la dirección de la web (p. ej. `https://porra-liga.vercel.app`) para que salgan los avisos.
 
 ## Instalar en el móvil
 - **iPhone:** Safari → Compartir → *Añadir a pantalla de inicio*. Ábrela desde el icono y activa los avisos en tu perfil (iOS 16.4 o superior).
