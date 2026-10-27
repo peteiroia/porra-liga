@@ -88,6 +88,10 @@ function points(pred, res) {
 }
 // Partidos de oro (valen doble): el Clásico y el derbi gallego
 const COMODINES = 3;
+const RETOS = 10;          // retos por jugador en toda la temporada
+const RETOS_MISMO = 2;     // máximo de retos a la misma persona
+// Plazo para retar: hasta 1 minuto antes del primer partido de la jornada
+const retoDeadline = (j) => Math.min(...j.matches.map((m) => Date.parse(m.kickoff))) - CLOSE_BEFORE;
 const clubKey = (n) => {
   const t = String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (/real madrid/.test(t)) return "madrid";
@@ -161,11 +165,12 @@ async function syncCalendar(force) {
 
 async function loadAll() {
   await syncCalendar();
-  const [jornadas, predsRaw, userKeys, crestsRaw] = await Promise.all([
+  const [jornadas, predsRaw, userKeys, crestsRaw, retos] = await Promise.all([
     getJSON(P + "jornadas", []),
     redis(["HGETALL", P + "preds"]),
     redis(["SMEMBERS", P + "users"]),
     redis(["HGETALL", P + "crests"]),
+    getJSON(P + "retos", []),
   ]);
   const crests = hgetallObj(crestsRaw);
   const preds = hgetallObj(predsRaw);
@@ -174,13 +179,15 @@ async function loadAll() {
     const u = await getUser(k);
     if (u) users.push({ key: k, name: displayOf(u), username: u.username, admin: !!u.admin, photo: u.photo || 0 });
   }
-  return { jornadas, preds, users, crests };
+  return { jornadas, preds, users, crests, retos };
 }
 
 function buildState(me, data) {
   const now = Date.now();
   const myKey = keyName(me.username);
   const { jornadas, preds, users, crests } = data;
+  const retos = (data.retos || []).filter((r) => users.some((u) => u.key === r.from) && users.some((u) => u.key === r.to));
+  const nameOf = Object.fromEntries(users.map((u) => [u.key, u.name]));
   jornadas.sort((a, b) => a.num - b.num);
   const photo = Object.fromEntries(users.map((u) => [u.name, u.photo ? u.key + "&v=" + u.photo : null]));
 
@@ -214,6 +221,29 @@ function buildState(me, data) {
       }
     }
   }
+  // Retos: cuando la jornada tiene todos los resultados, quien gana el duelo
+  // suma también los puntos de esa jornada del que pierde. Empate: nada extra.
+  const retoOut = [];
+  for (const r of retos) {
+    const j = jornadas.find((x) => x.id === r.jornada);
+    if (!j) continue;
+    const A = byKey[r.from], B = byKey[r.to];
+    const done = j.matches.length && j.matches.every((m) => m.result);
+    const o = { jornada: j.id, num: j.num, from: nameOf[r.from], to: nameOf[r.to], done };
+    if (done && A && B) {
+      const pa = A.byJ[j.id] || 0, pb = B.byJ[j.id] || 0;
+      o.ptsFrom = pa; o.ptsTo = pb;
+      if (pa !== pb) {
+        const W = pa > pb ? A : B, gain = Math.min(pa, pb);
+        o.winner = W.name; o.gain = gain;
+        W.retoJ = W.retoJ || {}; W.retoJ[j.id] = (W.retoJ[j.id] || 0) + gain;
+        W.retoPts = (W.retoPts || 0) + gain;
+      }
+    }
+    retoOut.push(o);
+  }
+  for (const r of table) if (r.retoPts) { r.pts += r.retoPts; for (const jid in r.retoJ) r.byJ[jid] += r.retoJ[jid]; }
+
   const doneJ = jornadas.filter((j) => j.matches.some((m) => m.result));
   const lastJ = doneJ[doneJ.length - 1];
   const cmp = (a, b, f) => f(b) - f(a) || b.exact - a.exact || a.name.localeCompare(b.name);
@@ -228,6 +258,7 @@ function buildState(me, data) {
   const outJ = jornadas.map((j) => ({
     id: j.id, num: j.num, title: j.title || "", current: j.id === curId,
     myPleno: ((byKey[myKey] || {}).plenos || {})[j.id] || 0,
+    retoDeadline: j.matches.length ? retoDeadline(j) : null,
     matches: j.matches.map((m) => {
       const locked = isLocked(m, now);
       // Los pronósticos de los demás solo se ven cuando el partido ha empezado
@@ -255,7 +286,10 @@ function buildState(me, data) {
 
   return {
     me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
-      comodines: { total: COMODINES, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length } },
+      comodines: { total: COMODINES, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length },
+      retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
+        porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
+    retos: retoOut,
     now,
     jornadas: outJ,
     table: table.map(({ key, ...r }) => ({ ...r, photo: photo[r.name] })),
@@ -459,6 +493,35 @@ async function handle(body) {
   if (a === "testPush") {
     const n = await sendPush(keyName(me.username), { title: "⚽ La Porra", body: "¡Avisos activados! Te avisaremos 1 hora antes si te falta algún pronóstico.", tag: "test", url: "./" });
     return { sent: n };
+  }
+
+  // Retar a otro jugador en la jornada en juego
+  if (a === "reto" || a === "cancelReto") {
+    const { jornadas, users, retos } = await loadAll();
+    const now = Date.now();
+    const j = jornadas.find((x) => x.id === body.jornada);
+    if (!j) bad("Jornada no encontrada");
+    if (j.id !== currentJornadaId(jornadas, now)) bad("Solo puedes retar en la jornada que está abierta");
+    if (j.matches.some((m) => m.tbc)) bad("Aún faltan horarios por confirmar en esta jornada");
+    if (now >= retoDeadline(j)) bad("Ya no se puede: la jornada ha empezado");
+    const myK = keyName(me.username);
+    let list = retos.slice();
+    if (a === "cancelReto") {
+      list = list.filter((r) => !(r.jornada === j.id && r.from === myK));
+    } else {
+      const target = users.find((u) => u.name.toLowerCase() === normName(body.to).toLowerCase());
+      if (!target) bad("Jugador no encontrado");
+      if (target.key === myK) bad("No puedes retarte a ti mismo");
+      if (list.some((r) => r.jornada === j.id && r.from === myK)) bad("Ya has retado a alguien en esta jornada");
+      if (list.some((r) => r.jornada === j.id && r.to === target.key)) bad(`${target.name} ya tiene un reto esta jornada. Reta a otro`);
+      if (list.filter((r) => r.from === myK).length >= RETOS) bad(`Ya has usado tus ${RETOS} retos de la temporada`);
+      if (list.filter((r) => r.from === myK && r.to === target.key).length >= RETOS_MISMO) bad(`Ya has retado ${RETOS_MISMO} veces a ${target.name}`);
+      list.push({ id: crypto.randomBytes(4).toString("hex"), jornada: j.id, from: myK, to: target.key, at: now });
+      // aviso al retado
+      sendPush(target.key, { title: "⚔️ ¡Te han retado!", body: `${displayOf(me)} te reta en la jornada ${j.num}. Quien haga más puntos se lleva también los del otro.`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
+    }
+    await setJSON(P + "retos", list);
+    return buildState(me, await loadAll());
   }
 
   if (a === "predict") {

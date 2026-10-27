@@ -691,6 +691,7 @@ function jornadaView() {
   ${anyOpen ? (() => { const c = S.data.me.comodines || { total: 3, used: 0 }; const used = c.used + j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0);
     return `<div class="combar">⚡ Comodines: <b>${c.total - used}</b> de ${c.total} disponibles <span class="dim">· el partido que elijas vale doble</span></div>`; })() : ""}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
+  ${retosCard(j)}
   ${j.myPleno ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:28px">${j.myPleno === 3 ? "🏆" : "🎉"}</span><div><b>${j.myPleno === 3 ? "¡PLENO DE RESULTADOS!" : "¡Pleno de signos!"} +${j.myPleno}</b><span class="muted">${j.myPleno === 3 ? "Has clavado todos los resultados de la jornada" : "Has acertado el 1X2 de todos los partidos"}</span></div></div>` : ""}
   ${j.matches.map((m) => matchCard(j, m, drafts)).join("")}
   ${jornadaPoints(j)}
@@ -751,6 +752,36 @@ function matchCard(j, m, drafts) {
       <div class="team ${awayC ? "fav" : ""}">${crest(m.away)}<span class="tn">${esc(m.away)}</span></div>
     </div>${foot}</div>`;
 }
+// ---------- Retos ----------
+function retosCard(j) {
+  const d = S.data, me = d.me, R = me.retos || { total: 10, max: 2, used: 0, porRival: {} };
+  const list = (d.retos || []).filter((r) => r.jornada === j.id);
+  const now = serverNow();
+  const canRet = j.current && j.retoDeadline && now < j.retoDeadline && !j.matches.some((m) => m.tbc);
+  const mine = list.find((r) => r.from === me.name);
+  const ph = Object.fromEntries(d.users.map((u) => [u.name, u.photo]));
+  if (!list.length && !canRet) return "";
+  let action = "";
+  if (canRet) {
+    if (mine) action = `<div class="row" style="justify-content:space-between;margin-top:8px"><span>Has retado a <b>${esc(mine.to)}</b></span><button class="btn small danger" id="retoCancel">Quitar reto</button></div>`;
+    else if (R.used >= R.total) action = `<p class="muted" style="margin:8px 0 0;font-size:14px">Ya has usado tus ${R.total} retos.</p>`;
+    else {
+      const taken = new Set(list.map((r) => r.to));
+      const opts = d.users.filter((u) => u.name !== me.name && !taken.has(u.name) && (R.porRival[u.name] || 0) < R.max);
+      action = opts.length ? `<div class="row" style="margin-top:8px"><select class="input" id="retoTo" style="flex:1;padding:10px 12px">${opts.map((u) => `<option value="${esc(u.name)}">${esc(u.name)}${R.porRival[u.name] ? ` (ya le retaste ${R.porRival[u.name]})` : ""}</option>`).join("")}</select><button class="btn gold" id="retoGo">⚔️ Retar</button></div>
+        <p class="dim" style="font-size:12px;margin:6px 0 0">Quien haga más puntos en la jornada se lleva también los del otro. Puedes retar hasta ${fmtWhen(new Date(j.retoDeadline).toISOString())}.</p>`
+        : `<p class="muted" style="margin:8px 0 0;font-size:14px">No queda nadie a quien retar esta jornada.</p>`;
+    }
+  }
+  const rows = list.map((r) => {
+    const res = r.done ? (r.winner ? `<span class="chip p3 pts">${esc(r.winner)} +${r.gain}</span>` : `<span class="chip">Empate · cada uno lo suyo</span>`) : "";
+    const sc = r.done ? `<span class="cond" style="font-weight:800;font-size:17px">${r.ptsFrom}–${r.ptsTo}</span>` : `<span style="font-size:18px">⚔️</span>`;
+    return `<div class="orow">${avatar(r.from, ph[r.from], "sm")}<span class="nm" style="flex:1">${esc(r.from)}</span>${sc}<span class="nm" style="flex:1;text-align:right">${esc(r.to)}</span>${avatar(r.to, ph[r.to], "sm")}${res}</div>`;
+  }).join("");
+  return `<div class="card" style="margin-bottom:12px;border-color:rgba(255,214,102,.3)">
+    <div class="row" style="justify-content:space-between"><b class="cond" style="font-size:19px;text-transform:uppercase;letter-spacing:.04em">⚔️ Retos</b><span class="chip">Te quedan ${R.total - R.used} de ${R.total}</span></div>
+    ${rows ? `<div class="others">${rows}</div>` : ""}${action}</div>`;
+}
 const sign = (h, a) => (h > a ? "1" : h < a ? "2" : "X");
 const ptsOf = (p, r) => (p.h === r.h && p.a === r.a ? 3 : sign(p.h, p.a) === sign(r.h, r.a) ? 1 : 0);
 // Chip de puntos totales (con comodín, partido de oro y bonus de acierto único ya sumados)
@@ -779,8 +810,31 @@ function tablaView() {
     const dlt = r.prevPos - r.pos;
     return dlt > 0 ? `<span class="mv up">▲${dlt}</span>` : dlt < 0 ? `<span class="mv down">▼${-dlt}</span>` : `<span class="mv eq">=</span>`;
   };
+  // --- Clasificación de la jornada (selector) ---
+  const jlist = d.jornadas.filter((j) => j.matches.some((m) => m.result) || j.current);
+  if (!S.tablaJ || !jlist.some((j) => j.id === S.tablaJ)) S.tablaJ = (done[done.length - 1] || jlist[jlist.length - 1] || {}).id;
+  const tj = jlist.find((j) => j.id === S.tablaJ);
+  let jornadaBlock = "";
+  if (tj) {
+    const ji = jlist.indexOf(tj);
+    const finished = tj.matches.every((m) => m.result);
+    const started = tj.matches.some((m) => m.result);
+    const rowsJ = t.map((r) => ({ ...r, jp: r.byJ[tj.id] || 0 })).sort((a, b) => b.jp - a.jp || a.name.localeCompare(b.name));
+    const best = rowsJ.length ? rowsJ[0].jp : 0;
+    jornadaBlock = `<h2 class="sec">Clasificación de la jornada</h2>
+    <div class="card">
+      <div class="jnav" style="margin:0 0 10px"><button class="btn" data-tj="${ji - 1}" ${ji <= 0 ? "disabled" : ""} aria-label="Anterior">‹</button>
+        <div class="jt"><b style="font-size:22px">Jornada ${tj.num}</b><small>${finished ? "Terminada" : started ? "En curso · puntos provisionales" : "Aún sin resultados"}</small></div>
+        <button class="btn" data-tj="${ji + 1}" ${ji >= jlist.length - 1 ? "disabled" : ""} aria-label="Siguiente">›</button></div>
+      <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
+      ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] ? " ⚔️" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
+      </tbody></table>
+      <div class="legend"><span>⭐ mejor de la jornada</span><span>🎉🏆 pleno</span><span>⚔️ ganó un reto</span></div>
+    </div>`;
+  }
   return `
-  <h2 class="sec">Clasificación ${done.length ? `<span class="chip">tras ${done.length} jornada${done.length > 1 ? "s" : ""}</span>` : ""}</h2>
+  ${jornadaBlock}
+  <h2 class="sec">Clasificación general ${done.length ? `<span class="chip">tras ${done.length} jornada${done.length > 1 ? "s" : ""}</span>` : ""}</h2>
   ${finished ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:30px">🏆</span><div><b style="font-size:18px">¡${esc(t[0].name)}, campeón de La Porra 2026-27!</b><span class="muted">${t[0].pts} puntos tras la jornada 38</span></div></div>`
     : `<p class="dim" style="font-size:13px;margin:-4px 2px 10px">🏆 Gana quien más puntos tenga al acabar la jornada 38 de la Liga 2026-27.</p>`}
   ${done.length ? `<div class="card"><div class="podium">${pod(podium[1], 2)}${pod(podium[0], 1)}${pod(podium[2], 3)}</div></div>` : ""}
@@ -789,7 +843,7 @@ function tablaView() {
     <tbody>${t.map((r) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${r.pos}${mv(r)}</td>
       <td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>
       <td class="tot">${r.pts}</td><td>${r.exact}</td><td>${r.signs}</td>${last ? `<td class="muted">+${r.byJ[last.id] || 0}</td>` : ""}</tr>`).join("")}</tbody></table>
-    <div class="legend"><span>🎯 resultados exactos (3 pts)</span><span>1X2 signo acertado (1 pt)</span><span>Empate a puntos: más exactos</span></div>
+    <div class="legend"><span>🎯 resultados exactos (3 pts)</span><span>1X2 signo acertado (1 pt)</span><span>Los puntos incluyen comodines, bonus y retos</span><span>Empate a puntos: más exactos</span></div>
   </div>
   ${done.length > 1 ? `<h2 class="sec">Jornada a jornada</h2><div class="card"><div class="scrollx"><table class="tbl matrix"><thead><tr><th>#</th><th>Jugador</th>${done.map((j) => `<th>J${j.num}</th>`).join("")}<th>Total</th></tr></thead>
     <tbody>${t.map((r) => {
@@ -815,6 +869,7 @@ function normasView() {
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
+    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. En cada jornada puedes retar a <b>un</b> jugador, antes de que empiece el primer partido. A cada jugador solo le puede retar <b>una</b> persona por jornada, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva también los puntos del otro</b>; el que pierde suma solo los suyos. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
@@ -1021,6 +1076,10 @@ function bindMain() {
 
   // Jornada
   document.querySelectorAll("[data-j]").forEach((b) => (b.onclick = () => { const j = S.data.jornadas[+b.dataset.j]; if (j) { S.jornada = j.id; render(); } }));
+  document.querySelectorAll("[data-tj]").forEach((b) => (b.onclick = () => {
+    const jl = S.data.jornadas.filter((j) => j.matches.some((m) => m.result) || j.current);
+    const x = jl[+b.dataset.tj]; if (x) { S.tablaJ = x.id; render(); }
+  }));
   document.querySelectorAll("[data-others]").forEach((b) => (b.onclick = () => { S.openOthers[b.dataset.others] = !S.openOthers[b.dataset.others]; render(); }));
   const j = S.data.jornadas.length ? curJ() : null;
   const dr = j ? (S.drafts[j.id] = S.drafts[j.id] || {}) : null;
@@ -1049,6 +1108,17 @@ function bindMain() {
     d.x2 = !d.x2; render();
     if (navigator.vibrate) navigator.vibrate(15);
   }));
+  const rg = $("#retoGo");
+  if (rg) rg.onclick = async () => {
+    const to = $("#retoTo").value;
+    if (!confirm(`¿Retar a ${to} en la jornada ${j.num}? Te quedará un reto menos.`)) return;
+    rg.disabled = true;
+    try { setData(await api("reto", { jornada: j.id, to })); render(); toast(`⚔️ Has retado a ${to}`); } catch (err) { toast(err.message, true); rg.disabled = false; }
+  };
+  const rc = $("#retoCancel");
+  if (rc) rc.onclick = async () => {
+    try { setData(await api("cancelReto", { jornada: j.id })); render(); toast("Reto quitado"); } catch (err) { toast(err.message, true); }
+  };
   const sb = $("#saveBtn");
   if (sb) sb.onclick = async () => {
     const picks = {};
