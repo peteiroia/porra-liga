@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#06140d">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="preload" as="image" href="icons/logo.png">
+<link rel="preload" as="image" href="icons/icon-512.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -478,7 +478,7 @@ function render() {
 
   app.innerHTML = `
   <header class="top"><div class="topin">
-    <img src="icons/logo.png" alt="" style="width:44px;height:44px;flex:none">
+    <img src="icons/icon-192.png" alt="" style="width:42px;height:42px;flex:none;border-radius:24%;box-shadow:0 0 0 1px rgba(255,226,122,.5)">
     <div class="brand"><h1>La <span>Porra</span></h1><small>Madrid · Barça · Depor · Celta</small></div>
     <button class="me-btn" id="meBtn" aria-label="Mi perfil">${avatar(d.me.name, d.me.photo)}</button>
   </div></header>
@@ -516,7 +516,7 @@ function authView() {
     <button class="btn block small" type="button" data-mode="forgot" style="margin-top:10px;background:none;border:0;color:var(--sign)">¿Olvidaste la contraseña?</button>`;
   return `
   <div class="hero">
-    <img src="icons/logo.png" alt="La Porra" style="display:block;width:min(56vw,220px);height:auto;margin:6px auto 4px;filter:drop-shadow(0 10px 24px rgba(245,197,66,.25))">
+    <img src="icons/icon-512.png" alt="La Porra" style="display:block;width:min(56vw,220px);height:auto;margin:6px auto 10px;border-radius:24%;box-shadow:0 0 0 2px rgba(255,226,122,.6),0 14px 34px rgba(0,0,0,.55),0 0 46px rgba(245,197,66,.35)">
     <div style="text-align:center;margin-bottom:14px">
       <p class="muted" style="margin:0">Pronostica los partidos de Madrid, Barça, Depor y Celta.<br>Resultado exacto <b style="color:var(--gold)">3 pts</b> · Acertar 1X2 <b style="color:var(--sign)">1 pt</b></p>
     </div>
