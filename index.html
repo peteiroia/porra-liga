@@ -226,7 +226,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:15px}
 @keyframes pulse{50%{opacity:.7;transform:scale(.9)}}
 .cracks-cap{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:28px 16px 14px;text-align:center;
   background:linear-gradient(transparent,rgba(0,0,0,.75))}
-.cracks-cap b{display:block;white-space:nowrap;font-family:"Barlow Condensed";font-weight:800;font-size:24px;letter-spacing:.06em;text-transform:uppercase;
+.cracks-cap b{display:block;white-space:nowrap;font-family:"Barlow Condensed";font-weight:800;font-size:clamp(16px,5.4vw,24px);letter-spacing:.06em;text-transform:uppercase;
   color:#fff;text-shadow:0 0 18px rgba(255,214,102,.65),0 2px 4px rgba(0,0,0,.8)}
 .cracks-cap span{display:block;white-space:nowrap;font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .cracks.compact .cracks-cap{padding:20px 12px 10px}.cracks.compact .cracks-cap b{font-size:18px}
@@ -521,7 +521,6 @@ function authView() {
       <p class="muted" style="margin:0">Pronostica los partidos de Madrid, Barça, Depor y Celta.<br>Resultado exacto <b style="color:var(--gold)">3 pts</b> · Acertar 1X2 <b style="color:var(--sign)">1 pt</b></p>
     </div>
   </div>
-  <div class="auth-stars">${starsStrip()}</div>
   <div class="auth card">
     ${m === "forgot" ? `<div class="row" style="margin-bottom:4px"><button class="btn small" data-mode="login">‹ Volver</button><b class="cond" style="font-size:20px;text-transform:uppercase">Recuperar contraseña</b></div>`
       : `<div class="seg"><button data-mode="login" class="${m === "login" ? "on" : ""}">Entrar</button><button data-mode="register" class="${m === "register" ? "on" : ""}">Crear cuenta</button></div>`}
@@ -556,7 +555,7 @@ function bindAuth() {
 function profileSetupView() {
   const me = S.data.me, ph = S.newPhoto;
   return `
-  <div class="hero">${heroFlags()}</div>
+  <div class="auth-stars" style="margin-top:14px">${starsStrip()}</div>
   <div class="auth card">
     <h2 class="cond" style="margin:0 0 4px;font-size:28px;text-transform:uppercase;text-align:center">Tu ficha de jugador</h2>
     <p class="muted" style="text-align:center;margin:0 0 6px;font-size:14px">Así te verán los demás en la clasificación.</p>
@@ -601,7 +600,7 @@ function liveStatus(m) {
 }
 function jornadaView() {
   const d = S.data, js = d.jornadas;
-  if (!js.length) return starsStrip(true) + `<div class="card empty"><span class="ball">⚽</span><h2 class="cond" style="margin:4px 0;font-size:24px">Aún no hay jornadas</h2>
+  if (!js.length) return `<div class="card empty"><span class="ball">⚽</span><h2 class="cond" style="margin:4px 0;font-size:24px">Aún no hay jornadas</h2>
     <p class="muted">${d.me.admin ? "Eres el administrador: crea la primera jornada en la pestaña <b>Admin</b>." : "El administrador todavía no ha creado la primera jornada. ¡Vuelve pronto!"}</p>
     ${d.me.admin ? `<button class="btn primary" data-go="admin">Crear jornada</button>` : ""}</div>`;
   const j = curJ(), idx = js.indexOf(j);
@@ -613,7 +612,6 @@ function jornadaView() {
   if (first) sub = (sub ? sub + " · " : "") + new Date(first).toLocaleDateString("es-ES", { day: "numeric", month: "long" });
 
   return `
-  ${starsStrip(true)}
   <div class="jnav">
     <button class="btn" data-j="${idx - 1}" ${idx <= 0 ? "disabled" : ""} aria-label="Jornada anterior">‹</button>
     <div class="jt"><b>Jornada ${j.num}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">en juego</span>` : ""}</small></div>
