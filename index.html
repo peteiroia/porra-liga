@@ -140,8 +140,6 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .team .tn{font-weight:700;font-size:14px;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .team.fav .tn{color:#fff}
 .crest{width:50px;height:50px;border-radius:50%;position:relative;overflow:hidden;border:2px solid rgba(255,255,255,.85);box-shadow:0 4px 12px rgba(0,0,0,.4);display:grid;place-items:center}
-.crest.img{background:#fff}
-.crest.img img{width:100%;height:100%;object-fit:cover;display:block}
 .crest span{position:relative;font-family:"Barlow Condensed";font-weight:800;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.45);letter-spacing:.03em}
 .score{display:flex;align-items:center;gap:6px}
 .score .dash{font-family:"Barlow Condensed";font-size:26px;color:var(--dim);font-weight:700}
@@ -159,6 +157,12 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .orow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.04)}
 .orow .nm{flex:1;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .orow .pk{font-family:"Barlow Condensed";font-weight:800;font-size:19px;min-width:44px;text-align:center}
+.x2btn{margin-top:10px;width:100%;border:1px dashed rgba(255,214,102,.45);background:rgba(255,214,102,.06);color:var(--gold);border-radius:12px;padding:9px;font-weight:700;font-size:14px}
+.x2btn.on{border-style:solid;background:linear-gradient(180deg,#ffd866,#e9ae1b);color:#2a1d00;box-shadow:0 0 18px rgba(245,197,66,.35)}
+.x2c{color:var(--gold);border-color:rgba(255,214,102,.45)}
+.golden{margin:-2px -2px 10px;padding:6px 10px;border-radius:10px;text-align:center;font-size:13px;font-weight:800;letter-spacing:.02em;color:#2a1d00;background:linear-gradient(90deg,#e9ae1b,#ffe07a,#e9ae1b);box-shadow:0 0 16px rgba(245,197,66,.3)}
+.combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
+.combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
 .toggle-others{border:0;background:none;color:var(--sign);font-weight:700;font-size:14px;padding:0}
 .savebar{position:fixed;left:0;right:0;bottom:calc(68px + var(--safe-b));z-index:15;padding:10px 16px;pointer-events:none}
@@ -314,31 +318,68 @@ function initials(s) {
   const w = String(s || "?").replace(/^(fc|cd|rcd|ud|sd|ca|real|club)\s+/i, "").split(/\s+/).filter(Boolean);
   return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || "?").slice(0, 3)).toUpperCase();
 }
-const CREST_IMG = { "Real Madrid": "madrid", "FC Barcelona": "barca", "Deportivo": "depor", "Celta": "celta" };
-const tkey = (n) => String(n || "").trim().replace(/\s+/g, " ").toLowerCase();
-function crestImg(name) {
-  const up = S.data && S.data.crests && S.data.crests[tkey(name)];
-  if (up) return `${API}?crest=${encodeURIComponent(tkey(name))}&v=${up}`;
-  const c = clubOf(name);
-  return c ? `img/escudos/${CREST_IMG[c.name]}.jpg` : null;
+// Colores de cada equipo (camiseta): rayas verticales, banda horizontal o banda diagonal
+const KIT = [
+  [/real madrid/, "RMA", { st: ["#ffffff"], band: ["#3e2f8f", "#febe10"], fg: "#1d2a6e" }],
+  [/barcelona|barca/, "FCB", { st: ["#a50044", "#004d98"], n: 5, fg: "#fff" }],
+  [/deportivo|depor|coruna/, "DEP", { st: ["#0068b3", "#ffffff"], n: 5, fg: "#fff" }],
+  [/celta/, "CEL", { st: ["#8ac6ee"], band: ["#e30613"], fg: "#fff" }],
+  [/atletico/, "ATM", { st: ["#cb3524", "#ffffff"], n: 5, band: ["#272e61"], fg: "#fff" }],
+  [/athletic/, "ATH", { st: ["#ee2523", "#ffffff"], n: 5, band: ["#111111"], fg: "#fff" }],
+  [/real sociedad/, "RSO", { st: ["#0067b1", "#ffffff"], n: 5, fg: "#fff" }],
+  [/villarreal/, "VIL", { st: ["#ffe667"], band: ["#005187"], fg: "#005187" }],
+  [/betis/, "BET", { st: ["#0bb363", "#ffffff"], n: 5, fg: "#fff" }],
+  [/sevilla/, "SEV", { st: ["#ffffff"], band: ["#d8001e"], fg: "#d8001e" }],
+  [/valencia/, "VAL", { st: ["#ffffff"], band: ["#111111", "#ee7203"], fg: "#111" }],
+  [/osasuna/, "OSA", { st: ["#d91a21"], band: ["#0a346f"], fg: "#fff" }],
+  [/getafe/, "GET", { st: ["#005999"], band: ["#ffffff"], fg: "#fff" }],
+  [/rayo/, "RAY", { st: ["#ffffff"], sash: "#e1001a", fg: "#111" }],
+  [/girona/, "GIR", { st: ["#d71920", "#ffffff"], n: 5, fg: "#fff" }],
+  [/mallorca/, "MLL", { st: ["#e20613"], band: ["#111111"], fg: "#fff" }],
+  [/espanyol/, "ESP", { st: ["#007fc8", "#ffffff"], n: 5, fg: "#fff" }],
+  [/alaves/, "ALA", { st: ["#0761af", "#ffffff"], n: 5, fg: "#fff" }],
+  [/levante/, "LEV", { st: ["#b4053f", "#004f9f"], n: 5, fg: "#fff" }],
+  [/elche/, "ELC", { st: ["#ffffff"], band: ["#05642c"], fg: "#05642c" }],
+  [/oviedo/, "OVI", { st: ["#0e3a8a"], band: ["#ffffff"], fg: "#fff" }],
+  [/racing/, "RAC", { st: ["#ffffff"], band: ["#00915a"], fg: "#00915a" }],
+  [/malaga/, "MAL", { st: ["#56a0d3", "#ffffff"], n: 5, fg: "#fff" }],
+  [/las palmas/, "LPA", { st: ["#ffe400"], band: ["#0059a6"], fg: "#0059a6" }],
+  [/valladolid/, "VLL", { st: ["#5b2b82", "#ffffff"], n: 5, fg: "#fff" }],
+  [/leganes/, "LEG", { st: ["#ffffff", "#0b4ea2"], n: 5, fg: "#fff" }],
+  [/almeria/, "ALM", { st: ["#e2001a", "#ffffff"], n: 5, fg: "#fff" }],
+  [/granada/, "GRA", { st: ["#d71920", "#ffffff"], n: 6, dir: "h", fg: "#fff" }],
+  [/sporting/, "SPO", { st: ["#e2001a", "#ffffff"], n: 5, fg: "#fff" }],
+  [/eibar/, "EIB", { st: ["#7a1631", "#005ca9"], n: 5, fg: "#fff" }],
+  [/cadiz/, "CAD", { st: ["#ffe600"], band: ["#0045a5"], fg: "#0045a5" }],
+];
+const norm = (n) => String(n || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function kitOf(name) {
+  const n = norm(name);
+  for (const [re, short, k] of KIT) if (re.test(n) && !(re.source.includes("barcelona") && /espanyol/.test(n)) && !(re.source === "athletic" && /atletico/.test(n))) return { short, ...k };
+  return null;
+}
+function kitBg(k) {
+  if (k.st.length === 1) return k.st[0];
+  const n = k.n || k.st.length, w = 100 / n, cols = [];
+  for (let i = 0; i < n; i++) cols.push(`${k.st[i % k.st.length]} ${(i * w).toFixed(2)}% ${((i + 1) * w).toFixed(2)}%`);
+  return `linear-gradient(${k.dir === "h" ? "180deg" : "90deg"},${cols.join(",")})`;
 }
 function crest(name, small) {
-  const im = crestImg(name);
-  if (im) return `<div class="crest img" style="${small ? "width:24px;height:24px;border-width:1.5px" : ""}"><img src="${im}" alt="${esc(name)}" loading="lazy"></div>`;
-  const c = clubOf(name);
-  if (!c) {
+  const k = kitOf(name);
+  const size = small ? "width:24px;height:24px;border-width:1.5px;" : "";
+  if (!k) {
     const h = hashHue(name);
-    return `<div class="crest" style="background:linear-gradient(145deg,hsl(${h} 28% 40%),hsl(${h} 30% 24%))"><span style="color:#fff">${esc(initials(name))}</span></div>`;
+    return `<div class="crest" style="${size}background:linear-gradient(145deg,hsl(${h} 28% 40%),hsl(${h} 30% 24%))">${small ? "" : `<span style="color:#fff">${esc(initials(name))}</span>`}</div>`;
   }
-  const n = c.stripes.length, w = 100 / n;
-  const bg = n === 1 ? c.stripes[0] : `linear-gradient(90deg,${c.stripes.map((s, i) => `${s} ${i * w}% ${(i + 1) * w}%`).join(",")})`;
-  const band = c.accent.length ? `<i style="position:absolute;left:0;right:0;bottom:16%;height:${c === CLUBS.madrid ? 10 : 8}%;background:${c.accent[c.accent.length - 1]}"></i>${c.accent.length > 1 ? `<i style="position:absolute;left:0;right:0;bottom:26%;height:6%;background:${c.accent[0]}"></i>` : ""}` : "";
-  return `<div class="crest" style="background:${bg}${small ? ";width:24px;height:24px;border-width:1.5px" : ""}">${band}${small ? "" : `<span style="color:${c.fg}">${c.short}</span>`}</div>`;
+  let deco = "";
+  if (k.band) k.band.forEach((c, i) => (deco += `<i style="position:absolute;left:0;right:0;top:${54 + i * 12}%;height:${k.band.length > 1 ? 10 : 14}%;background:${c}"></i>`));
+  if (k.sash) deco += `<i style="position:absolute;left:-20%;top:42%;width:140%;height:18%;background:${k.sash};transform:rotate(-38deg)"></i>`;
+  return `<div class="crest" style="${size}background:${kitBg(k)}" title="${esc(name)}">${deco}</div>`;
 }
 function stripeColors(name) {
-  const c = clubOf(name);
-  if (!c) return [`hsl(${hashHue(name)} 25% 40%)`];
-  return c === CLUBS.madrid ? ["#ffffff", "#febe10", "#ffffff"] : c === CLUBS.celta ? ["#8ac6ee", "#e30613", "#8ac6ee"] : c.stripes.slice(0, 2);
+  const k = kitOf(name);
+  if (!k) return [`hsl(${hashHue(name)} 25% 40%)`];
+  return [...new Set([...k.st, ...(k.band || []), ...(k.sash ? [k.sash] : [])])].slice(0, 3);
 }
 
 /* ---------- Banderas ondeando (SVG animado) ---------- */
@@ -647,6 +688,8 @@ function jornadaView() {
     <div class="jt"><b>Jornada ${j.num}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
+  ${anyOpen ? (() => { const c = S.data.me.comodines || { total: 3, used: 0 }; const used = c.used + j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0);
+    return `<div class="combar">⚡ Comodines: <b>${c.total - used}</b> de ${c.total} disponibles <span class="dim">· el partido que elijas vale doble</span></div>`; })() : ""}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
   ${j.matches.map((m) => matchCard(j, m, drafts)).join("")}
   ${jornadaPoints(j)}
@@ -667,7 +710,7 @@ function matchCard(j, m, drafts) {
 
   let center;
   if (st === "open") {
-    const dv = drafts[m.id] || (m.mine ? { h: m.mine.h, a: m.mine.a } : { h: "", a: "" });
+    const dv = drafts[m.id] || (m.mine ? { h: m.mine.h, a: m.mine.a, x2: !!m.mine.x2 } : { h: "", a: "", x2: false });
     const g = (side) => `<div class="gbox"><input type="number" inputmode="numeric" min="0" max="30" data-m="${m.id}" data-side="${side}" value="${dv[side]}" aria-label="Goles ${side === "h" ? esc(m.home) : esc(m.away)}" placeholder="–">
       <div class="pm"><button type="button" data-step="-1" data-m="${m.id}" data-side="${side}" aria-label="Menos">−</button><button type="button" data-step="1" data-m="${m.id}" data-side="${side}" aria-label="Más">+</button></div></div>`;
     center = `<div class="score">${g("h")}<span class="dash">:</span>${g("a")}</div>`;
@@ -676,25 +719,30 @@ function matchCard(j, m, drafts) {
 
   let foot = "";
   const mineTxt = m.mine ? `<span class="mypick muted">Tu pronóstico: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b></span>` : `<span class="muted">${st === "open" ? "Sin pronóstico todavía" : "No pronosticaste"}</span>`;
-  if (st === "open") foot = `<div class="mfoot">${m.mine ? `<span class="muted">✅ Guardado: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b></span>` : `<span class="muted">Sin pronóstico todavía</span>`}<span class="lockmsg">👀 ${m.count} de ${S.data.users.length} lo han puesto</span></div>`;
+  if (st === "open") {
+    const on = drafts[m.id] ? !!drafts[m.id].x2 : !!(m.mine && m.mine.x2);
+    foot = `<div class="mfoot">${m.mine ? `<span class="muted">✅ Guardado: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b>${m.mine.x2 ? " ⚡" : ""}</span>` : `<span class="muted">Sin pronóstico todavía</span>`}<span class="lockmsg">👀 ${m.count} de ${S.data.users.length}</span></div>
+      <button type="button" class="x2btn ${on ? "on" : ""}" data-x2="${m.id}">⚡ ${on ? "Comodín x2 activado" : "Usar comodín x2"}</button>`;
+  }
   else if (st === "soon" || st === "next" || st === "tbc") foot = `<div class="mfoot"><span class="lockmsg">${st === "soon" ? "Se podrá pronosticar 7 días antes del partido" : st === "tbc" ? "Se abrirá cuando LaLiga confirme la hora" : "Solo se puede pronosticar la jornada siguiente"}</span></div>`;
   else {
-    const p = m.result && m.mine ? ptsOf(m.mine, m.result) : m.result ? 0 : null;
+    const sc = m.myScore || (m.result ? { pts: 0, base: 0 } : null);
     const nOthers = Object.keys(m.others || {}).length;
     const open = S.openOthers[m.id];
-    foot = `<div class="mfoot">${mineTxt}${p != null ? ptsChip(p) : ""}</div>`;
+    foot = `<div class="mfoot">${mineTxt}${m.mine && m.mine.x2 ? ` <span class="chip x2c">⚡ x2</span>` : ""}${sc ? scoreChip(sc.pts, sc.unique) : ""}</div>`;
     if (st === "closed") foot += `<div class="lockmsg" style="margin-top:8px">🙈 Los pronósticos del resto se verán cuando empiece el partido.</div>`;
     else if (nOthers) {
       foot += `<div style="margin-top:8px"><button class="toggle-others" data-others="${m.id}">${open ? "Ocultar" : "Ver"} pronósticos de todos (${nOthers}) ${open ? "▴" : "▾"}</button></div>`;
       if (open) {
         const rows = Object.entries(m.others).sort((a, b) => (b[1].pts ?? 0) - (a[1].pts ?? 0) || a[0].localeCompare(b[0]));
         const ph = Object.fromEntries(S.data.users.map((u) => [u.name, u.photo]));
-        foot += `<div class="others">${rows.map(([n, o]) => `<div class="orow">${avatar(n, ph[n], "sm")}<span class="nm">${esc(n)}${n === S.data.me.name ? " (tú)" : ""}</span><span class="pk">${o.h}-${o.a}</span>${o.pts != null ? ptsChip(o.pts) : `<span class="chip">…</span>`}</div>`).join("")}</div>`;
+        foot += `<div class="others">${rows.map(([n, o]) => `<div class="orow">${avatar(n, ph[n], "sm")}<span class="nm">${esc(n)}${n === S.data.me.name ? " (tú)" : ""}</span><span class="pk">${o.h}-${o.a}</span>${o.x2 ? `<span title="Comodín x2">⚡</span>` : ""}${o.pts != null ? scoreChip(o.pts, o.unique) : `<span class="chip">…</span>`}</div>`).join("")}</div>`;
       }
     }
   }
 
   return `<div class="card match"><div class="stripe">${stripe}</div>
+    ${m.golden ? `<div class="golden">⭐ ${m.golden} · partido de oro: vale el doble</div>` : ""}
     <div class="mhead"><span class="when">${!m.kickoff ? "Fecha por confirmar" : m.tbc ? "Hacia el " + new Date(m.kickoff).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : fmtWhen(m.kickoff)}</span>${chip}</div>
     <div class="mbody">
       <div class="team ${homeC ? "fav" : ""}">${crest(m.home)}<span class="tn">${esc(m.home)}</span></div>
@@ -704,6 +752,8 @@ function matchCard(j, m, drafts) {
 }
 const sign = (h, a) => (h > a ? "1" : h < a ? "2" : "X");
 const ptsOf = (p, r) => (p.h === r.h && p.a === r.a ? 3 : sign(p.h, p.a) === sign(r.h, r.a) ? 1 : 0);
+// Chip de puntos totales (con comodín, partido de oro y bonus de acierto único ya sumados)
+const scoreChip = (pts, unique) => `<span class="chip pts ${pts >= 3 ? "p3" : pts >= 1 ? "p1" : "p0"}">+${pts}${unique ? " 🦄" : pts >= 3 ? " 🎯" : ""}</span>`;
 const ptsChip = (p) => `<span class="chip pts p${p}">${p === 3 ? "+3 🎯" : "+" + p}</span>`;
 function jornadaPoints(j) {
   if (!j.matches.some((m) => m.result)) return "";
@@ -759,6 +809,9 @@ function normasView() {
     <li>Solo se puede rellenar <b>la jornada siguiente</b>, nunca varias por adelantado.</li>
     <li>Los pronósticos del resto son <b>secretos</b> hasta que empieza el partido. Desde el pitido inicial se ven los de todos.</li>
     <li>Si activas los avisos, te llega una <b>notificación 1 hora antes</b> de cualquier partido que te falte por pronosticar.</li>
+    <li>⚡ <b>Comodín x2</b>: tienes <b>3 comodines</b> para toda la temporada. Actívalo en el partido que quieras antes de que cierre y ese partido te cuenta doble. Puedes moverlo a otro partido mientras siga abierto.</li>
+    <li>⭐ <b>Partidos de oro</b>: el <b>Clásico</b> (Madrid–Barça) y el <b>derbi gallego</b> (Depor–Celta) valen el doble. Si además usas el comodín, cuenta x4.</li>
+    <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
@@ -810,13 +863,6 @@ function adminView() {
       ${started ? `<input type="number" inputmode="numeric" min="0" id="rh-${m.id}" value="${m.result ? m.result.h : ""}"><input type="number" inputmode="numeric" min="0" id="ra-${m.id}" value="${m.result ? m.result.a : ""}">
       <button class="btn small ${m.result ? "" : "gold"}" data-res="${j.id}|${m.id}">${m.result ? "✓" : "Poner"}</button>` : `<span class="chip">Sin empezar</span>`}</div>`;
     }).join("")}</div>`).join("") : `<div class="card muted">Crea una jornada para poder meter resultados.</div>`}
-  <h2 class="sec">Escudos de los rivales</h2>
-  <div class="card" style="padding:8px 12px">${(() => {
-    const teams = [...new Set(js.flatMap((j) => j.matches.flatMap((m) => [m.home, m.away])))].filter((t) => !clubOf(t)).sort((a, b) => a.localeCompare(b));
-    return teams.map((t) => `<div class="urow">${crest(t, true).replace("width:24px;height:24px", "width:34px;height:34px")}<span class="nm">${esc(t)}</span>
-      <label class="btn small">${d.crests && d.crests[tkey(t)] ? "Cambiar" : "Subir escudo"}<input type="file" accept="image/*" data-crest="${esc(t)}" hidden></label>
-      ${d.crests && d.crests[tkey(t)] ? `<button class="btn small danger" data-crestdel="${esc(t)}">✕</button>` : ""}</div>`).join("") || `<p class="muted">Aún no hay rivales.</p>`;
-  })()}<p class="dim" style="font-size:12px;margin:8px 0 4px">Madrid, Barça, Depor y Celta ya llevan su escudo. Para los rivales, sube una imagen de cada escudo y saldrá en todos sus partidos.</p></div>
   <h2 class="sec">Todas las jornadas</h2>
   <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">Jornada ${j.num} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
   <h2 class="sec">Jugadores <span class="chip">${d.users.length}</span></h2>
@@ -976,7 +1022,7 @@ function bindMain() {
   const j = S.data.jornadas.length ? curJ() : null;
   const dr = j ? (S.drafts[j.id] = S.drafts[j.id] || {}) : null;
   const getDraft = (mid) => {
-    if (!dr[mid]) { const m = j.matches.find((x) => x.id === mid); dr[mid] = m && m.mine ? { h: m.mine.h, a: m.mine.a } : { h: "", a: "" }; }
+    if (!dr[mid]) { const m = j.matches.find((x) => x.id === mid); dr[mid] = m && m.mine ? { h: m.mine.h, a: m.mine.a, x2: !!m.mine.x2 } : { h: "", a: "", x2: false }; }
     return dr[mid];
   };
   document.querySelectorAll(".gbox input").forEach((inp) => (inp.oninput = () => {
@@ -990,6 +1036,16 @@ function bindMain() {
     d[s] = v; const inp = document.querySelector(`.gbox input[data-m="${b.dataset.m}"][data-side="${s}"]`); if (inp) inp.value = v;
     if (navigator.vibrate) navigator.vibrate(8);
   }));
+  document.querySelectorAll("[data-x2]").forEach((b) => (b.onclick = () => {
+    const d = getDraft(b.dataset.x2);
+    if (!d.x2) {
+      const c = S.data.me.comodines || { total: 3, used: 0 };
+      const used = c.used + j.matches.reduce((n, m) => { const x = dr[m.id]; if (!x || liveStatus(m) !== "open") return n; return n + (x.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0);
+      if (used >= c.total) { toast(`Ya has usado tus ${c.total} comodines de la temporada`, true); return; }
+    }
+    d.x2 = !d.x2; render();
+    if (navigator.vibrate) navigator.vibrate(15);
+  }));
   const sb = $("#saveBtn");
   if (sb) sb.onclick = async () => {
     const picks = {};
@@ -998,7 +1054,8 @@ function bindMain() {
       const d = dr[m.id];
       if (!d) continue;
       if ((d.h === "") !== (d.a === "")) { toast(`Completa los dos marcadores de ${m.home} – ${m.away}`, true); return; }
-      if (d.h !== "") picks[m.id] = d;
+      if (d.h !== "") picks[m.id] = { h: d.h, a: d.a, x2: !!d.x2 };
+      else if (d.x2) { toast(`Pon el resultado de ${m.home} – ${m.away} para usar el comodín`, true); return; }
     }
     if (!Object.keys(picks).length) { toast("Pon al menos un resultado", true); return; }
     sb.disabled = true; sb.textContent = "Guardando…";
@@ -1029,13 +1086,6 @@ function bindMain() {
   }));
   document.querySelectorAll("[data-delm]").forEach((b) => (b.onclick = () => { collectEdit(); S.editJ.matches.splice(+b.dataset.delm, 1); render(); }));
   document.querySelectorAll("[data-swap]").forEach((b) => (b.onclick = () => { collectEdit(); const m = S.editJ.matches[+b.dataset.swap]; [m.home, m.away] = [m.away, m.home]; render(); }));
-  document.querySelectorAll("[data-crest]").forEach((inp) => (inp.onchange = async () => {
-    try { const ph = await shrinkPhoto(inp.files[0]); setData(await api("setCrest", { team: inp.dataset.crest, photo: ph })); render(); toast("Escudo guardado"); }
-    catch (err) { toast(err.message, true); }
-  }));
-  document.querySelectorAll("[data-crestdel]").forEach((b) => (b.onclick = async () => {
-    try { setData(await api("setCrest", { team: b.dataset.crestdel, clear: true })); render(); } catch (err) { toast(err.message, true); }
-  }));
   const sc = $("#syncCal");
   if (sc) sc.onclick = async () => {
     sc.disabled = true;

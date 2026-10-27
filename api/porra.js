@@ -86,6 +86,34 @@ function points(pred, res) {
   if (pred.h === res.h && pred.a === res.a) return 3;
   return sign(pred.h, pred.a) === sign(res.h, res.a) ? 1 : 0;
 }
+// Partidos de oro (valen doble): el Clásico y el derbi gallego
+const COMODINES = 3;
+const clubKey = (n) => {
+  const t = String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (/real madrid/.test(t)) return "madrid";
+  if (/barcelona|barca/.test(t) && !/espanyol/.test(t)) return "barca";
+  if (/deportivo|coruna/.test(t) && !/alaves/.test(t)) return "depor";
+  if (/celta/.test(t)) return "celta";
+  return null;
+};
+function goldenOf(m) {
+  const pair = [clubKey(m.home), clubKey(m.away)].sort().join("-");
+  if (pair === "barca-madrid") return "Clásico";
+  if (pair === "celta-depor") return "Derbi gallego";
+  return null;
+}
+// Puntos finales de un pronóstico:
+//   base (3 exacto · 1 signo · 0) × 2 si es partido de oro × 2 si usó comodín
+//   + 1 extra si fue el ÚNICO en acertar el resultado exacto de ese partido
+function scoreFor(p, m, exactCount) {
+  if (!p || !m.result) return null;
+  const base = points(p, m.result);
+  const mult = (goldenOf(m) ? 2 : 1) * (p.x2 ? 2 : 1);
+  const unique = base === 3 && exactCount === 1 ? 1 : 0;
+  return { base, pts: base * mult + unique, mult, unique: !!unique };
+}
+const exactCountOf = (m, users, preds) =>
+  m.result ? users.filter((u) => { const p = (preds[u.key] || {})[m.id]; return p && p.h === m.result.h && p.a === m.result.a; }).length : 0;
 const isLocked = (m, now) => !!m.result || (!!m.kickoff && Date.parse(m.kickoff) - CLOSE_BEFORE <= now);
 // Jornada en juego = la de número más bajo que aún tiene algún partido sin cerrar
 function currentJornadaId(jornadas, now) {
@@ -162,12 +190,14 @@ function buildState(me, data) {
     for (const r of table) r.byJ[j.id] = 0;
     for (const m of j.matches) {
       if (!m.result) continue;
+      const ec = exactCountOf(m, users, preds);
       for (const r of table) {
         const p = (preds[r.key] || {})[m.id];
         if (!p) continue;
-        const pt = points(p, m.result);
-        r.byJ[j.id] += pt; r.pts += pt; r.played++;
-        if (pt === 3) r.exact++; else if (pt === 1) r.signs++;
+        const sc = scoreFor(p, m, ec);
+        r.byJ[j.id] += sc.pts; r.pts += sc.pts; r.played++;
+        if (sc.base === 3) r.exact++; else if (sc.base === 1) r.signs++;
+        if (sc.unique) r.unique = (r.unique || 0) + 1;
       }
     }
   }
@@ -189,25 +219,29 @@ function buildState(me, data) {
       // Los pronósticos de los demás solo se ven cuando el partido ha empezado
       const started = !!m.result || (!!m.kickoff && Date.parse(m.kickoff) <= now);
       const others = {};
+      const ec = exactCountOf(m, users, preds);
       if (started) {
         for (const u of users) {
           const p = (preds[u.key] || {})[m.id];
-          if (p) others[u.name] = { h: p.h, a: p.a, pts: m.result ? points(p, m.result) : null };
+          if (p) { const sc = scoreFor(p, m, ec); others[u.name] = { h: p.h, a: p.a, x2: !!p.x2, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false }; }
         }
       }
+      const myP = (preds[myKey] || {})[m.id] || null;
+      const mySc = scoreFor(myP, m, ec);
       const ko = m.kickoff ? Date.parse(m.kickoff) : null;
       return {
         id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.result || null, tbc: !!m.tbc,
         locked, started, status: matchStatus(j, m, now, curId),
         opensAt: ko && ko - OPEN_BEFORE, closesAt: ko && ko - CLOSE_BEFORE,
-        mine: (preds[myKey] || {})[m.id] || null, others,
+        mine: myP, myScore: mySc, golden: goldenOf(m), others,
         count: users.filter((u) => (preds[u.key] || {})[m.id]).length,
       };
     }),
   }));
 
   return {
-    me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display },
+    me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
+      comodines: { total: COMODINES, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length } },
     now,
     jornadas: outJ,
     table: table.map(({ key, ...r }) => ({ ...r, photo: photo[r.name] })),
@@ -427,9 +461,15 @@ async function handle(body) {
       const p = body.picks && body.picks[m.id];
       if (!p || p.h === "" || p.a === "" || p.h == null || p.a == null) continue;
       if (matchStatus(j, m, now, curId) !== "open") { skipped++; continue; }
-      mine[m.id] = { h: goals(p.h), a: goals(p.a), at: now };
+      mine[m.id] = { h: goals(p.h), a: goals(p.a), at: now, ...(p.x2 ? { x2: true } : {}) };
       saved++;
     }
+    // Comodín: también se puede quitar de un partido abierto sin cambiar el marcador
+    for (const m of j.matches) {
+      const p = body.picks && body.picks[m.id];
+      if (p && p.x2 === false && mine[m.id] && matchStatus(j, m, now, curId) === "open") delete mine[m.id].x2;
+    }
+    if (Object.values(mine).filter((x) => x && x.x2).length > COMODINES) bad(`Solo tienes ${COMODINES} comodines en toda la temporada`);
     await redis(["HSET", P + "preds", k, JSON.stringify(mine)]);
     return { saved, skipped, ...buildState(me, await loadAll()) };
   }
