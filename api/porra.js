@@ -103,12 +103,12 @@ function goldenOf(m) {
   return null;
 }
 // Puntos finales de un pronóstico:
-//   base (3 exacto · 1 signo · 0) × 2 si es partido de oro × 2 si usó comodín
+//   base (3 exacto · 1 signo · 0) × 2 si es partido de oro o si usó comodín (no se acumulan)
 //   + 1 extra si fue el ÚNICO en acertar el resultado exacto de ese partido
 function scoreFor(p, m, exactCount) {
   if (!p || !m.result) return null;
   const base = points(p, m.result);
-  const mult = (goldenOf(m) ? 2 : 1) * (p.x2 ? 2 : 1);
+  const mult = goldenOf(m) ? 2 : p.x2 ? 2 : 1; // el comodín no se suma en partidos de oro
   const unique = base === 3 && exactCount === 1 ? 1 : 0;
   return { base, pts: base * mult + unique, mult, unique: !!unique };
 }
@@ -461,6 +461,7 @@ async function handle(body) {
       const p = body.picks && body.picks[m.id];
       if (!p || p.h === "" || p.a === "" || p.h == null || p.a == null) continue;
       if (matchStatus(j, m, now, curId) !== "open") { skipped++; continue; }
+      if (p.x2 && goldenOf(m)) bad(`No puedes usar el comodín en el ${goldenOf(m)}: ya vale doble`);
       mine[m.id] = { h: goals(p.h), a: goals(p.a), at: now, ...(p.x2 ? { x2: true } : {}) };
       saved++;
     }

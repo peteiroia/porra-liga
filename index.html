@@ -722,7 +722,7 @@ function matchCard(j, m, drafts) {
   if (st === "open") {
     const on = drafts[m.id] ? !!drafts[m.id].x2 : !!(m.mine && m.mine.x2);
     foot = `<div class="mfoot">${m.mine ? `<span class="muted">✅ Guardado: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b>${m.mine.x2 ? " ⚡" : ""}</span>` : `<span class="muted">Sin pronóstico todavía</span>`}<span class="lockmsg">👀 ${m.count} de ${S.data.users.length}</span></div>
-      <button type="button" class="x2btn ${on ? "on" : ""}" data-x2="${m.id}">⚡ ${on ? "Comodín x2 activado" : "Usar comodín x2"}</button>`;
+      ${m.golden ? "" : `<button type="button" class="x2btn ${on ? "on" : ""}" data-x2="${m.id}">⚡ ${on ? "Comodín x2 activado" : "Usar comodín x2"}</button>`}`;
   }
   else if (st === "soon" || st === "next" || st === "tbc") foot = `<div class="mfoot"><span class="lockmsg">${st === "soon" ? "Se podrá pronosticar 7 días antes del partido" : st === "tbc" ? "Se abrirá cuando LaLiga confirme la hora" : "Solo se puede pronosticar la jornada siguiente"}</span></div>`;
   else {
@@ -810,7 +810,7 @@ function normasView() {
     <li>Los pronósticos del resto son <b>secretos</b> hasta que empieza el partido. Desde el pitido inicial se ven los de todos.</li>
     <li>Si activas los avisos, te llega una <b>notificación 1 hora antes</b> de cualquier partido que te falte por pronosticar.</li>
     <li>⚡ <b>Comodín x2</b>: tienes <b>3 comodines</b> para toda la temporada. Actívalo en el partido que quieras antes de que cierre y ese partido te cuenta doble. Puedes moverlo a otro partido mientras siga abierto.</li>
-    <li>⭐ <b>Partidos de oro</b>: el <b>Clásico</b> (Madrid–Barça) y el <b>derbi gallego</b> (Depor–Celta) valen el doble. Si además usas el comodín, cuenta x4.</li>
+    <li>⭐ <b>Partidos de oro</b>: el <b>Clásico</b> (Madrid–Barça) y el <b>derbi gallego</b> (Depor–Celta) valen el doble para todos. En estos partidos <b>no se puede usar el comodín</b>.</li>
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
