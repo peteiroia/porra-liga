@@ -690,6 +690,8 @@ function tablaView() {
   const done = d.jornadas.filter((j) => j.matches.some((m) => m.result));
   const last = done[done.length - 1];
   const podium = t.slice(0, 3);
+  const finalJ = d.jornadas.find((j) => j.num === 38);
+  const finished = finalJ && finalJ.matches.length && finalJ.matches.every((m) => m.result);
   const pod = (r, g) => r ? `<div class="pod g${g}">${g === 1 ? `<div class="crown">👑</div>` : ""}${avatar(r.name, r.photo, g === 1 ? "lg" : "md")}<div class="nm">${esc(r.name)}</div><div class="pp" style="color:${g === 1 ? "var(--gold)" : "#fff"}">${r.pts} pts</div><div class="step">${g}</div></div>` : `<div></div>`;
   const mv = (r) => {
     if (!r.prevPos) return "";
@@ -698,6 +700,8 @@ function tablaView() {
   };
   return `
   <h2 class="sec">Clasificación ${done.length ? `<span class="chip">tras ${done.length} jornada${done.length > 1 ? "s" : ""}</span>` : ""}</h2>
+  ${finished ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:30px">🏆</span><div><b style="font-size:18px">¡${esc(t[0].name)}, campeón de La Porra 2026-27!</b><span class="muted">${t[0].pts} puntos tras la jornada 38</span></div></div>`
+    : `<p class="dim" style="font-size:13px;margin:-4px 2px 10px">🏆 Gana quien más puntos tenga al acabar la jornada 38 de la Liga 2026-27.</p>`}
   ${done.length ? `<div class="card"><div class="podium">${pod(podium[1], 2)}${pod(podium[0], 1)}${pod(podium[2], 3)}</div></div>` : ""}
   <div class="card">
     <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th><th title="Resultados exactos">🎯</th><th title="Aciertos 1X2">1X2</th>${last ? `<th>J${last.num}</th>` : ""}</tr></thead>
@@ -726,6 +730,7 @@ function normasView() {
     <li>Los pronósticos del resto son <b>secretos</b> hasta que empieza el partido. Desde el pitido inicial se ven los de todos.</li>
     <li>Si activas los avisos, te llega una <b>notificación 1 hora antes</b> de cualquier partido que te falte por pronosticar.</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
+    <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
   <div class="card"><div class="row" style="justify-content:space-around;text-align:center">
     <div><span class="chip pts p3" style="font-size:16px">+3 🎯</span><div class="muted" style="font-size:13px;margin-top:6px">Pones 2-1<br>Acaba 2-1</div></div>

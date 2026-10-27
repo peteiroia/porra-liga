@@ -9,6 +9,7 @@ Porra online para pronosticar cada jornada de Primera los partidos del Real Madr
 - Los pronósticos del resto están **ocultos hasta que empieza el partido**.
 - **Aviso al móvil 1 hora antes** si te falta un pronóstico.
 - Clasificación acumulada; empate a puntos → más resultados exactos.
+- 🏆 **Gana quien tenga más puntos al acabar la jornada 38 de la Liga 2026-2027.**
 
 ## Cómo funciona
 - `index.html` — la app (una sola página).
