@@ -1,0 +1,12 @@
+{
+  "name": "porra-liga",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "nodemailer": "^6.9.16"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
