@@ -200,6 +200,19 @@ function buildState(me, data) {
         if (sc.unique) r.unique = (r.unique || 0) + 1;
       }
     }
+    // Pleno de jornada (cuando están todos los resultados):
+    //   todos los signos acertados → +1 · todos los resultados exactos → +3 (en lugar del +1)
+    if (j.matches.length && j.matches.every((m) => m.result)) {
+      for (const r of table) {
+        const ps = j.matches.map((m) => (preds[r.key] || {})[m.id]);
+        if (ps.some((p) => !p)) continue;
+        const bases = j.matches.map((m, i) => points(ps[i], m.result));
+        const bonus = bases.every((b) => b === 3) ? 3 : bases.every((b) => b >= 1) ? 1 : 0;
+        if (!bonus) continue;
+        r.byJ[j.id] += bonus; r.pts += bonus;
+        (r.plenos = r.plenos || {})[j.id] = bonus;
+      }
+    }
   }
   const doneJ = jornadas.filter((j) => j.matches.some((m) => m.result));
   const lastJ = doneJ[doneJ.length - 1];
@@ -214,6 +227,7 @@ function buildState(me, data) {
   const curId = currentJornadaId(jornadas, now);
   const outJ = jornadas.map((j) => ({
     id: j.id, num: j.num, title: j.title || "", current: j.id === curId,
+    myPleno: ((byKey[myKey] || {}).plenos || {})[j.id] || 0,
     matches: j.matches.map((m) => {
       const locked = isLocked(m, now);
       // Los pronósticos de los demás solo se ven cuando el partido ha empezado

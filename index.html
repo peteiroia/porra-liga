@@ -691,6 +691,7 @@ function jornadaView() {
   ${anyOpen ? (() => { const c = S.data.me.comodines || { total: 3, used: 0 }; const used = c.used + j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0);
     return `<div class="combar">⚡ Comodines: <b>${c.total - used}</b> de ${c.total} disponibles <span class="dim">· el partido que elijas vale doble</span></div>`; })() : ""}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
+  ${j.myPleno ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:28px">${j.myPleno === 3 ? "🏆" : "🎉"}</span><div><b>${j.myPleno === 3 ? "¡PLENO DE RESULTADOS!" : "¡Pleno de signos!"} +${j.myPleno}</b><span class="muted">${j.myPleno === 3 ? "Has clavado todos los resultados de la jornada" : "Has acertado el 1X2 de todos los partidos"}</span></div></div>` : ""}
   ${j.matches.map((m) => matchCard(j, m, drafts)).join("")}
   ${jornadaPoints(j)}
   ${anyOpen ? `<div class="savebar"><button class="btn primary" id="saveBtn">Guardar pronósticos</button></div><div style="height:64px"></div>` : ""}`;
@@ -812,6 +813,8 @@ function normasView() {
     <li>⚡ <b>Comodín x2</b>: tienes <b>3 comodines</b> para toda la temporada. Actívalo en el partido que quieras antes de que cierre y ese partido te cuenta doble. Puedes moverlo a otro partido mientras siga abierto.</li>
     <li>⭐ <b>Partidos de oro</b>: el <b>Clásico</b> (Madrid–Barça) y el <b>derbi gallego</b> (Depor–Celta) valen el doble para todos. En estos partidos <b>no se puede usar el comodín</b>.</li>
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
+    <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
+    <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
