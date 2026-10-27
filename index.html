@@ -379,27 +379,44 @@ function avatar(name, photo, cls = "") {
   const h = hashHue(name);
   return `<div class="av ${cls}" style="background:linear-gradient(145deg,hsl(${h} 55% 45%),hsl(${(h + 40) % 360} 55% 30%))">${esc(initials(name).slice(0, 2))}</div>`;
 }
-// Reduce la foto en el propio móvil a 256×256 (recorte cuadrado centrado)
-function shrinkPhoto(file) {
-  return new Promise((resolve, reject) => {
-    if (!file || !/^image\//.test(file.type)) return reject(new Error("Elige una imagen"));
-    const img = new Image();
+// Reduce la foto en el propio móvil a 256×256 (recorte cuadrado centrado).
+// Admite fotos enormes del iPhone, HEIC y archivos sin tipo.
+async function shrinkPhoto(file) {
+  if (!file) throw new Error("No se ha elegido ninguna imagen");
+  if (file.type && !/^image\//.test(file.type)) throw new Error("Ese archivo no es una imagen");
+  const S = 256;
+  let src, w, h, cleanup = () => {};
+  try {
+    if (window.createImageBitmap) {
+      src = await createImageBitmap(file);
+      w = src.width; h = src.height; cleanup = () => src.close && src.close();
+    }
+  } catch (e) { src = null; }
+  if (!src) {
     const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const S = 256, c = document.createElement("canvas");
-      c.width = c.height = S;
-      const g = c.getContext("2d");
-      const m = Math.min(img.width, img.height);
-      g.fillStyle = "#ffffff"; g.fillRect(0, 0, S, S);
-      g.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
-      URL.revokeObjectURL(url);
-      let q = 0.85, d = c.toDataURL("image/jpeg", q);
-      while (d.length > 140000 && q > 0.4) { q -= 0.1; d = c.toDataURL("image/jpeg", q); }
-      resolve(d);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("No se pudo leer la imagen")); };
-    img.src = url;
-  });
+    src = await new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error("No se pudo abrir esa imagen. Prueba con otra o haz una captura de pantalla de ella."));
+      img.src = url;
+    }).finally(() => setTimeout(() => URL.revokeObjectURL(url), 1000));
+    w = src.naturalWidth || src.width; h = src.naturalHeight || src.height;
+  }
+  if (!w || !h) throw new Error("No se pudo leer la imagen");
+  // primero a un tamaño intermedio (evita fallos de memoria con fotos de 48 MP en iPhone)
+  const m = Math.min(w, h), mid = Math.min(m, 1024);
+  const c1 = document.createElement("canvas"); c1.width = c1.height = mid;
+  const g1 = c1.getContext("2d");
+  g1.fillStyle = "#ffffff"; g1.fillRect(0, 0, mid, mid);
+  g1.drawImage(src, (w - m) / 2, (h - m) / 2, m, m, 0, 0, mid, mid);
+  cleanup();
+  const c = document.createElement("canvas"); c.width = c.height = S;
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high";
+  g.drawImage(c1, 0, 0, S, S);
+  let q = 0.85, d = c.toDataURL("image/jpeg", q);
+  while (d.length > 140000 && q > 0.4) { q -= 0.1; d = c.toDataURL("image/jpeg", q); }
+  if (!/^data:image\/jpeg;base64,/.test(d)) throw new Error("Tu navegador no pudo procesar la imagen");
+  return d;
 }
 
 /* ---------- Estado y API ---------- */
@@ -573,8 +590,9 @@ function profileSetupView() {
 }
 function bindProfileSetup() {
   $("#profFile").onchange = async (e) => {
+    $("#profErr").textContent = "";
     try { S.newPhoto = await shrinkPhoto(e.target.files[0]); $("#profAv").innerHTML = `<div class="av lg"><img src="${S.newPhoto}" alt=""></div>`; }
-    catch (err) { toast(err.message, true); }
+    catch (err) { $("#profErr").textContent = err.message; toast(err.message, true); }
   };
   $("#profForm").onsubmit = async (e) => {
     e.preventDefault();
