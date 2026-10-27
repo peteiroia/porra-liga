@@ -23,7 +23,7 @@ El **primer usuario que se registra es el administrador**: crea las jornadas, me
 ## Puesta en marcha (Vercel)
 1. En Vercel: **Add New → Project** e importa este repositorio.
 2. En el proyecto: **Storage → Upstash (Redis) → Connect**. Crea las variables `KV_REST_API_URL` y `KV_REST_API_TOKEN`.
-3. (Opcional, para recuperar contraseña por correo) en **Settings → Environment Variables**:
+3. (Ya no hace falta: si alguien olvida la contraseña, el administrador le pone una nueva desde Admin → Jugadores → 🔑) en **Settings → Environment Variables**:
    - `GMAIL_USER` = tu Gmail
    - `GMAIL_APP_PASSWORD` = una contraseña de aplicación de Google (myaccount.google.com → Seguridad → Contraseñas de aplicaciones)
 4. Redeploy.

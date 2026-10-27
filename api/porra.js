@@ -133,24 +133,26 @@ async function syncCalendar(force) {
 
 async function loadAll() {
   await syncCalendar();
-  const [jornadas, predsRaw, userKeys] = await Promise.all([
+  const [jornadas, predsRaw, userKeys, crestsRaw] = await Promise.all([
     getJSON(P + "jornadas", []),
     redis(["HGETALL", P + "preds"]),
     redis(["SMEMBERS", P + "users"]),
+    redis(["HGETALL", P + "crests"]),
   ]);
+  const crests = hgetallObj(crestsRaw);
   const preds = hgetallObj(predsRaw);
   const users = [];
   for (const k of userKeys || []) {
     const u = await getUser(k);
-    if (u) users.push({ key: k, name: displayOf(u), admin: !!u.admin, photo: u.photo || 0 });
+    if (u) users.push({ key: k, name: displayOf(u), username: u.username, admin: !!u.admin, photo: u.photo || 0 });
   }
-  return { jornadas, preds, users };
+  return { jornadas, preds, users, crests };
 }
 
 function buildState(me, data) {
   const now = Date.now();
   const myKey = keyName(me.username);
-  const { jornadas, preds, users } = data;
+  const { jornadas, preds, users, crests } = data;
   jornadas.sort((a, b) => a.num - b.num);
   const photo = Object.fromEntries(users.map((u) => [u.name, u.photo ? u.key + "&v=" + u.photo : null]));
 
@@ -209,7 +211,8 @@ function buildState(me, data) {
     now,
     jornadas: outJ,
     table: table.map(({ key, ...r }) => ({ ...r, photo: photo[r.name] })),
-    users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name] })),
+    users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username } : {}) })),
+    crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
 }
@@ -298,30 +301,29 @@ async function handle(body) {
   const a = body.action;
 
   if (a === "register") {
-    const email = normEmail(body.email);
+    const username = normName(body.username);
     const pass = String(body.pass || "");
-    if (!validEmail(email)) bad("Pon un correo válido");
-    const username = email; // se entra con el correo
+    if (username.length < 3 || username.length > 20) bad("El usuario debe tener entre 3 y 20 caracteres");
+    if (!/^[\p{L}\p{N} ._-]+$/u.test(username) || username.includes("@")) bad("Usa solo letras, números, espacios, punto o guion");
+    const email = "";
     if (pass.length < 6) bad("La contraseña debe tener al menos 6 caracteres");
     const k = keyName(username);
-    if (await redis(["GET", P + "user:" + k])) bad("Ese correo ya está registrado. Si olvidaste la contraseña, recupérala.");
-    const okMail = await redis(["SET", P + "email:" + email, k, "NX"]);
-    if (!okMail) bad("Ese correo ya está registrado. Si olvidaste la contraseña, recupérala.");
+    if (await redis(["GET", P + "user:" + k])) bad("Ese usuario ya existe. Elige otro.");
     const salt = crypto.randomBytes(12).toString("hex");
     const count = await redis(["SCARD", P + "users"]);
     const user = { username, email, salt, hash: hashPass(pass, salt), admin: !count, created: Date.now(), photo: 0, display: "" };
     const ok = await redis(["SET", P + "user:" + k, JSON.stringify(user), "NX"]);
-    if (!ok) { await redis(["DEL", P + "email:" + email]); bad("Ese usuario ya existe"); }
+    if (!ok) bad("Ese usuario ya existe. Elige otro.");
     await redis(["SADD", P + "users", k]);
     return { token: await newSession(user), admin: user.admin };
   }
 
   if (a === "login") {
-    const id = String(body.email || body.username || "").trim();
+    const id = String(body.username || body.email || "").trim();
     let k = keyName(id);
     if (id.includes("@")) k = (await redis(["GET", P + "email:" + normEmail(id)])) || "";
     const u = k && (await getUser(k));
-    if (!u || hashPass(body.pass || "", u.salt) !== u.hash) bad("Correo o contraseña incorrectos");
+    if (!u || hashPass(body.pass || "", u.salt) !== u.hash) bad("Usuario o contraseña incorrectos. Si la olvidaste, pide al administrador una nueva.");
     return { token: await newSession(u), admin: !!u.admin };
   }
 
@@ -466,6 +468,20 @@ async function handle(body) {
     return buildState(me, await loadAll());
   }
 
+  // Escudo de un equipo (lo sube el administrador)
+  if (a === "setCrest") {
+    const team = keyName(body.team).slice(0, 40);
+    if (!team) bad("Falta el equipo");
+    if (body.clear) { await redis(["DEL", P + "crest:" + team]); await redis(["HDEL", P + "crests", team]); }
+    else {
+      const mt = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(body.photo || ""));
+      if (!mt || mt[2].length > 200000) bad("Imagen no válida");
+      await redis(["SET", P + "crest:" + team, body.photo]);
+      await redis(["HSET", P + "crests", team, String(Date.now())]);
+    }
+    return buildState(me, await loadAll());
+  }
+
   if (a === "syncCalendar") { await syncCalendar(true); return buildState(me, await loadAll()); }
 
   if (a === "deleteJornada") {
@@ -534,6 +550,14 @@ module.exports = async (req, res) => {
       const q = req.query || {};
       if (q.avatar) {
         const d = await redis(["GET", P + "avatar:" + keyName(q.avatar)]);
+        const mt = d && /^data:(image\/\w+);base64,(.+)$/.exec(d);
+        if (!mt) return res.status(404).end();
+        res.setHeader("Content-Type", mt[1]);
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        return res.status(200).send(Buffer.from(mt[2], "base64"));
+      }
+      if (q.crest) {
+        const d = await redis(["GET", P + "crest:" + keyName(q.crest)]);
         const mt = d && /^data:(image\/\w+);base64,(.+)$/.exec(d);
         if (!mt) return res.status(404).end();
         res.setHeader("Content-Type", mt[1]);
