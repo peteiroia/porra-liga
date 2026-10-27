@@ -1,4 +1,4 @@
-// Porra Liga · API (Vercel serverless + Upstash Redis REST + Web Push)
+// La Porra · API (Vercel serverless + Upstash Redis REST + Web Push)
 //   POST /api/porra            { action, token?, ...datos }
 //   GET  /api/porra?avatar=k   foto del jugador
 //   GET  /api/porra?cron=1     envía avisos (lo llama GitHub Actions cada 10 min)
@@ -42,7 +42,7 @@ async function sendMail(to, subject, text) {
   const user = process.env.GMAIL_USER, pass = process.env.GMAIL_APP_PASSWORD;
   if (!nodemailer || !user || !pass) return false;
   const t = nodemailer.createTransport({ service: "gmail", auth: { user, pass } });
-  await t.sendMail({ from: `"Porra Liga" <${user}>`, to, subject, text });
+  await t.sendMail({ from: `"La Porra" <${user}>`, to, subject, text });
   return true;
 }
 
@@ -307,8 +307,8 @@ async function handle(body) {
       const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
       await redis(["SET", P + "reset:" + email, JSON.stringify({ k, code, n: 0 }), "EX", "900"]);
       const u = await getUser(k);
-      const sent = await sendMail(email, "Tu código para Porra Liga: " + code,
-        `Hola ${displayOf(u)},\n\nTu código para cambiar la contraseña de Porra Liga es: ${code}\n\nCaduca en 15 minutos. Tu usuario es: ${u.username}\n\nSi no lo has pedido tú, ignora este correo.`);
+      const sent = await sendMail(email, "Tu código para La Porra: " + code,
+        `Hola ${displayOf(u)},\n\nTu código para cambiar la contraseña de La Porra es: ${code}\n\nCaduca en 15 minutos. Tu usuario es: ${u.username}\n\nSi no lo has pedido tú, ignora este correo.`);
       if (!sent) bad("El envío de correos no está configurado todavía. Pide al administrador que te cambie la contraseña.");
     }
     return { ok: true }; // misma respuesta exista o no el correo
@@ -378,7 +378,7 @@ async function handle(body) {
     return { ok: true };
   }
   if (a === "testPush") {
-    const n = await sendPush(keyName(me.username), { title: "⚽ Porra Liga", body: "¡Avisos activados! Te avisaremos 1 hora antes si te falta algún pronóstico.", tag: "test", url: "./" });
+    const n = await sendPush(keyName(me.username), { title: "⚽ La Porra", body: "¡Avisos activados! Te avisaremos 1 hora antes si te falta algún pronóstico.", tag: "test", url: "./" });
     return { sent: n };
   }
 

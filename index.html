@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Porra Liga</title>
+<title>La Porra</title>
 <meta name="description" content="La porra de Madrid, Barça, Depor y Celta: pronostica cada jornada y sube en la clasificación.">
 <meta name="theme-color" content="#06140d">
 <link rel="manifest" href="manifest.json">
@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Porra Liga">
+<meta name="apple-mobile-web-app-title" content="La Porra">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -254,7 +254,7 @@ nav.tabs button.on{color:var(--accent)}
 <script>
 "use strict";
 /* =========================================================
-   Porra Liga · Madrid · Barça · Depor · Celta
+   La Porra · Madrid · Barça · Depor · Celta
    ========================================================= */
 const API = "api/porra";
 const $ = (s, el = document) => el.querySelector(s);
@@ -478,7 +478,7 @@ function render() {
   app.innerHTML = `
   <header class="top"><div class="topin">
     ${miniFlags()}
-    <div class="brand"><h1>Porra <span>Liga</span></h1><small>Madrid · Barça · Depor · Celta</small></div>
+    <div class="brand"><h1>La <span>Porra</span></h1><small>Madrid · Barça · Depor · Celta</small></div>
     <button class="me-btn" id="meBtn" aria-label="Mi perfil">${avatar(d.me.name, d.me.photo)}</button>
   </div></header>
   <main>${installBanner()}${body}</main>
@@ -516,7 +516,7 @@ function authView() {
   return `
   <div class="hero">${heroFlags()}
     <div style="text-align:center;margin-bottom:14px">
-      <h1 class="cond" style="margin:0;font-size:46px;font-weight:800;line-height:.95;text-transform:uppercase;letter-spacing:.04em">Porra <span style="color:var(--gold)">Liga</span></h1>
+      <h1 class="cond" style="margin:0;font-size:46px;font-weight:800;line-height:.95;text-transform:uppercase;letter-spacing:.04em">La <span style="color:var(--gold)">Porra</span></h1>
       <p class="muted" style="margin:6px 0 0">Pronostica los partidos de Madrid, Barça, Depor y Celta.<br>Resultado exacto <b style="color:var(--gold)">3 pts</b> · Acertar 1X2 <b style="color:var(--sign)">1 pt</b></p>
     </div>
   </div>
@@ -852,7 +852,7 @@ const isStandalone = () => window.matchMedia("(display-mode: standalone)").match
 function installBanner() {
   if (isStandalone() || ls.get("porra_nobanner") === "1") return "";
   if (!deferredPrompt && !isIOS()) return "";
-  return `<div class="banner"><span style="font-size:28px">📲</span><div style="flex:1"><b>Instala Porra Liga en tu móvil</b><span class="muted">Ábrela como una app y recibe avisos.</span></div>
+  return `<div class="banner"><span style="font-size:28px">📲</span><div style="flex:1"><b>Instala La Porra en tu móvil</b><span class="muted">Ábrela como una app y recibe avisos.</span></div>
     <button class="btn small gold" id="instBtn">Instalar</button><button class="x" id="instX" aria-label="Cerrar">×</button></div>`;
 }
 async function installHelp() {
@@ -869,7 +869,7 @@ async function installHelp() {
       <li>Abre esta página en <b>Safari</b>.</li>
       <li>Pulsa el botón <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li>
       <li>Elige <b>“Añadir a pantalla de inicio”</b> y pulsa <b>Añadir</b>.</li>
-      <li>Abre <b>Porra Liga</b> desde el icono y activa los avisos en tu perfil.</li>
+      <li>Abre <b>La Porra</b> desde el icono y activa los avisos en tu perfil.</li>
     </ol><button class="btn primary block" style="margin-top:14px" data-close>Entendido</button>` : `
     <h2 class="cond" style="margin:0 0 10px;font-size:24px">Instalar en Android</h2>
     <ol class="rules" style="padding-left:20px;margin:0">

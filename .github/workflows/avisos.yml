@@ -12,5 +12,5 @@ jobs:
     steps:
       - name: Enviar avisos
         env:
-          SITE_URL: ${{ vars.SITE_URL || 'https://porra-liga.vercel.app' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://la-porra.vercel.app' }}
         run: curl -fsS "$SITE_URL/api/porra?cron=1" || true

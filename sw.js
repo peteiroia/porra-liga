@@ -1,4 +1,4 @@
-// Porra Liga · service worker: app instalable, funciona offline la portada y recibe avisos
+// La Porra · service worker: app instalable, funciona offline la portada y recibe avisos
 const CACHE = "porra-v1";
 const SHELL = ["./", "index.html", "manifest.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
@@ -23,7 +23,7 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Porra Liga", {
+  e.waitUntil(self.registration.showNotification(d.title || "La Porra", {
     body: d.body || "",
     icon: "icons/icon-192.png",
     badge: "icons/badge-96.png",
