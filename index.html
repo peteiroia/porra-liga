@@ -1421,7 +1421,7 @@ function showChamp(j) {
   const shared = (j.winners || []).length > 1;
   const el = document.createElement("div");
   el.className = "champ";
-  el.innerHTML = `<div class="rays"></div><canvas></canvas><div class="boom l">¡CHUM!</div><div class="boom r">¡CHUM!</div>
+  el.innerHTML = `<div class="rays"></div><canvas></canvas>
     <div class="trophy">🏆</div>
     <div class="kick">${esc(jName(j))}</div>
     <h1>${shared ? "¡Campeones<br>de la jornada!" : "¡Campeón<br>de la jornada!"}</h1>
@@ -1432,7 +1432,7 @@ function showChamp(j) {
     <button class="btn-champ">🎉 ¡Vamos!</button>`;
   document.body.appendChild(el);
   const fx = confetti(el.querySelector("canvas"));
-  const bang = (side, t) => setTimeout(() => { fx.shoot(side === "l"); const b = el.querySelector(".boom." + side); b.classList.remove("go"); void b.offsetWidth; b.classList.add("go"); if (navigator.vibrate) navigator.vibrate(60); }, t);
+  const bang = (side, t) => setTimeout(() => { fx.shoot(side === "l"); if (navigator.vibrate) navigator.vibrate(60); }, t);
   bang("l", 350); bang("r", 750); setTimeout(fx.rain, 1300); bang("l", 2600); bang("r", 2900);
   const cnt = el.querySelector(".cnt"), n = j.winPts || 0;
   setTimeout(() => { const t0 = performance.now(); const st = (t) => { const k = Math.min(1, (t - t0) / 900); cnt.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); }, 1300);
