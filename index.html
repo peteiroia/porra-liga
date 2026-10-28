@@ -839,11 +839,13 @@ function authView() {
     ${m === "forgot" ? `<div class="row" style="margin-bottom:4px"><button class="btn small" data-mode="login">‹ Volver</button><b class="cond" style="font-size:20px;text-transform:uppercase">Recuperar contraseña</b></div>`
       : `<div class="seg"><button data-mode="login" class="${m === "login" ? "on" : ""}">Entrar</button><button data-mode="register" class="${m === "register" ? "on" : ""}">Crear cuenta</button></div>`}
     <form id="authForm" autocomplete="on">${form}</form>
-  </div>`;
+  </div>
+  ${!isStandalone() ? `<div style="text-align:center;margin:14px 0 30px"><button class="btn" id="authInstall">📲 Instalar la app en el móvil</button></div>` : ""}`;
 }
 function bindAuth() {
   document.querySelectorAll("[data-mode]").forEach((b) => (b.onclick = () => { S.authMode = b.dataset.mode; S.resetEmail = null; render(); }));
   const bf = $("#backForgot"); if (bf) bf.onclick = () => { S.resetEmail = null; render(); };
+  const ai = $("#authInstall"); if (ai) ai.onclick = installHelp;
   $("#authForm").onsubmit = async (e) => {
     e.preventDefault();
     const fd = Object.fromEntries(new FormData(e.target)), btn = e.target.querySelector("button[type=submit]");
@@ -1563,11 +1565,12 @@ function profileSheet() {
 /* ---------- Instalar como app ---------- */
 let deferredPrompt = null;
 window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredPrompt = e; if (S.data) render(); });
+const isAndroid = () => /android/i.test(navigator.userAgent);
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 function installBanner() {
   if (isStandalone() || ls.get("porra_nobanner") === "1") return "";
-  if (!deferredPrompt && !isIOS()) return "";
+  if (!deferredPrompt && !isIOS() && !isAndroid()) return "";
   return `<div class="banner"><span style="font-size:28px">📲</span><div style="flex:1"><b>Instala La Porra en tu móvil</b><span class="muted">Ábrela como una app y recibe avisos.</span></div>
     <button class="btn small gold" id="instBtn">Instalar</button><button class="x" id="instX" aria-label="Cerrar">×</button></div>`;
 }
@@ -1591,7 +1594,8 @@ async function installHelp() {
     <ol class="rules" style="padding-left:20px;margin:0">
       <li>Abre esta página en <b>Chrome</b>.</li>
       <li>Pulsa el menú <b>⋮</b> arriba a la derecha.</li>
-      <li>Elige <b>“Instalar aplicación”</b> o <b>“Añadir a pantalla de inicio”</b>.</li>
+      <li>Elige <b>“Instalar aplicación”</b> o <b>“Añadir a pantalla de inicio”</b> y confirma con <b>Instalar</b>.</li>
+      <li>Aparecerá <b>La Porra</b> con su icono en tu pantalla y en el cajón de apps. Ábrela desde ahí y activa los avisos en tu perfil.</li>
     </ol><button class="btn primary block" style="margin-top:14px" data-close>Entendido</button>`,
   (el, close) => { $("[data-close]", el).onclick = close; });
 }
