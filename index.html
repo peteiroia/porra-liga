@@ -1036,7 +1036,7 @@ function retosCard(j) {
   if (!list.length && !canRet) return "";
   let action = "";
   if (canRet) {
-    if (mine) action = `<div class="row" style="justify-content:space-between;margin-top:8px"><span>Has retado a <b>${esc(mine.to)}</b></span><button class="btn small danger" id="retoCancel">Quitar reto</button></div>`;
+    if (mine) action = `<div class="row" style="justify-content:space-between;margin-top:8px"><span>⚔️ Has retado a <b>${esc(mine.to)}</b>. ¡No hay marcha atrás!</span></div>`;
     else if (vsMe) action = `<p class="muted" style="margin:8px 0 0;font-size:14px">⚔️ <b>${esc(vsMe.from)}</b> te ha retado. Solo se puede tener un reto por jornada, así que esta jornada no puedes retar a nadie.</p>`;
     else if (R.used >= R.total) action = `<p class="muted" style="margin:8px 0 0;font-size:14px">Ya has usado tus ${R.total} retos.</p>`;
     else {
@@ -1208,7 +1208,7 @@ function normasView() {
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
-    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. Cada jugador solo puede tener <b>un reto por jornada</b>: si retas a alguien ya no te pueden retar, y si te retan ya no puedes retar. Hay que retar antes de que empiece el primer partido, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
+    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. Cada jugador solo puede tener <b>un reto por jornada</b>: si retas a alguien ya no te pueden retar, y si te retan ya no puedes retar. Hay que retar antes de que empiece el primer partido y, <b>una vez lanzado, el reto no se puede cancelar</b>, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
     <li>🚫 <b>Partidos aplazados</b>: si aplazan un partido, queda <b>anulado</b>. No suma puntos a nadie, no cuenta para los plenos y, si le pusiste el comodín, se te devuelve.</li>
     <li>📅 <b>Cambios de fecha</b>: si un partido se adelanta o se retrasa, pasa a la <b>jornada más cercana</b> a la fecha en que se juega.</li>
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
@@ -1710,7 +1710,7 @@ function bindMain() {
   const rg = $("#retoGo");
   if (rg) rg.onclick = async () => {
     const to = $("#retoTo").value;
-    if (!confirm(`¿Retar a ${to} en la jornada ${j.num}? Te quedará un reto menos.`)) return;
+    if (!confirm(`¿Retar a ${to} en la jornada ${j.num}?\n\nUna vez lanzado NO se puede cancelar y te quedará un reto menos.`)) return;
     rg.disabled = true;
     try { setData(await api("reto", { jornada: j.id, to })); render(); toast(`⚔️ Has retado a ${to}`); } catch (err) { toast(err.message, true); rg.disabled = false; }
   };

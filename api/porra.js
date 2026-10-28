@@ -634,7 +634,7 @@ async function handle(body) {
     const myK = keyName(me.username);
     let list = retos.slice();
     if (a === "cancelReto") {
-      list = list.filter((r) => !(r.jornada === j.id && r.from === myK));
+      bad("Un reto lanzado no se puede cancelar");
     } else {
       const target = users.find((u) => u.name.toLowerCase() === normName(body.to).toLowerCase());
       if (!target) bad("Jugador no encontrado");
