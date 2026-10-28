@@ -810,7 +810,7 @@ function authView() {
   const m = S.authMode;
   let form;
   if (m === "register") form = `
-    <label class="field"><span>Código de la liga</span><input class="input pin" name="code" maxlength="6" autocapitalize="characters" autocorrect="off" autocomplete="off" placeholder="XXXXXX" value="${esc(S.inviteCode || "")}" style="letter-spacing:.3em;text-transform:uppercase"></label>
+    <label class="field"><span>Código de la liga</span><input class="input pin" name="code" maxlength="12" inputmode="text" autocapitalize="characters" autocorrect="off" autocomplete="off" placeholder="112233" value="${esc(S.inviteCode || "")}" style="letter-spacing:.3em;text-transform:uppercase"></label>
     <label class="field"><span>Usuario</span><input class="input" name="username" maxlength="20" autocomplete="username" autocapitalize="none" autocorrect="off" placeholder="Ej. pepe" required></label>
     <label class="field"><span>Contraseña (mínimo 6)</span><input class="input" name="pass" type="password" minlength="6" autocomplete="new-password" required></label>
     <div class="err" id="authErr"></div>
@@ -1257,7 +1257,7 @@ function adminView() {
     <p class="muted" style="font-size:14px;margin:6px 0 10px">Para darse de alta hace falta este código. Envíales la invitación y entrarán con él ya puesto.</p>
     <div class="code-box" id="leagueCode">${S.leagueCode ? esc(S.leagueCode) : "······"}</div>
     <button class="btn gold block" id="invShare" style="margin-top:10px">📤 Enviar invitación</button>
-    <div class="row" style="margin-top:8px"><button class="btn small" style="flex:1" id="invCopy">📋 Copiar mensaje</button><button class="btn small" style="flex:1" id="invRegen">🔄 Cambiar código</button></div></div>` : ""}
+    <div class="row" style="margin-top:8px"><button class="btn small" style="flex:1" id="invCopy">📋 Copiar mensaje</button><button class="btn small" style="flex:1" id="invRegen">✏️ Cambiar código</button></div></div>` : ""}
   ${!e ? `<div class="row"><button class="btn primary" style="flex:1" id="newJ">+ Nueva jornada</button><button class="btn gold" id="newX">⭐ Extra</button><button class="btn" id="syncCal" title="Volver a cargar el calendario oficial">🔄 Calendario</button></div>
   <p class="dim" style="font-size:12px;margin:8px 2px 0">Los partidos de Madrid, Barça, Depor y Celta se cargan solos del calendario oficial. Puedes añadir partidos extra o cambiar horas editando una jornada.</p>` : ""}
   <h2 class="sec">Resultados</h2>
@@ -1771,8 +1771,10 @@ function bindMain() {
       catch (e) { prompt("Copia este mensaje:", inviteText(S.leagueCode)); }
     };
     $("#invRegen").onclick = async () => {
-      if (!confirm("¿Cambiar el código? El anterior dejará de servir para nuevas altas (los que ya juegan no se ven afectados).")) return;
-      await loadCode(true); toast("Código nuevo: " + S.leagueCode);
+      const c = prompt("Nuevo código de la liga (4-12 letras o números). Déjalo vacío para generar uno al azar. El anterior dejará de servir para nuevas altas:", S.leagueCode || "");
+      if (c === null) return;
+      try { const r = await api("code", c.trim() ? { custom: c.trim() } : { regen: true }); S.leagueCode = r.code; const el = $("#leagueCode"); if (el) el.textContent = r.code; toast("Código de la liga: " + r.code); }
+      catch (err) { toast(err.message, true); }
     };
   }
   const sc = $("#syncCal");

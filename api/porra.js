@@ -430,10 +430,13 @@ function newCode() {
   let c = ""; for (let i = 0; i < 6; i++) c += A[crypto.randomInt(0, A.length)];
   return c;
 }
-async function leagueCode(regen) {
-  let c = regen ? null : await redis(["GET", P + "code"]);
-  if (!c) { c = newCode(); await redis(["SET", P + "code", c]); }
-  return c;
+// Código fijo y fácil por defecto: 112233 (el admin puede cambiarlo o poner uno propio)
+const DEFAULT_CODE = "112233";
+async function leagueCode(regen, custom) {
+  if (custom) { await redis(["SET", P + "code2", custom]); return custom; }
+  let c = regen ? null : await redis(["GET", P + "code2"]);
+  if (regen) { c = newCode(); await redis(["SET", P + "code2", c]); }
+  return c || DEFAULT_CODE;
 }
 
 // ---------- Avisos push ----------
@@ -728,7 +731,14 @@ async function handle(body) {
     return buildState(me, await loadAll());
   }
 
-  if (a === "code") return { code: await leagueCode(!!body.regen) };
+  if (a === "code") {
+    let custom = null;
+    if (body.custom != null) {
+      custom = String(body.custom).trim().toUpperCase();
+      if (!/^[A-Z0-9]{4,12}$/.test(custom)) bad("El código debe tener entre 4 y 12 letras o números");
+    }
+    return { code: await leagueCode(!!body.regen, custom) };
+  }
 
   if (a === "syncCalendar") { await syncCalendar(true); return buildState(me, await loadAll()); }
 
