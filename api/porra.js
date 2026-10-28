@@ -244,6 +244,20 @@ function buildState(me, data) {
   }
   for (const r of table) if (r.retoPts) { r.pts += r.retoPts; for (const jid in r.retoJ) r.byJ[jid] += r.retoJ[jid]; }
 
+  // Comodín de consolación: el último de cada jornada terminada (entre los que jugaron)
+  // gana un comodín x2 extra. Si hay empate en la última plaza, se lo llevan todos;
+  // si todos empatan, nadie.
+  const extraX2 = {}, lastOf = {};
+  for (const j of jornadas) {
+    if (!j.matches.length || !j.matches.every((m) => m.result)) continue;
+    const played = table.filter((r) => j.matches.some((m) => (preds[r.key] || {})[m.id]));
+    if (played.length < 2) continue;
+    const pts = played.map((r) => r.byJ[j.id] || 0), min = Math.min(...pts), max = Math.max(...pts);
+    if (min === max) continue;
+    lastOf[j.id] = played.filter((r) => (r.byJ[j.id] || 0) === min).map((r) => r.key);
+    for (const k of lastOf[j.id]) extraX2[k] = (extraX2[k] || 0) + 1;
+  }
+
   const doneJ = jornadas.filter((j) => j.matches.some((m) => m.result));
   const lastJ = doneJ[doneJ.length - 1];
   const cmp = (a, b, f) => f(b) - f(a) || b.exact - a.exact || a.name.localeCompare(b.name);
@@ -258,6 +272,7 @@ function buildState(me, data) {
   const outJ = jornadas.map((j) => ({
     id: j.id, num: j.num, title: j.title || "", current: j.id === curId,
     myPleno: ((byKey[myKey] || {}).plenos || {})[j.id] || 0,
+    lastBonus: (lastOf[j.id] || []).includes(myKey),
     retoDeadline: j.matches.length ? retoDeadline(j) : null,
     matches: j.matches.map((m) => {
       const locked = isLocked(m, now);
@@ -286,7 +301,7 @@ function buildState(me, data) {
 
   return {
     me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
-      comodines: { total: COMODINES, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length },
+      comodines: { total: COMODINES + (extraX2[myKey] || 0), extra: extraX2[myKey] || 0, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length },
       retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
     // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
@@ -567,7 +582,9 @@ async function handle(body) {
       const p = body.picks && body.picks[m.id];
       if (p && p.x2 === false && mine[m.id] && matchStatus(j, m, now, curId) === "open") delete mine[m.id].x2;
     }
-    if (Object.values(mine).filter((x) => x && x.x2).length > COMODINES) bad(`Solo tienes ${COMODINES} comodines en toda la temporada`);
+    const allData = await loadAll();
+    const myTotal = buildState(me, allData).me.comodines.total;
+    if (Object.values(mine).filter((x) => x && x.x2).length > myTotal) bad(`Solo tienes ${myTotal} comodines`);
     await redis(["HSET", P + "preds", k, JSON.stringify(mine)]);
     return { saved, skipped, ...buildState(me, await loadAll()) };
   }
