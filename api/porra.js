@@ -229,7 +229,7 @@ function buildState(me, data) {
     if (!j) continue;
     const A = byKey[r.from], B = byKey[r.to];
     const done = j.matches.length && j.matches.every((m) => m.result);
-    const o = { jornada: j.id, num: j.num, from: nameOf[r.from], to: nameOf[r.to], done };
+    const o = { jornada: j.id, num: j.num, from: nameOf[r.from], to: nameOf[r.to], done, started: now >= retoDeadline(j) };
     if (done && A && B) {
       const pa = A.byJ[j.id] || 0, pb = B.byJ[j.id] || 0;
       o.ptsFrom = pa; o.ptsTo = pb;
@@ -289,12 +289,13 @@ function buildState(me, data) {
       comodines: { total: COMODINES, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length },
       retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
-    retos: retoOut.filter((r) => r.from === displayOf(me) || r.to === displayOf(me)),
+    // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
+    retos: retoOut.filter((r) => r.started || r.from === displayOf(me) || r.to === displayOf(me)),
     retados: Object.fromEntries(jornadas.map((j) => [j.id, retos.filter((r) => r.jornada === j.id).map((r) => nameOf[r.to])])),
     now,
     jornadas: outJ,
     // los retos y comodines de cada uno son secretos: no se envían los de los demás
-    table: table.map(({ key, retoJ, retoPts, ...r }) => ({ ...r, photo: photo[r.name], ...(key === myKey ? { retoJ, retoPts } : {}) })),
+    table: table.map(({ key, retoPts, ...r }) => ({ ...r, photo: photo[r.name] })),
     users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username } : {}) })),
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
