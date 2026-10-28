@@ -985,26 +985,16 @@ function collectEdit() {
 /* ---------- Mensaje de invitación ---------- */
 function inviteText(code) {
   const url = location.origin + location.pathname.replace(/index\.html$/, "") + "?codigo=" + code;
-  return `⚽🔥 ¡ESTÁS CONVOCADO A LA PORRA! 🔥⚽
+  return `⚽🔥 ¡Estás convocado a LA PORRA!
 
-Madrid, Barça, Depor y Celta. Cada jornada, tú contra todos. ¿Eres de los que «ya lo sabía» después del partido? Pues ahora toca demostrarlo ANTES. 😏
+Pronostica los partidos de Madrid, Barça, Depor y Celta cada jornada.
+🎯 Exacto 3 pts · ✅ 1X2 1 pt · ⭐ Clásico y derbi x2
+⚡ Comodines, ⚔️ retos y bonus. Gana quien más sume en la jornada 38. 👑
 
-🎯 Resultado exacto: 3 puntos
-✅ Aciertas el 1X2: 1 punto
-⭐ Clásico y derbi gallego: ¡valen DOBLE!
-⚡ 3 comodines x2 para cuando lo veas clarísimo
-⚔️ 10 retos para robarle los puntos a tu cuñado
-🦄 Si eres el único que lo clava: punto extra
-🏆 Pleno en la jornada: bonus
+👉 ${url}
+🔑 Código: ${code}
 
-Quien más puntos tenga al acabar la jornada 38 se lleva la gloria eterna. 👑
-
-👉 Entra aquí: ${url}
-🔑 Código de la liga: ${code}
-
-Instálala en el móvil (Compartir → Añadir a pantalla de inicio) y activa los avisos: te avisamos 1 hora antes si te falta algún pronóstico. ¡Sin excusas! 📲
-
-¿Te atreves o te da miedo quedar el último? 😎`;
+¿Te atreves? 😎`;
 }
 
 /* ---------- Perfil ---------- */
