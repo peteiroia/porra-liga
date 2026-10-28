@@ -19,14 +19,23 @@ def render(S=1024, tema="oro"):
     if tema == "oro":
         r = np.hypot(x - W * .35, y - W * .25) / (W * 1.1)
         c1, c2 = np.array((255, 222, 120)), np.array((196, 128, 18))
+    elif tema == "vivo":
+        r = np.hypot(x - W * .5, y - W * .35) / (W * .95)
+        c1, c2 = np.array((24, 92, 230)), np.array((8, 14, 70))
     else:
         r = np.hypot(x - W * .5, y - W * .3) / (W * 1.0)
         c1, c2 = np.array((40, 62, 96)), np.array((10, 16, 30))
     base = c1 + (c2 - c1) * np.clip(r, 0, 1)[..., None]
     img = Image.fromarray(base.astype("uint8")).convert("RGBA")
-    if tema == "noche":  # halo dorado detrás del disco
-        halo = Image.new("L", (W, W), 0); ImageDraw.Draw(halo).ellipse([W*.12, W*.06, W*.88, W*.82], fill=120)
-        img.paste((245, 190, 60, 255), (0, 0), halo.filter(ImageFilter.GaussianBlur(W * .08)))
+    if tema in ("noche", "vivo"):  # halo dorado detrás del disco
+        halo = Image.new("L", (W, W), 0); ImageDraw.Draw(halo).ellipse([W*.12, W*.06, W*.88, W*.82], fill=200 if tema == "vivo" else 120)
+        img.paste((255, 200, 50, 255) if tema == "vivo" else (245, 190, 60, 255), (0, 0), halo.filter(ImageFilter.GaussianBlur(W * .07)))
+    if tema == "vivo":  # rayos de luz
+        rays = Image.new("L", (W, W), 0); rd0 = ImageDraw.Draw(rays)
+        for k in range(16):
+            a0 = k * 22.5
+            rd0.pieslice([-W*.5, -W*.56, W*1.5, W*1.44], a0, a0 + 9, fill=38)
+        img.paste((255, 255, 255, 255), (0, 0), rays.filter(ImageFilter.GaussianBlur(W * .01)))
     R = int(W * .335); C = (W // 2, int(W * .44))
     # sombra suave
     sh = Image.new("L", (W, W), 0); ImageDraw.Draw(sh).ellipse([C[0]-R, C[1]-R+W*.035, C[0]+R, C[1]+R+W*.035], fill=150)
@@ -51,16 +60,19 @@ def render(S=1024, tema="oro"):
             for (y0, h, c) in bs:
                 ld.polygon([(C[0]-R, C[1] + R*y0 + R*.25), (C[0]+R, C[1] + R*y0 - R*.25), (C[0]+R, C[1] + R*(y0+h) - R*.25), (C[0]-R, C[1] + R*(y0+h) + R*.25)], fill=c)
         return fn
-    quad(0, stripes(["#a50044", "#004d98"], 11, -12))                                   # Barça
-    quad(1, bands("#f7f7fb", [(-.62, .1, "#febe10"), (-.5, .08, "#4b3a9c")]))            # Madrid
-    quad(3, stripes(["#0a6fbe", "#f7f7fb"], 11, 12))                                    # Depor
-    quad(2, bands("#8fcbf0", [(.5, .1, "#f7f7fb"), (.6, .07, "#e30613")]))              # Celta
+    V = tema == "vivo"
+    quad(0, stripes(["#d4004f" if V else "#a50044", "#0058d6" if V else "#004d98"], 11, -12))                                   # Barça
+    quad(1, bands("#ffffff" if V else "#f7f7fb", [(-.62, .1, "#ffc400" if V else "#febe10"), (-.5, .08, "#5a3fd6" if V else "#4b3a9c")]))            # Madrid
+    quad(3, stripes(["#0a7cff" if V else "#0a6fbe", "#ffffff" if V else "#f7f7fb"], 11, 12))                                    # Depor
+    quad(2, bands("#5fc4ff" if V else "#8fcbf0", [(.5, .1, "#ffffff" if V else "#f7f7fb"), (.6, .07, "#ff1a2e" if V else "#e30613")]))              # Celta
     # huecos finos entre cuartos
     gd = ImageDraw.Draw(disc); gap = int(W * .012)
     gd.line([C[0]-R, C[1], C[0]+R, C[1]], fill=(0, 0, 0, 0), width=gap); gd.line([C[0], C[1]-R, C[0], C[1]+R], fill=(0, 0, 0, 0), width=gap)
     # aros: fino azul grisáceo + fino rojo + borde dorado
     d = ImageDraw.Draw(img)
     rings = [(.105, (46, 58, 78)), (.085, (255, 226, 130)), (.07, (90, 108, 134)), (.05, (226, 38, 47)), (.034, (90, 108, 134)), (.022, (250, 250, 252))]
+    if tema == "vivo":
+        rings = [(.115, (255, 170, 0)), (.098, (255, 236, 150)), (.08, (20, 30, 70)), (.06, (255, 40, 60)), (.042, (255, 214, 80)), (.024, (255, 255, 255))]
     for pad, col in rings:
         p = W * pad * .5
         d.ellipse([C[0]-R-p, C[1]-R-p, C[0]+R+p, C[1]+R+p], fill=col)
@@ -95,8 +107,8 @@ def render(S=1024, tema="oro"):
     # sombra del óvalo
     so = Image.new("L", (W, W), 0); ImageDraw.Draw(so).rounded_rectangle([bx0, by + W*.012, bx1, by + bh + W*.012], radius=bh // 2, fill=150)
     img.paste((0, 0, 0, 255), (0, 0), so.filter(ImageFilter.GaussianBlur(W * .012)))
-    slate, slate_d = (58, 72, 96), (34, 44, 62)
-    rb = grad_img(W, [(0, (92, 110, 140)), (.5, slate), (1, slate_d)], "y", by / W, (by + bh) / W)
+    slate, slate_d = ((30, 70, 200), (12, 26, 100)) if tema == "vivo" else ((58, 72, 96), (34, 44, 62))
+    rb = grad_img(W, [(0, (80, 140, 255) if tema == "vivo" else (92, 110, 140)), (.5, slate), (1, slate_d)], "y", by / W, (by + bh) / W)
     rm = Image.new("L", (W, W), 0); ImageDraw.Draw(rm).rounded_rectangle([bx0 + fold, by, bx1 - fold, by + bh], radius=bh // 2, fill=255)
     img.paste(rb, (0, 0), rm)
     d = ImageDraw.Draw(img)
