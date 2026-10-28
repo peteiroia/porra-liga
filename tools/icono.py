@@ -75,7 +75,18 @@ def render(S=1024, scale=1.0, ribbon=True):
         f = font(int(bh*.78)); txt = "LA PORRA"
         tw = d.textlength(txt, font=f); tx = (W - tw)/2; ty = by + bh*.04
         d.text((tx+8, ty+12), txt, font=f, fill=INK, stroke_width=18, stroke_fill=INK)
-        d.text((tx, ty), txt, font=f, fill="#ffffff", stroke_width=16, stroke_fill=INK)
+        d.text((tx, ty), txt, font=f, fill=INK, stroke_width=16, stroke_fill=INK)
+        # letras doradas con degradado y brillo
+        tm = Image.new("L", (W, W), 0); ImageDraw.Draw(tm).text((tx, ty), txt, font=f, fill=255)
+        gy = np.linspace(0, 1, W)[:, None] * np.ones((1, W))
+        t0, t1 = (by) / W, (by + bh) / W; k = np.clip((gy - t0) / (t1 - t0), 0, 1)
+        stops = [(0, (255, 248, 196)), (.35, (255, 214, 92)), (.55, (232, 168, 28)), (1, (176, 112, 8))]
+        col = np.zeros((W, W, 3))
+        for (p0, c0), (p1, c1) in zip(stops, stops[1:]):
+            m = (k >= p0) & (k <= p1); u = ((k - p0) / (p1 - p0))[..., None]
+            col = np.where(m[..., None], np.array(c0) + (np.array(c1) - np.array(c0)) * u, col)
+        gold = Image.fromarray(col.astype("uint8")).convert("RGBA")
+        img.paste(gold, (0, 0), tm)
     return img.resize((S, S), Image.LANCZOS).convert("RGB")
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "icons"
