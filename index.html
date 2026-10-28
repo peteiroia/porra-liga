@@ -170,6 +170,8 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .resbar.x2 .rb-track i.on{background:linear-gradient(180deg,#ffe07a,#e9ae1b);box-shadow:0 0 8px rgba(245,197,66,.45)}
 .resbar.rt .rb-track i.on{background:linear-gradient(180deg,#ff8a8a,#e23b3b);box-shadow:0 0 8px rgba(226,59,59,.4)}
 .resbar.x2 .rb-h b{color:var(--gold)} .resbar.rt .rb-h b{color:#ff7b7b}
+.invite{margin-bottom:14px;border-color:rgba(255,214,102,.4);background:linear-gradient(160deg,rgba(255,214,102,.1),var(--card) 60%)}
+.code-box{font-family:"Barlow Condensed";font-weight:800;font-size:40px;letter-spacing:.35em;text-align:center;padding:10px 0 10px .35em;border-radius:14px;background:rgba(0,0,0,.35);border:1px dashed rgba(255,214,102,.5);color:var(--gold)}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -482,7 +484,8 @@ async function shrinkPhoto(file) {
 }
 
 /* ---------- Estado y API ---------- */
-const S = { token: ls.get("porra_token"), data: null, tab: (location.hash || "#jornada").slice(1), jornada: null, drafts: {}, openOthers: {}, offset: 0, editJ: null, authMode: "login", resetEmail: null, newPhoto: null };
+const INV = (() => { try { const c = new URLSearchParams(location.search).get("codigo"); if (c) ls.set("porra_invite", c.toUpperCase()); return (c || ls.get("porra_invite") || "").toUpperCase(); } catch (e) { return ""; } })();
+const S = { inviteCode: INV, token: ls.get("porra_token"), data: null, tab: (location.hash || "#jornada").slice(1), jornada: null, drafts: {}, openOthers: {}, offset: 0, editJ: null, authMode: INV && !ls.get("porra_token") ? "register" : "login", resetEmail: null, newPhoto: null };
 const serverNow = () => Date.now() + S.offset;
 
 async function api(action, payload = {}) {
@@ -571,6 +574,7 @@ function authView() {
   const m = S.authMode;
   let form;
   if (m === "register") form = `
+    <label class="field"><span>Código de la liga</span><input class="input pin" name="code" maxlength="6" autocapitalize="characters" autocorrect="off" autocomplete="off" placeholder="XXXXXX" value="${esc(S.inviteCode || "")}" style="letter-spacing:.3em;text-transform:uppercase"></label>
     <label class="field"><span>Usuario</span><input class="input" name="username" maxlength="20" autocomplete="username" autocapitalize="none" autocorrect="off" placeholder="Ej. pepe" required></label>
     <label class="field"><span>Contraseña (mínimo 6)</span><input class="input" name="pass" type="password" minlength="6" autocomplete="new-password" required></label>
     <div class="err" id="authErr"></div>
@@ -941,6 +945,11 @@ function adminView() {
   const now = serverNow();
   return `
   ${form}
+  ${!e ? `<div class="card invite"><div class="row" style="justify-content:space-between"><b class="cond" style="font-size:20px;text-transform:uppercase;letter-spacing:.04em">📨 Invitar jugadores</b></div>
+    <p class="muted" style="font-size:14px;margin:6px 0 10px">Para darse de alta hace falta este código. Envíales la invitación y entrarán con él ya puesto.</p>
+    <div class="code-box" id="leagueCode">${S.leagueCode ? esc(S.leagueCode) : "······"}</div>
+    <button class="btn gold block" id="invShare" style="margin-top:10px">📤 Enviar invitación</button>
+    <div class="row" style="margin-top:8px"><button class="btn small" style="flex:1" id="invCopy">📋 Copiar mensaje</button><button class="btn small" style="flex:1" id="invRegen">🔄 Cambiar código</button></div></div>` : ""}
   ${!e ? `<div class="row"><button class="btn primary" style="flex:1" id="newJ">+ Nueva jornada</button><button class="btn" id="syncCal" title="Volver a cargar el calendario oficial">🔄 Calendario</button></div>
   <p class="dim" style="font-size:12px;margin:8px 2px 0">Los partidos de Madrid, Barça, Depor y Celta se cargan solos del calendario oficial. Puedes añadir partidos extra o cambiar horas editando una jornada.</p>` : ""}
   <h2 class="sec">Resultados</h2>
@@ -971,6 +980,31 @@ function collectEdit() {
       m[f] = f === "kickoff" ? (inp.value ? new Date(inp.value).toISOString() : "") : inp.value;
     });
   });
+}
+
+/* ---------- Mensaje de invitación ---------- */
+function inviteText(code) {
+  const url = location.origin + location.pathname.replace(/index\.html$/, "") + "?codigo=" + code;
+  return `⚽🔥 ¡ESTÁS CONVOCADO A LA PORRA! 🔥⚽
+
+Madrid, Barça, Depor y Celta. Cada jornada, tú contra todos. ¿Eres de los que «ya lo sabía» después del partido? Pues ahora toca demostrarlo ANTES. 😏
+
+🎯 Resultado exacto: 3 puntos
+✅ Aciertas el 1X2: 1 punto
+⭐ Clásico y derbi gallego: ¡valen DOBLE!
+⚡ 3 comodines x2 para cuando lo veas clarísimo
+⚔️ 10 retos para robarle los puntos a tu cuñado
+🦄 Si eres el único que lo clava: punto extra
+🏆 Pleno en la jornada: bonus
+
+Quien más puntos tenga al acabar la jornada 38 se lleva la gloria eterna (y el derecho a vacilar todo el verano). 👑
+
+👉 Entra aquí: ${url}
+🔑 Código de la liga: ${code}
+
+Instálala en el móvil (Compartir → Añadir a pantalla de inicio) y activa los avisos: te avisamos 1 hora antes si te falta algún pronóstico. ¡Sin excusas! 📲
+
+¿Te atreves o te da miedo quedar el último? 😎`;
 }
 
 /* ---------- Perfil ---------- */
@@ -1191,6 +1225,26 @@ function bindMain() {
   }));
   document.querySelectorAll("[data-delm]").forEach((b) => (b.onclick = () => { collectEdit(); S.editJ.matches.splice(+b.dataset.delm, 1); render(); }));
   document.querySelectorAll("[data-swap]").forEach((b) => (b.onclick = () => { collectEdit(); const m = S.editJ.matches[+b.dataset.swap]; [m.home, m.away] = [m.away, m.home]; render(); }));
+  // Invitación
+  if ($("#leagueCode")) {
+    const loadCode = async (regen) => { try { const r = await api("code", { regen }); S.leagueCode = r.code; const el = $("#leagueCode"); if (el) el.textContent = r.code; } catch (err) { toast(err.message, true); } };
+    if (!S.leagueCode) loadCode(false);
+    $("#invShare").onclick = async () => {
+      if (!S.leagueCode) await loadCode(false);
+      const text = inviteText(S.leagueCode);
+      if (navigator.share) { try { await navigator.share({ title: "La Porra", text }); return; } catch (e) { if (e.name === "AbortError") return; } }
+      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+    };
+    $("#invCopy").onclick = async () => {
+      if (!S.leagueCode) await loadCode(false);
+      try { await navigator.clipboard.writeText(inviteText(S.leagueCode)); toast("Mensaje copiado. Pégalo en WhatsApp"); }
+      catch (e) { prompt("Copia este mensaje:", inviteText(S.leagueCode)); }
+    };
+    $("#invRegen").onclick = async () => {
+      if (!confirm("¿Cambiar el código? El anterior dejará de servir para nuevas altas (los que ya juegan no se ven afectados).")) return;
+      await loadCode(true); toast("Código nuevo: " + S.leagueCode);
+    };
+  }
   const sc = $("#syncCal");
   if (sc) sc.onclick = async () => {
     sc.disabled = true;

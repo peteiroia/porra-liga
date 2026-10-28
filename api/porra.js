@@ -328,6 +328,18 @@ async function savePhoto(u, dataUrl) {
   await setJSON(P + "user:" + keyName(u.username), u);
 }
 
+// ---------- Código de invitación de la liga ----------
+function newCode() {
+  const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O ni 1/I para no confundir
+  let c = ""; for (let i = 0; i < 6; i++) c += A[crypto.randomInt(0, A.length)];
+  return c;
+}
+async function leagueCode(regen) {
+  let c = regen ? null : await redis(["GET", P + "code"]);
+  if (!c) { c = newCode(); await redis(["SET", P + "code", c]); }
+  return c;
+}
+
 // ---------- Avisos push ----------
 async function vapid() {
   let k = await getJSON(P + "vapid", null);
@@ -394,8 +406,13 @@ async function handle(body) {
     if (pass.length < 6) bad("La contraseña debe tener al menos 6 caracteres");
     const k = keyName(username);
     if (await redis(["GET", P + "user:" + k])) bad("Ese usuario ya existe. Elige otro.");
-    const salt = crypto.randomBytes(12).toString("hex");
     const count = await redis(["SCARD", P + "users"]);
+    // Para entrar en la liga hace falta el código de invitación (el primero, el admin, no)
+    if (count) {
+      const code = await leagueCode();
+      if (String(body.code || "").trim().toUpperCase() !== code) bad("Código de liga incorrecto. Pídeselo al administrador.");
+    }
+    const salt = crypto.randomBytes(12).toString("hex");
     const user = { username, email, salt, hash: hashPass(pass, salt), admin: !count, created: Date.now(), photo: 0, display: "" };
     const ok = await redis(["SET", P + "user:" + k, JSON.stringify(user), "NX"]);
     if (!ok) bad("Ese usuario ya existe. Elige otro.");
@@ -602,6 +619,8 @@ async function handle(body) {
     }
     return buildState(me, await loadAll());
   }
+
+  if (a === "code") return { code: await leagueCode(!!body.regen) };
 
   if (a === "syncCalendar") { await syncCalendar(true); return buildState(me, await loadAll()); }
 
