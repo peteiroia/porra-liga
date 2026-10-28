@@ -196,6 +196,71 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .winner .av+.av{margin-left:-18px}
 .gen th small{display:block;font-size:9px;letter-spacing:.04em;margin-top:2px}
 .gen td{font-weight:700}
+/* ---------- Desafío vikingo ---------- */
+.duel{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:24px 16px calc(24px + var(--safe-b));
+  background:radial-gradient(120% 70% at 50% 45%,#3a1408 0%,#1a0a06 45%,#070405 100%);animation:dIn .5s ease-out both}
+@keyframes dIn{from{opacity:0}}
+.duel .din.shake{animation:dShake .45s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes dShake{10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-2px)}30%,50%,70%{transform:translate(-6px,3px)}40%,60%{transform:translate(6px,-3px)}}
+.duel .din{position:relative;display:flex;flex-direction:column;align-items:center;width:100%}
+.duel .storm{position:absolute;inset:-20%;background:
+  radial-gradient(40% 25% at 20% 10%,rgba(255,120,40,.18),transparent 70%),radial-gradient(40% 25% at 80% 15%,rgba(255,80,20,.14),transparent 70%),
+  repeating-conic-gradient(from 0deg at 50% 46%,rgba(255,140,60,.06) 0 6deg,transparent 6deg 18deg);animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.duel .flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(255,230,180,.95),rgba(255,140,40,.4) 25%,transparent 55%);opacity:0;pointer-events:none}
+.duel .flash.go{animation:flash .7s ease-out}
+@keyframes flash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.duel .embers i{position:absolute;bottom:-10px;width:4px;height:4px;border-radius:50%;background:#ffb347;box-shadow:0 0 8px 2px rgba(255,140,40,.8);animation:ember linear infinite;opacity:0}
+@keyframes ember{0%{transform:translate(0,0);opacity:0}10%{opacity:1}100%{transform:translate(var(--dx),-110vh);opacity:0}}
+.duel .runes{position:absolute;left:0;right:0;font-family:serif;font-size:22px;letter-spacing:.6em;color:rgba(255,170,90,.28);text-align:center;white-space:nowrap;overflow:hidden}
+.duel .runes.t{top:calc(18px + var(--safe-t))}.duel .runes.b{bottom:calc(18px + var(--safe-b))}
+.duel .kick{position:relative;font-family:"Barlow Condensed";font-weight:800;letter-spacing:.35em;font-size:13px;color:#ffb36b;text-transform:uppercase;opacity:0;animation:dUp .6s .2s ease-out forwards}
+.duel h1{position:relative;z-index:4;margin:4px 0 0;font-family:"Barlow Condensed";font-weight:800;font-size:clamp(38px,11vw,60px);line-height:.92;text-align:center;text-transform:uppercase;letter-spacing:.02em;
+  background:linear-gradient(180deg,#fff6d6 0%,#ffd36b 40%,#e0861b 70%,#8a3a07 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 0 #2a0d03) drop-shadow(0 0 24px rgba(255,120,30,.55));opacity:0;transform:scale(1.6);animation:slam .5s 1.05s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes slam{to{opacity:1;transform:scale(1)}}
+.duel .arena{position:relative;width:min(100%,420px);height:250px;margin:14px 0 0}
+.duel .army{position:absolute;top:0;bottom:0;width:56%;overflow:hidden;opacity:0}
+.duel .army img{width:100%;height:100%;object-fit:cover;object-position:50% 10%;filter:sepia(.35) saturate(1.25) contrast(1.1) brightness(.92)}
+.duel .army::after{content:"";position:absolute;inset:0;mix-blend-mode:multiply}
+.duel .army.l::after{background:linear-gradient(180deg,rgba(255,120,90,.55),rgba(170,40,20,.55) 60%,rgba(20,4,4,.95))}
+.duel .army.r::after{background:linear-gradient(180deg,rgba(130,170,255,.55),rgba(30,60,140,.55) 60%,rgba(4,6,20,.95))}
+.duel .army.l{left:0;width:53%;clip-path:polygon(0 0,100% 0,80% 100%,0 100%);border-radius:14px 0 0 14px;animation:arL .7s .1s cubic-bezier(.2,.9,.3,1) forwards}
+.duel .army.r{right:0;width:53%;clip-path:polygon(20% 0,100% 0,100% 100%,0 100%);border-radius:0 14px 14px 0;animation:arR .7s .1s cubic-bezier(.2,.9,.3,1) forwards}
+.duel .army.l::before,.duel .army.r::before{content:"";position:absolute;inset:0;z-index:1;box-shadow:inset 0 0 40px rgba(0,0,0,.6)}
+@keyframes arL{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:none}}
+@keyframes arR{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+.duel .crack{position:absolute;left:50%;top:-6px;bottom:-6px;width:10px;margin-left:-5px;background:linear-gradient(#fff2c4,#ff9a2e,#ff5a10);box-shadow:0 0 18px 6px rgba(255,120,30,.7);transform:skewX(-8.5deg) scaleY(0);transform-origin:50% 50%;animation:crack .35s .85s ease-out forwards}
+@keyframes crack{to{transform:skewX(-8.5deg) scaleY(1)}}
+.duel .army-tag{position:absolute;top:8px;z-index:2;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.45);font-family:"Barlow Condensed";font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#ffd9a8;text-shadow:0 1px 2px #000}
+.duel .army.l .army-tag{left:10px}.duel .army.r .army-tag{right:10px}
+.duel .duelists{position:relative;display:flex;align-items:center;justify-content:space-between;width:min(100%,420px);margin-top:-46px;z-index:3}
+.duel .sword{position:absolute;top:18px;left:50%;width:46px;height:210px;margin-left:-23px;z-index:2;transform-origin:50% 62%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.duel .sword.l{animation:swL .55s .35s cubic-bezier(.5,0,.75,0) both}
+.duel .sword.r{animation:swR .55s .35s cubic-bezier(.5,0,.75,0) both}
+@keyframes swL{from{transform:translateX(-60vw) rotate(-120deg)}to{transform:rotate(-38deg)}}
+@keyframes swR{from{transform:translateX(60vw) rotate(120deg) scaleX(-1)}to{transform:rotate(38deg) scaleX(-1)}}
+.duel .spark{position:absolute;left:50%;top:44%;width:0;height:0}
+.duel .spark i{position:absolute;width:3px;height:16px;border-radius:2px;background:linear-gradient(#fff,#ffcf6b,#ff7a1a);opacity:0;transform-origin:50% 0}
+.duel .spark.go i{animation:sp .6s ease-out forwards}
+@keyframes sp{0%{opacity:1;transform:rotate(var(--a)) translateY(0) scaleY(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(var(--d)) scaleY(.3)}}
+.duel .shield{position:relative;width:96px;height:112px;display:flex;align-items:center;justify-content:center;opacity:0}
+.duel .shield.l{animation:shL .6s 1.0s cubic-bezier(.2,1.4,.4,1) forwards}
+.duel .shield.r{animation:shR .6s 1.0s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes shL{from{opacity:0;transform:translateX(-40px) rotate(-14deg)}to{opacity:1;transform:rotate(-6deg)}}
+@keyframes shR{from{opacity:0;transform:translateX(40px) rotate(14deg)}to{opacity:1;transform:rotate(6deg)}}
+.duel .shield svg{position:absolute;inset:0;width:100%;height:100%}
+.duel .shield .av{position:relative;width:58px;height:58px;font-size:22px;border:3px solid #ffd36b;box-shadow:0 0 0 3px #3a1a06,0 0 22px rgba(255,140,40,.6)}
+.duel .names{position:relative;display:flex;justify-content:space-between;width:min(100%,420px);margin-top:4px;opacity:0;animation:dUp .5s 1.4s ease-out forwards}
+.duel .names b{width:130px;text-align:center;font-family:"Barlow Condensed";font-weight:800;font-size:22px;color:#fff;text-transform:uppercase;letter-spacing:.04em;text-shadow:0 2px 0 #000}
+.duel .names b small{display:block;font-size:11px;color:#ffb36b;letter-spacing:.2em}
+.duel .vs{position:absolute;left:50%;top:-4px;transform:translateX(-50%);font-family:"Barlow Condensed";font-weight:800;font-size:30px;color:#ffcf6b;text-shadow:0 0 16px rgba(255,120,30,.9)}
+.duel p.lore{position:relative;max-width:360px;text-align:center;color:#f3d7bd;font-size:14px;line-height:1.4;margin:10px 0 14px;opacity:0;animation:dUp .5s 1.65s ease-out forwards}
+.duel p.lore b{color:#ffcf6b}
+.duel .btn-duel{position:relative;border:0;border-radius:14px;padding:15px 26px;font-family:"Barlow Condensed";font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase;color:#2a0d03;
+  background:linear-gradient(180deg,#ffe08a,#f0a12a 55%,#c66a0e);box-shadow:0 0 0 2px #3a1a06,0 8px 0 #5a2406,0 0 30px rgba(255,140,40,.5);opacity:0;animation:dUp .5s 1.9s ease-out forwards}
+.duel .btn-duel:active{transform:translateY(4px);box-shadow:0 0 0 2px #3a1a06,0 4px 0 #5a2406}
+@keyframes dUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -559,6 +624,7 @@ async function refresh(silent) {
   try { setData(await api("state")); }
   catch (e) { if (!silent) toast(e.message, true); }
   render();
+  if (S.data && S.data.me && S.data.me.profileDone) setTimeout(checkDuels, 400);
 }
 function logoutLocal() { S.token = null; S.data = null; ls.set("porra_token", null); render(); }
 
@@ -1072,6 +1138,73 @@ function collectEdit() {
       m[f] = f === "kickoff" ? (inp.value ? new Date(inp.value).toISOString() : "") : inp.value;
     });
   });
+}
+
+/* ---------- Desafío vikingo (al recibir un reto) ---------- */
+const SWORD_SVG = `<svg viewBox="0 0 46 210" class="sword-svg"><defs>
+  <linearGradient id="blade" x1="0" x2="1"><stop offset="0" stop-color="#8d97a6"/><stop offset=".45" stop-color="#f4f7fb"/><stop offset=".55" stop-color="#c9d1dc"/><stop offset="1" stop-color="#6b7480"/></linearGradient>
+  <linearGradient id="hilt" x1="0" x2="1"><stop offset="0" stop-color="#7a4a12"/><stop offset=".5" stop-color="#ffd36b"/><stop offset="1" stop-color="#7a4a12"/></linearGradient></defs>
+  <path d="M23 2 L31 22 L30 132 L16 132 L15 22 Z" fill="url(#blade)" stroke="#3a4250" stroke-width="1"/>
+  <path d="M23 8 L23 128" stroke="#6b7480" stroke-width="1.2" opacity=".7"/>
+  <rect x="2" y="132" width="42" height="9" rx="4" fill="url(#hilt)" stroke="#3a1a06" stroke-width="1.2"/>
+  <rect x="18" y="141" width="10" height="44" rx="3" fill="#4a2a12" stroke="#2a1406"/>
+  <path d="M18 150h10M18 158h10M18 166h10M18 174h10" stroke="#8a5a2a" stroke-width="2"/>
+  <circle cx="23" cy="193" r="9" fill="url(#hilt)" stroke="#3a1a06" stroke-width="1.2"/></svg>`;
+const SHIELD_SVG = (c1, c2) => `<svg viewBox="0 0 118 138"><defs><radialGradient id="sh${c1.slice(1)}" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></radialGradient></defs>
+  <path d="M59 4 C80 14 100 14 112 12 C114 66 100 108 59 134 C18 108 4 66 6 12 C18 14 38 14 59 4 Z" fill="url(#sh${c1.slice(1)})" stroke="#ffd36b" stroke-width="4"/>
+  <path d="M59 14 C77 22 94 22 103 21 C104 66 92 100 59 123 C26 100 14 66 15 21 C24 22 41 22 59 14 Z" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+  <g fill="#ffd36b">${[[59, 10], [108, 16], [10, 16], [104, 70], [14, 70], [59, 128]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.2"/>`).join("")}</g></svg>`;
+function showDuel(r) {
+  if (document.querySelector(".duel")) return;
+  const ph = Object.fromEntries((S.data.users || []).map((u) => [u.name, u.photo]));
+  const el = document.createElement("div");
+  el.className = "duel";
+  const runes = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ".split("").join(" ");
+  el.innerHTML = `<div class="storm"></div><div class="embers">${Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;--dx:${(Math.random() * 120 - 60).toFixed(0)}px;animation-duration:${(3 + Math.random() * 4).toFixed(1)}s;animation-delay:${(Math.random() * 4).toFixed(1)}s"></i>`).join("")}</div>
+    <div class="runes t">${runes}</div><div class="runes b">${runes}</div><div class="flash"></div>
+    <div class="din">
+    <div class="kick">⚔️ Jornada ${r.num} ⚔️</div>
+    <h1>¡Te han<br>desafiado!</h1>
+    <div class="arena">
+      <div class="army l"><img src="img/duel-l.jpg" alt="Aspas y Aubameyang"><span class="army-tag">Aspas · Aubameyang</span></div>
+      <div class="army r"><img src="img/duel-r.jpg" alt="Mbappé y Lamine Yamal"><span class="army-tag">Mbappé · Lamine</span></div>
+      <div class="crack"></div>
+      <div class="sword l">${SWORD_SVG}</div><div class="sword r">${SWORD_SVG}</div>
+      <div class="spark" style="z-index:3">${Array.from({ length: 16 }, (_, i) => `<i style="--a:${i * 22.5}deg;--d:${50 + Math.random() * 50}px"></i>`).join("")}</div>
+    </div>
+    <div class="duelists">
+      <div class="shield l">${SHIELD_SVG("#a8341b", "#4a0f06")}${avatar(r.from, ph[r.from])}</div>
+      <div class="shield r">${SHIELD_SVG("#2c4a7a", "#0d1a33")}${avatar(r.to, ph[r.to])}</div>
+    </div>
+    <div class="names"><b><small>Retador</small>${esc(r.from)}</b><span class="vs">VS</span><b><small>Tú</small>${esc(r.to)}</b></div>
+    <p class="lore"><b>${esc(r.from)}</b> ha clavado su hacha en tu puerta. En la jornada ${r.num}, el que más puntos haga <b>se lo lleva todo</b>… y el otro se queda con <b>nada</b>.</p>
+    <button class="btn-duel">🛡️ ¡A la batalla!</button></div>`;
+  document.body.appendChild(el);
+  // choque de espadas: destello, chispas y temblor
+  setTimeout(() => {
+    el.querySelector(".flash").classList.add("go"); el.querySelector(".spark").classList.add("go");
+    const din = el.querySelector(".din"); din.classList.add("shake"); if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+    setTimeout(() => din.classList.remove("shake"), 500);
+  }, 880);
+  // «¡A la batalla!» lleva directo a rellenar los resultados de esa jornada
+  el.querySelector(".btn-duel").onclick = () => {
+    S.tab = "jornada"; S.jornada = r.jornada; history.replaceState(null, "", "#jornada"); render();
+    el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => el.remove(), 350);
+    setTimeout(() => {
+      const inp = [...document.querySelectorAll(".gbox input")].find((i) => i.value === "") || document.querySelector(".gbox input");
+      if (inp) { inp.closest(".match").scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => inp.focus({ preventScroll: true }), 450); }
+      else window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 380);
+  };
+}
+function checkDuels() {
+  if (!S.data || !S.data.me) return;
+  let seen = [];
+  try { seen = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
+  const nuevo = (S.data.retos || []).find((r) => r.to === S.data.me.name && !r.done && !seen.includes(r.id));
+  if (!nuevo) return;
+  seen.push(nuevo.id); ls.set("porra_duels", JSON.stringify(seen.slice(-50)));
+  showDuel(nuevo);
 }
 
 /* ---------- Mensaje de invitación ---------- */

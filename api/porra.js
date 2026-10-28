@@ -233,7 +233,7 @@ function buildState(me, data) {
     if (!j) continue;
     const A = byKey[r.from], B = byKey[r.to];
     const done = j.matches.length && j.matches.every((m) => m.result);
-    const o = { jornada: j.id, num: j.num, from: nameOf[r.from], to: nameOf[r.to], done, started: now >= retoDeadline(j) };
+    const o = { id: r.id || (r.jornada + ":" + r.from), jornada: j.id, num: j.num, from: nameOf[r.from], to: nameOf[r.to], done, started: now >= retoDeadline(j) };
     if (done && A && B) {
       const pa = A.byJ[j.id] || 0, pb = B.byJ[j.id] || 0;
       o.ptsFrom = pa; o.ptsTo = pb;
@@ -572,7 +572,7 @@ async function handle(body) {
       if (list.filter((r) => r.from === myK && r.to === target.key).length >= RETOS_MISMO) bad(`Ya has retado ${RETOS_MISMO} veces a ${target.name}`);
       list.push({ id: crypto.randomBytes(4).toString("hex"), jornada: j.id, from: myK, to: target.key, at: now });
       // aviso al retado
-      sendPush(target.key, { title: "⚔️ ¡Te han retado!", body: `${displayOf(me)} te reta en la jornada ${j.num}. Quien haga más puntos se lleva los del otro y el que pierde se queda a 0.`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
+      sendPush(target.key, { title: "⚔️ ¡TE HAN DESAFIADO!", body: `${displayOf(me)} te reta a muerte en la jornada ${j.num}. El que gane se lo lleva todo. Abre La Porra y prepara tu escudo 🛡️`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
     }
     await setJSON(P + "retos", list);
     return buildState(me, await loadAll());
