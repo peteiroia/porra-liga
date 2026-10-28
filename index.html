@@ -1185,7 +1185,7 @@ function normasView() {
     <li>Solo se puede rellenar <b>la jornada siguiente</b>, nunca varias por adelantado.</li>
     <li>Los pronósticos del resto son <b>secretos</b> hasta que empieza el partido. Desde el pitido inicial se ven los de todos.</li>
     <li>Si activas los avisos, te llega una <b>notificación 1 hora antes</b> de cualquier partido que te falte por pronosticar.</li>
-    <li>⚡ <b>Comodín x2</b>: empiezas con <b>3 comodines</b> para toda la temporada. Actívalo en el partido que quieras antes de que cierre y ese partido te cuenta doble. Puedes moverlo a otro partido mientras siga abierto. Nadie sabe dónde lo has puesto, pero si aciertas con él, en la clasificación saldrá un <b>balón dorado</b>.</li>
+    <li>⚡ <b>Comodín x2</b>: empiezas con <b>3 comodines</b> para toda la temporada, y solo puedes usar <b>uno por jornada</b>. Actívalo en el partido que quieras antes de que cierre y ese partido te cuenta doble. Puedes moverlo a otro partido mientras siga abierto. Nadie sabe dónde lo has puesto, pero si aciertas con él, en la clasificación saldrá un <b>balón dorado</b>.</li>
     <li>🆘 <b>Comodín de consolación</b>: el <b>último</b> de cada jornada (entre los que han jugado) gana <b>un comodín x2 extra</b>. Si hay empate en la última plaza, se lo llevan todos los empatados.</li>
     <li>⭐ <b>Partidos de oro</b>: el <b>Clásico</b> (Madrid–Barça) y el <b>derbi gallego</b> (Depor–Celta) valen el doble para todos. En estos partidos <b>no se puede usar el comodín</b>.</li>
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
@@ -1668,6 +1668,14 @@ function bindMain() {
   document.querySelectorAll("[data-x2]").forEach((b) => (b.onclick = () => {
     const d = getDraft(b.dataset.x2);
     if (!d.x2) {
+      // uno por jornada: si ya hay otro activado en esta jornada, se mueve aquí
+      for (const m of j.matches) {
+        if (m.id === b.dataset.x2 || liveStatus(m) !== "open") continue;
+        const o = getDraft(m.id);
+        if (o.x2) { o.x2 = false; toast("Comodín movido a este partido (solo 1 por jornada)"); }
+      }
+      const lockedX2 = j.matches.some((m) => m.id !== b.dataset.x2 && liveStatus(m) !== "open" && m.mine && m.mine.x2);
+      if (lockedX2) { toast("Ya usaste el comodín en otro partido de esta jornada", true); return; }
       const c = S.data.me.comodines || { total: 3, used: 0 };
       const used = c.used + j.matches.reduce((n, m) => { const x = dr[m.id]; if (!x || liveStatus(m) !== "open") return n; return n + (x.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0);
       if (used >= c.total) { toast(`Ya has usado tus ${c.total} comodines de la temporada`, true); return; }

@@ -612,6 +612,8 @@ async function handle(body) {
       const p = body.picks && body.picks[m.id];
       if (p && p.x2 === false && mine[m.id] && matchStatus(j, m, now, curId) === "open") delete mine[m.id].x2;
     }
+    // Máximo un comodín por jornada
+    if (j.matches.filter((m) => mine[m.id] && mine[m.id].x2).length > 1) bad("Solo puedes usar un comodín x2 por jornada");
     const allData = await loadAll();
     const myTotal = buildState(me, allData).me.comodines.total;
     if (Object.values(mine).filter((x) => x && x.x2).length > myTotal) bad(`Solo tienes ${myTotal} comodines`);
