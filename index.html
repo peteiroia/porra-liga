@@ -926,7 +926,6 @@ function tablaView(mode) {
   }
   if (mode === "jornada") return tj ? jornadaBlock : `<div class="card empty"><span class="ball">⚽</span><p class="muted">Aún no hay jornadas en juego.</p></div>`;
   return `
-  <div class="fridama"><img src="icons/icon-192.png" alt=""><div><b>La Porra de Fridama</b><span>Temporada 2026-27</span></div></div>
   <h2 class="sec">Clasificación general ${done.length ? `<span class="chip">tras ${done.length} jornada${done.length > 1 ? "s" : ""}</span>` : ""}</h2>
   ${finished ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:30px">🏆</span><div><b style="font-size:18px">¡${esc(t[0].name)}, campeón de La Porra 2026-27!</b><span class="muted">${t[0].pts} puntos tras la jornada 38</span></div></div>`
     : `<p class="dim" style="font-size:13px;margin:-4px 2px 10px">🏆 Gana quien más puntos tenga al acabar la jornada 38 de la Liga 2026-27.</p>`}
