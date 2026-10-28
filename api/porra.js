@@ -91,7 +91,7 @@ const COMODINES = 3;
 const RETOS = 10;          // retos por jugador en toda la temporada
 const RETOS_MISMO = 2;     // máximo de retos a la misma persona
 // Plazo para retar: hasta 1 minuto antes del primer partido de la jornada
-const retoDeadline = (j) => Math.min(...j.matches.map((m) => Date.parse(m.kickoff))) - CLOSE_BEFORE;
+const retoDeadline = (j) => Math.min(...j.matches.filter((m) => !m.cancelled).map((m) => Date.parse(m.kickoff))) - CLOSE_BEFORE;
 const clubKey = (n) => {
   const t = String(n || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (/real madrid/.test(t)) return "madrid";
@@ -120,16 +120,21 @@ function scoreFor(p, m, exactCount, extra) {
 }
 const exactCountOf = (m, users, preds) =>
   m.result ? users.filter((u) => { const p = (preds[u.key] || {})[m.id]; return p && p.h === m.result.h && p.a === m.result.a; }).length : 0;
-const isLocked = (m, now) => !!m.result || (!!m.kickoff && Date.parse(m.kickoff) - CLOSE_BEFORE <= now);
+// Partidos aplazados = anulados: no puntúan ni cuentan para nada
+const live = (j) => j.matches.filter((m) => !m.cancelled);
+const allDone = (j) => live(j).length > 0 && live(j).every((m) => m.result);
+const isLocked = (m, now) => !!m.cancelled || !!m.result || (!!m.kickoff && Date.parse(m.kickoff) - CLOSE_BEFORE <= now);
 // Jornada en juego = la de número más bajo que aún tiene algún partido sin cerrar
 // (las jornadas extra van por libre y no cuentan aquí)
 const firstKo = (j) => Math.min(...j.matches.map((m) => Date.parse(m.kickoff) || Infinity));
 function currentJornadaId(jornadas, now) {
-  const open = jornadas.filter((j) => !j.extra && j.matches.some((m) => !isLocked(m, now))).sort((a, b) => a.num - b.num);
+  const nextKo = (j) => Math.min(...j.matches.filter((m) => !isLocked(m, now)).map((m) => Date.parse(m.kickoff) || Infinity));
+  const open = jornadas.filter((j) => !j.extra && j.matches.some((m) => !isLocked(m, now))).sort((a, b) => nextKo(a) - nextKo(b) || a.num - b.num);
   return open.length ? open[0].id : null;
 }
 // open | soon (aún no han pasado a faltar 7 días) | next (no es la jornada siguiente) | closed
 function matchStatus(j, m, now, curId) {
+  if (m.cancelled) return "cancelled";
   if (isLocked(m, now)) return "closed";
   if (!j.extra && j.id !== curId) return "next";
   if (m.tbc) return "tbc"; // hora por confirmar: no se abre hasta saber la hora
@@ -140,6 +145,32 @@ function goals(v) {
   const n = Number(v);
   if (!Number.isInteger(n) || n < 0 || n > 30) bad("Marcador no válido");
   return n;
+}
+
+// ---------- Recolocar partidos por fecha ----------
+// Si un partido se adelanta o se retrasa, pasa a la jornada de Liga cuya fecha
+// (mediana de sus partidos) quede más cerca. Las jornadas extra no se tocan.
+function regroup(jornadas) {
+  const liga = jornadas.filter((j) => !j.extra);
+  const med = (arr) => { const v = arr.slice().sort((a, b) => a - b); return v.length ? v[Math.floor((v.length - 1) / 2)] : null; };
+  const center = {};
+  for (const j of liga) center[j.id] = med(j.matches.filter((m) => !m.cancelled && !m.movedFrom).map((m) => Date.parse(m.kickoff)).filter(Boolean))
+    ?? med(j.matches.map((m) => Date.parse(m.kickoff)).filter(Boolean));
+  const DAY = 864e5;
+  for (const j of liga) {
+    for (const m of j.matches.slice()) {
+      const t = Date.parse(m.kickoff); if (!t || m.cancelled || m.result) continue;
+      let best = j, bd = Math.abs(t - (center[j.id] ?? t));
+      for (const o of liga) { if (center[o.id] == null) continue; const dd = Math.abs(t - center[o.id]); if (dd + 2 * DAY < bd) { best = o; bd = dd; } }
+      if (best !== j) {
+        j.matches = j.matches.filter((x) => x !== m);
+        m.movedFrom = m.movedFrom || j.num;
+        if (m.movedFrom === best.num) delete m.movedFrom;
+        best.matches.push(m); best.matches.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
+      }
+    }
+  }
+  return jornadas;
 }
 
 // ---------- Calendario oficial (data/calendario.json) ----------
@@ -156,12 +187,15 @@ async function syncCalendar(force) {
     if (!j) { j = { id: crypto.randomBytes(5).toString("hex"), num: cj.num, title: cj.title || "", matches: [] }; jornadas.push(j); }
     for (const cm of cj.matches) {
       let m = j.matches.find((x) => sameTeams(x, cm));
+      if (!m) { for (const o of jornadas) { const f = o.matches.find((x) => sameTeams(x, cm) && x.movedFrom === cj.num); if (f) { m = f; break; } } }
       if (!m) { m = { id: crypto.randomBytes(5).toString("hex"), home: cm.home, away: cm.away }; j.matches.push(m); }
+      if (cm.postponed) m.cancelled = true;
       if (!m.manual) { m.kickoff = new Date(cm.kickoff).toISOString(); m.tbc = !!cm.tbc; }
       if (cm.result && !m.result) m.result = { h: Number(cm.result.h), a: Number(cm.result.a) };
     }
     j.matches.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
   }
+  regroup(jornadas);
   await setJSON(P + "jornadas", jornadas);
   await redis(["SET", P + "calver", CAL.version]);
   return true;
@@ -190,6 +224,7 @@ function buildState(me, data) {
   const now = Date.now();
   const myKey = keyName(me.username);
   const { jornadas, preds, users, crests } = data;
+  const cancelledIds = new Set(jornadas.flatMap((j) => j.matches.filter((m) => m.cancelled).map((m) => m.id)));
   const retos = (data.retos || []).filter((r) => users.some((u) => u.key === r.from) && users.some((u) => u.key === r.to));
   const nameOf = Object.fromEntries(users.map((u) => [u.key, u.name]));
   // orden por fecha (las extra se intercalan donde caigan)
@@ -201,7 +236,7 @@ function buildState(me, data) {
   for (const j of jornadas) {
     for (const r of table) r.byJ[j.id] = 0;
     for (const m of j.matches) {
-      if (!m.result) continue;
+      if (!m.result || m.cancelled) continue;
       const ec = exactCountOf(m, users, preds);
       for (const r of table) {
         const p = (preds[r.key] || {})[m.id];
@@ -217,11 +252,11 @@ function buildState(me, data) {
     }
     // Pleno de jornada (cuando están todos los resultados):
     //   todos los signos acertados → +1 · todos los resultados exactos → +3 (en lugar del +1)
-    if (!j.extra && j.matches.length && j.matches.every((m) => m.result)) {
+    if (!j.extra && allDone(j)) {
       for (const r of table) {
-        const ps = j.matches.map((m) => (preds[r.key] || {})[m.id]);
+        const ps = live(j).map((m) => (preds[r.key] || {})[m.id]);
         if (ps.some((p) => !p)) continue;
-        const bases = j.matches.map((m, i) => points(ps[i], m.result));
+        const bases = live(j).map((m, i) => points(ps[i], m.result));
         const bonus = bases.every((b) => b === 3) ? 3 : bases.every((b) => b >= 1) ? 1 : 0;
         if (!bonus) continue;
         r.byJ[j.id] += bonus; r.pts += bonus;
@@ -238,7 +273,7 @@ function buildState(me, data) {
     const j = jornadas.find((x) => x.id === r.jornada);
     if (!j) continue;
     const A = byKey[r.from], B = byKey[r.to];
-    const done = j.matches.length && j.matches.every((m) => m.result);
+    const done = allDone(j);
     const o = { id: r.id || (r.jornada + ":" + r.from), jornada: j.id, num: j.num, from: nameOf[r.from], to: nameOf[r.to], done, started: now >= retoDeadline(j) };
     if (done && A && B) {
       const pa = A.byJ[j.id] || 0, pb = B.byJ[j.id] || 0;
@@ -264,8 +299,8 @@ function buildState(me, data) {
   const jWinners = {}, jTop = {};
   // Campeón de jornada: el que más puntos hace en cada jornada de Liga terminada (empates cuentan para todos)
   for (const j of jornadas) {
-    if (j.extra || !j.matches.length || !j.matches.every((m) => m.result)) continue;
-    const played = table.filter((r) => j.matches.some((m) => (preds[r.key] || {})[m.id]));
+    if (j.extra || !allDone(j)) continue;
+    const played = table.filter((r) => live(j).some((m) => (preds[r.key] || {})[m.id]));
     if (!played.length) continue;
     const top = Math.max(...played.map((r) => r.byJ[j.id] || 0));
     if (top <= 0) continue;
@@ -277,8 +312,8 @@ function buildState(me, data) {
   // si todos empatan, nadie.
   const extraX2 = {}, lastOf = {};
   for (const j of jornadas) {
-    if (j.extra || !j.matches.length || !j.matches.every((m) => m.result)) continue;
-    const played = table.filter((r) => j.matches.some((m) => (preds[r.key] || {})[m.id]));
+    if (j.extra || !allDone(j)) continue;
+    const played = table.filter((r) => live(j).some((m) => (preds[r.key] || {})[m.id]));
     if (played.length < 2) continue;
     const pts = played.map((r) => r.byJ[j.id] || 0), min = Math.min(...pts), max = Math.max(...pts);
     if (min === max) continue;
@@ -288,12 +323,28 @@ function buildState(me, data) {
 
   const doneJ = jornadas.filter((j) => j.matches.some((m) => m.result));
   const lastJ = doneJ[doneJ.length - 1];
+  // Desempate a puntos:
+  //   · entre 2 jugadores: 1º quien haya ganado más retos entre ellos, 2º más resultados exactos
+  //   · entre 3 o más: más resultados exactos
+  const h2h = (x, y) => retoOut.filter((o) => o.winner === x.name && o.loser === y.name).length;
   const cmp = (a, b, f) => f(b) - f(a) || b.exact - a.exact || a.name.localeCompare(b.name);
-  table.sort((a, b) => cmp(a, b, (r) => r.pts));
+  const rankBy = (f) => {
+    const sorted = [...table].sort((a, b) => f(b) - f(a));
+    const out = [];
+    for (let i = 0; i < sorted.length; ) {
+      let k = i; while (k < sorted.length && f(sorted[k]) === f(sorted[i])) k++;
+      const grp = sorted.slice(i, k);
+      if (grp.length === 2) grp.sort((a, b) => (h2h(b, a) - h2h(a, b)) || b.exact - a.exact || a.name.localeCompare(b.name));
+      else grp.sort((a, b) => b.exact - a.exact || a.name.localeCompare(b.name));
+      out.push(...grp); i = k;
+    }
+    return out;
+  };
+  const ranked = rankBy((r) => r.pts);
+  table.length = 0; table.push(...ranked);
   table.forEach((r, i) => (r.pos = i + 1));
   if (lastJ) {
-    [...table].sort((a, b) => cmp(a, b, (r) => r.pts - (r.byJ[lastJ.id] || 0)))
-      .forEach((r, i) => (byKey[r.key].prevPos = i + 1));
+    rankBy((r) => r.pts - (r.byJ[lastJ.id] || 0)).forEach((r, i) => (byKey[r.key].prevPos = i + 1));
   }
 
   const curId = currentJornadaId(jornadas, now);
@@ -306,20 +357,21 @@ function buildState(me, data) {
     matches: j.matches.map((m) => {
       const locked = isLocked(m, now);
       // Los pronósticos de los demás solo se ven cuando el partido ha empezado
-      const started = !!m.result || (!!m.kickoff && Date.parse(m.kickoff) <= now);
+      const started = !m.cancelled && (!!m.result || (!!m.kickoff && Date.parse(m.kickoff) <= now));
       const others = {};
       const ec = exactCountOf(m, users, preds);
       if (started) {
         for (const u of users) {
           const p = (preds[u.key] || {})[m.id];
-          if (p) { const sc = scoreFor(p, m, ec, j.extra); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false, gold: !!(sc && sc.comodin) }; }
+          if (p && !m.cancelled) { const sc = scoreFor(p, m, ec, j.extra); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false, gold: !!(sc && sc.comodin) }; }
         }
       }
       const myP = (preds[myKey] || {})[m.id] || null;
-      const mySc = scoreFor(myP, m, ec, j.extra);
+      const mySc = m.cancelled ? null : scoreFor(myP, m, ec, j.extra);
       const ko = m.kickoff ? Date.parse(m.kickoff) : null;
       return {
-        id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.result || null, tbc: !!m.tbc,
+        id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.cancelled ? null : m.result || null, tbc: !!m.tbc,
+        cancelled: !!m.cancelled, movedFrom: m.movedFrom || null,
         locked, started, status: matchStatus(j, m, now, curId),
         opensAt: ko && ko - OPEN_BEFORE, closesAt: ko && ko - CLOSE_BEFORE,
         mine: myP, myScore: mySc, golden: goldenOf(m), others,
@@ -330,7 +382,7 @@ function buildState(me, data) {
 
   return {
     me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
-      comodines: { total: COMODINES + (extraX2[myKey] || 0), extra: extraX2[myKey] || 0, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length },
+      comodines: { total: COMODINES + (extraX2[myKey] || 0), extra: extraX2[myKey] || 0, used: Object.entries(preds[myKey] || {}).filter(([mid, p]) => p && p.x2 && !cancelledIds.has(mid)).length },
       retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
     // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
@@ -613,10 +665,11 @@ async function handle(body) {
       if (p && p.x2 === false && mine[m.id] && matchStatus(j, m, now, curId) === "open") delete mine[m.id].x2;
     }
     // Máximo un comodín por jornada
-    if (j.matches.filter((m) => mine[m.id] && mine[m.id].x2).length > 1) bad("Solo puedes usar un comodín x2 por jornada");
+    if (live(j).filter((m) => mine[m.id] && mine[m.id].x2).length > 1) bad("Solo puedes usar un comodín x2 por jornada");
     const allData = await loadAll();
     const myTotal = buildState(me, allData).me.comodines.total;
-    if (Object.values(mine).filter((x) => x && x.x2).length > myTotal) bad(`Solo tienes ${myTotal} comodines`);
+    const cancelledNow = new Set(jornadas.flatMap((jj) => jj.matches.filter((m) => m.cancelled).map((m) => m.id)));
+    if (Object.entries(mine).filter(([mid, x]) => x && x.x2 && !cancelledNow.has(mid)).length > myTotal) bad(`Solo tienes ${myTotal} comodines`);
     await redis(["HSET", P + "preds", k, JSON.stringify(mine)]);
     return { saved, skipped, ...buildState(me, await loadAll()) };
   }
@@ -656,6 +709,7 @@ async function handle(body) {
       j = { id: crypto.randomBytes(5).toString("hex"), num, extra: isExtra, title: normName(body.title).slice(0, 40), matches: matches.map((m) => ({ ...m, manual: true })) };
       jornadas.push(j);
     }
+    regroup(jornadas);
     await setJSON(P + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
@@ -682,6 +736,15 @@ async function handle(body) {
     const i = jornadas.findIndex((x) => x.id === body.id);
     if (i < 0) bad("Jornada no encontrada");
     jornadas.splice(i, 1);
+    await setJSON(P + "jornadas", jornadas);
+    return buildState(me, await loadAll());
+  }
+
+  if (a === "setCancelled") {
+    const j = jornadas.find((x) => x.id === body.jornada);
+    const m = j && j.matches.find((x) => x.id === body.match);
+    if (!m) bad("Partido no encontrado");
+    if (body.cancelled) { m.cancelled = true; delete m.result; } else delete m.cancelled;
     await setJSON(P + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
@@ -770,4 +833,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 };
-module.exports._test = { handle, setRedis: (f) => (redisImpl = f), points, runReminders };
+module.exports._test = { regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };

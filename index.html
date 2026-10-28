@@ -362,6 +362,10 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .final .podio .av{width:44px;height:44px;font-size:16px;margin-bottom:4px}
 .final .btn-final{position:relative;z-index:7;border:0;border-radius:14px;padding:14px 28px;font-family:"Barlow Condensed";font-weight:800;font-size:21px;letter-spacing:.06em;text-transform:uppercase;color:#2a1d00;
   background:linear-gradient(180deg,#ffe08a,#f0a12a);box-shadow:0 6px 0 #6a4206,0 0 26px rgba(255,190,60,.45);opacity:0;animation:dUp .5s 3.9s forwards}
+.chip.anul{color:var(--zero);border-color:rgba(255,107,107,.45);background:rgba(255,107,107,.1)}
+.match.anulado{opacity:.6}
+.match.anulado .crest{filter:grayscale(1)}
+.moved{margin:-2px -2px 10px;padding:6px 10px;border-radius:10px;text-align:center;font-size:12.5px;font-weight:700;color:#cfe3ff;background:rgba(92,184,255,.12);border:1px solid rgba(92,184,255,.35)}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -443,7 +447,7 @@ function picksGrid(j, rows) {
   const d = S.data;
   const code = (n) => { const k = kitOf(n); return k ? k.short : initials(n).slice(0, 3); };
   const head = j.matches.map((m) => `<th class="mcol"><div class="mc">${crest(m.home, true)}${crest(m.away, true)}</div><div>${esc(code(m.home))}-${esc(code(m.away))}</div>
-    <div class="mres ${m.result ? "" : "dim"}">${m.result ? `${m.result.h}-${m.result.a}` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
+    <div class="mres ${m.result ? "" : "dim"}">${m.cancelled ? "anulado" : m.result ? `${m.result.h}-${m.result.a}` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
   const body = rows.map((r) => {
     const cells = j.matches.map((m) => {
       const isMe = r.name === d.me.name;
@@ -451,6 +455,7 @@ function picksGrid(j, rows) {
       let gold = false;
       if (isMe && m.mine) { p = m.mine; pts = m.myScore ? m.myScore.pts : null; uni = m.myScore && m.myScore.unique; gold = !!(m.myScore && m.myScore.comodin); }
       else if (m.others && m.others[r.name]) { const o = m.others[r.name]; p = o; pts = o.pts; uni = o.unique; gold = !!o.gold; }
+      if (m.cancelled) return `<td class="pc"><span class="dim" style="font-size:11px">anulado</span></td>`;
       if (!p) return `<td class="pc">${m.started || isMe ? `<span class="dim">—</span>` : `<span title="Oculto hasta que empiece">🔒</span>`}</td>`;
       const cls = pts == null ? "pend" : pts >= 3 ? "g3" : pts >= 1 ? "g1" : "g0";
       return `<td class="pc"><span class="pk2 ${cls}">${p.h}-${p.a}</span>${pts != null ? `<small>+${pts}${gold ? '<i class="gball" title="Acertado con comodín"></i>' : ""}${uni ? "🦄" : ""}</small>` : ""}</td>`;
@@ -906,6 +911,7 @@ function bindProfileSetup() {
 /* ---------- Jornada ---------- */
 function curJ() { return S.data.jornadas.find((j) => j.id === S.jornada); }
 function liveStatus(m) {
+  if (m.cancelled) return "cancelled";
   // El servidor manda el estado; aquí lo afinamos con el reloj para que cierre solo al llegar la hora
   const now = serverNow();
   if (m.result) return "final";
@@ -952,6 +958,7 @@ function matchCard(j, m, drafts) {
   else if (st === "soon") chip = `<span class="chip">🔒 Abre ${new Date(m.opensAt).toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}</span>`;
   else if (st === "next") chip = `<span class="chip">🔒 Próximamente</span>`;
   else if (st === "tbc") chip = `<span class="chip">🕒 Hora por confirmar</span>`;
+  else if (st === "cancelled") chip = `<span class="chip anul">🚫 Anulado</span>`;
   else if (st === "closed") chip = `<span class="chip warn">🔒 Cerrado</span>`;
   else if (st === "live") chip = `<span class="chip live">En juego</span>`;
   else chip = `<span class="chip done">Final</span>`;
@@ -962,7 +969,8 @@ function matchCard(j, m, drafts) {
     const g = (side) => `<div class="gbox"><input type="number" inputmode="numeric" min="0" max="30" data-m="${m.id}" data-side="${side}" value="${dv[side]}" aria-label="Goles ${side === "h" ? esc(m.home) : esc(m.away)}" placeholder="–">
       <div class="pm"><button type="button" data-step="-1" data-m="${m.id}" data-side="${side}" aria-label="Menos">−</button><button type="button" data-step="1" data-m="${m.id}" data-side="${side}" aria-label="Más">+</button></div></div>`;
     center = `<div class="score">${g("h")}<span class="dash">:</span>${g("a")}</div>`;
-  } else if (m.result) center = `<div class="bigscore cond">${m.result.h}<span style="color:var(--dim)">-</span>${m.result.a}</div>`;
+  } else if (st === "cancelled") center = `<div class="bigscore pending cond" style="font-size:22px;color:var(--zero)">APLAZADO</div>`;
+  else if (m.result) center = `<div class="bigscore cond">${m.result.h}<span style="color:var(--dim)">-</span>${m.result.a}</div>`;
   else center = `<div class="bigscore pending cond">${st === "live" ? "· ·" : "vs"}</div>`;
 
   let foot = "";
@@ -972,6 +980,7 @@ function matchCard(j, m, drafts) {
     foot = `<div class="mfoot">${m.mine ? `<span class="muted">✅ Guardado: <b style="color:#fff">${m.mine.h}-${m.mine.a}</b>${m.mine.x2 ? " ⚡" : ""}</span>` : `<span class="muted">Sin pronóstico todavía</span>`}<span class="lockmsg">👀 ${m.count} de ${S.data.users.length}</span></div>
       ${m.golden ? "" : `<button type="button" class="x2btn ${on ? "on" : ""}" data-x2="${m.id}">⚡ ${on ? "Comodín x2 activado" : "Usar comodín x2"}</button>`}`;
   }
+  else if (st === "cancelled") foot = `<div class="mfoot"><span class="lockmsg">🚫 Partido aplazado: queda <b>anulado</b> y no cuenta para la porra${m.mine && m.mine.x2 ? ". Te devolvemos el comodín ⚡" : ""}.</span></div>`;
   else if (st === "soon" || st === "next" || st === "tbc") foot = `<div class="mfoot"><span class="lockmsg">${st === "soon" ? "Se podrá pronosticar 7 días antes del partido" : st === "tbc" ? "Se abrirá cuando LaLiga confirme la hora" : "Solo se puede pronosticar la jornada siguiente"}</span></div>`;
   else {
     const sc = m.myScore || (m.result ? { pts: 0, base: 0 } : null);
@@ -989,7 +998,8 @@ function matchCard(j, m, drafts) {
     }
   }
 
-  return `<div class="card match"><div class="stripe">${stripe}</div>
+  return `<div class="card match ${st === "cancelled" ? "anulado" : ""}"><div class="stripe">${stripe}</div>
+    ${m.movedFrom ? `<div class="moved">📅 Partido de la jornada ${m.movedFrom}, movido a esta por su nueva fecha</div>` : ""}
     ${m.golden ? `<div class="golden">⭐ ${m.golden} · partido de oro: vale el doble</div>` : ""}
     <div class="mhead"><span class="when">${!m.kickoff ? "Fecha por confirmar" : m.tbc ? "Hacia el " + new Date(m.kickoff).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : fmtWhen(m.kickoff)}</span>${chip}</div>
     <div class="mbody">
@@ -1009,6 +1019,8 @@ function myResources(extraX2 = 0) {
   return `<div class="card res-card">${resBar("⚡", "Comodines x2", c.total, c.used + extraX2, "x2")}${resBar("⚔️", "Retos", r.total, r.used, "rt")}
     <p class="dim" style="font-size:11px;margin:6px 0 0;text-align:right">🔒 Solo tú ves lo que te queda</p></div>`;
 }
+const liveM = (j) => j.matches.filter((m) => !m.cancelled);
+const jDone = (j) => liveM(j).length > 0 && liveM(j).every((m) => m.result);
 const jName = (j) => (j.extra ? `⭐ ${j.title || "Jornada extra"}` : `Jornada ${j.num}`);
 const jNameLow = (j) => (j.extra ? (j.title || "jornada extra") : `jornada ${j.num}`);
 // ---------- Retos ----------
@@ -1050,7 +1062,7 @@ const ptsChip = (p) => `<span class="chip pts p${p}">${p === 3 ? "+3 🎯" : "+"
 function jornadaPoints(j) {
   if (!j.matches.some((m) => m.result)) return "";
   const rows = S.data.table.map((r) => ({ ...r, jp: r.byJ[j.id] || 0 })).sort((a, b) => b.jp - a.jp || a.name.localeCompare(b.name));
-  const fin = j.matches.every((m) => m.result), top = rows.length ? rows[0].jp : 0;
+  const fin = jDone(j), top = rows.length ? rows[0].jp : 0;
   const ws = fin && top > 0 ? rows.filter((r) => r.jp === top) : [];
   return `<h2 class="sec">Puntos · ${esc(jNameLow(j))}</h2><div class="card">
     ${ws.length ? `<div class="winner">${ws.map((w) => avatar(w.name, w.photo, "md")).join("")}<div><span>🏆 ${ws.length > 1 ? "Ganadores" : "Ganador"} de la jornada</span><b>${ws.map((w) => esc(w.name)).join(" y ")}</b><small>${top} puntos</small></div></div>` : ""}
@@ -1067,7 +1079,7 @@ function tablaView(mode) {
   const last = doneLiga[doneLiga.length - 1];
   const podium = t.slice(0, 3);
   const finalJ = d.jornadas.find((j) => !j.extra && j.num === 38);
-  const finished = finalJ && finalJ.matches.length && finalJ.matches.every((m) => m.result);
+  const finished = finalJ && jDone(finalJ);
   const pod = (r, g) => r ? `<div class="pod g${g}">${g === 1 ? `<div class="crown">👑</div>` : ""}${avatar(r.name, r.photo, g === 1 ? "lg" : "md")}<div class="nm">${esc(r.name)}</div><div class="pp" style="color:${g === 1 ? "var(--gold)" : "#fff"}">${r.pts} pts</div><div class="step">${g}</div></div>` : `<div></div>`;
   const mv = (r) => {
     if (!r.prevPos) return "";
@@ -1086,7 +1098,7 @@ function tablaView(mode) {
   let jornadaBlock = "";
   if (tj) {
     const ji = jlist.indexOf(tj);
-    const finished = tj.matches.every((m) => m.result);
+    const finished = jDone(tj);
     const started = tj.matches.some((m) => m.result);
     const rowsJ = t.map((r) => ({ ...r, jp: r.byJ[tj.id] || 0 })).sort((a, b) => b.jp - a.jp || a.name.localeCompare(b.name));
     const best = rowsJ.length ? rowsJ[0].jp : 0;
@@ -1112,7 +1124,7 @@ function tablaView(mode) {
         const lead = a > b ? r.from : b > a ? r.to : null;
         const res = r.done ? (r.winner ? `<span class="chip pts p3">${r.gain ? `${esc(r.winner)} +${r.gain}` : `Gana ${esc(r.winner)}`}</span>` : `<span class="chip">Empate</span>`) : `<span class="chip">${lead ? `Va ganando ${esc(lead)}` : "Empatados"}</span>`;
         return `<div class="orow" style="flex-wrap:wrap">${avatar(r.from, ph[r.from], "sm")}<span class="nm" style="flex:1">${esc(r.from)}</span><span class="cond" style="font-weight:800;font-size:19px">${a} ⚔️ ${b}</span><span class="nm" style="flex:1;text-align:right">${esc(r.to)}</span>${avatar(r.to, ph[r.to], "sm")}<div style="width:100%;text-align:center;margin-top:4px">${res}</div></div>`;
-      }).join("")}</div><p class="dim" style="font-size:12px;margin:8px 0 0">El que reta va a la izquierda. ${tj.matches.every((m) => m.result) ? "" : "Marcadores provisionales hasta que acabe la jornada."}</p></div>`;
+      }).join("")}</div><p class="dim" style="font-size:12px;margin:8px 0 0">El que reta va a la izquierda. ${jDone(tj) ? "" : "Marcadores provisionales hasta que acabe la jornada."}</p></div>`;
     })()}`;
   }
   if (mode === "jornada") return tj ? jornadaBlock : `<div class="card empty"><span class="ball">⚽</span><p class="muted">Aún no hay jornadas en juego.</p></div>`;
@@ -1128,7 +1140,7 @@ function tablaView(mode) {
     <tbody>${t.map((r) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${r.pos}${mv(r)}</td>
       <td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>
       <td>${r.exact}</td><td>${r.jWins || 0}</td><td>${r.retoWins || 0}</td><td class="tot">${r.pts}</td></tr>`).join("")}</tbody></table>
-    <div class="legend"><span>🎯 resultados exactos</span><span>🏆 veces campeón de jornada</span><span>⚔️ retos ganados</span><span>Los puntos incluyen comodines, bonus y retos · empate a puntos: más exactos</span></div>
+    <div class="legend"><span>🎯 resultados exactos</span><span>🏆 veces campeón de jornada</span><span>⚔️ retos ganados</span><span>Los puntos incluyen comodines, bonus y retos · empate entre 2: retos entre ellos y luego exactos · entre 3 o más: exactos</span></div>
   </div>
   ${done.length > 1 ? `<h2 class="sec">Jornada a jornada</h2><div class="card"><div class="scrollx"><table class="tbl matrix"><thead><tr><th>#</th><th>Jugador</th>${done.map((j) => `<th>${j.extra ? "⭐" : "J" + j.num}</th>`).join("")}<th>Total</th></tr></thead>
     <tbody>${t.map((r) => {
@@ -1144,7 +1156,7 @@ function picksGrid(j, rows) {
   const d = S.data;
   const code = (n) => { const k = kitOf(n); return k ? k.short : initials(n).slice(0, 3); };
   const head = j.matches.map((m) => `<th class="mcol"><div class="mc">${crest(m.home, true)}${crest(m.away, true)}</div><div>${esc(code(m.home))}-${esc(code(m.away))}</div>
-    <div class="mres ${m.result ? "" : "dim"}">${m.result ? `${m.result.h}-${m.result.a}` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
+    <div class="mres ${m.result ? "" : "dim"}">${m.cancelled ? "anulado" : m.result ? `${m.result.h}-${m.result.a}` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
   const body = rows.map((r) => {
     const cells = j.matches.map((m) => {
       const isMe = r.name === d.me.name;
@@ -1152,6 +1164,7 @@ function picksGrid(j, rows) {
       let gold = false;
       if (isMe && m.mine) { p = m.mine; pts = m.myScore ? m.myScore.pts : null; uni = m.myScore && m.myScore.unique; gold = !!(m.myScore && m.myScore.comodin); }
       else if (m.others && m.others[r.name]) { const o = m.others[r.name]; p = o; pts = o.pts; uni = o.unique; gold = !!o.gold; }
+      if (m.cancelled) return `<td class="pc"><span class="dim" style="font-size:11px">anulado</span></td>`;
       if (!p) return `<td class="pc">${m.started || isMe ? `<span class="dim">—</span>` : `<span title="Oculto hasta que empiece">🔒</span>`}</td>`;
       const cls = pts == null ? "pend" : pts >= 3 ? "g3" : pts >= 1 ? "g1" : "g0";
       return `<td class="pc"><span class="pk2 ${cls}">${p.h}-${p.a}</span>${pts != null ? `<small>+${pts}${gold ? '<i class="gball" title="Acertado con comodín"></i>' : ""}${uni ? "🦄" : ""}</small>` : ""}</td>`;
@@ -1194,9 +1207,11 @@ function normasView() {
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
     <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. En cada jornada puedes retar a <b>un</b> jugador, antes de que empiece el primer partido. A cada jugador solo le puede retar <b>una</b> persona por jornada, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
+    <li>🚫 <b>Partidos aplazados</b>: si aplazan un partido, queda <b>anulado</b>. No suma puntos a nadie, no cuenta para los plenos y, si le pusiste el comodín, se te devuelve.</li>
+    <li>📅 <b>Cambios de fecha</b>: si un partido se adelanta o se retrasa, pasa a la <b>jornada más cercana</b> a la fecha en que se juega.</li>
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
     <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último.</li>
-    <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
+    <li>La clasificación suma todas las jornadas. <b>Empates a puntos</b>: si empatan <b>dos</b>, va delante quien haya <b>ganado más retos entre ellos</b>; si siguen empatados, quien tenga <b>más resultados exactos</b>. Si empatan <b>tres o más</b>, va delante quien tenga <b>más resultados exactos</b>.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
   <div class="card"><div class="row" style="justify-content:space-around;text-align:center">
@@ -1251,8 +1266,8 @@ function adminView() {
     ${j.matches.map((m) => {
       const started = Date.parse(m.kickoff) <= now;
       return `<div class="res-row"><div class="tm">${esc(m.home)} – ${esc(m.away)}<div class="dim" style="font-size:12px;text-transform:capitalize">${m.tbc ? "Hora por confirmar" : fmtWhen(m.kickoff)} · ${m.count} pronósticos</div></div>
-      ${started ? `<input type="number" inputmode="numeric" min="0" id="rh-${m.id}" value="${m.result ? m.result.h : ""}"><input type="number" inputmode="numeric" min="0" id="ra-${m.id}" value="${m.result ? m.result.a : ""}">
-      <button class="btn small ${m.result ? "" : "gold"}" data-res="${j.id}|${m.id}">${m.result ? "✓" : "Poner"}</button>` : `<span class="chip">Sin empezar</span>`}</div>`;
+      ${m.cancelled ? `<span class="chip anul">Anulado</span><button class="btn small" data-anul="${j.id}|${m.id}|0">Reactivar</button>` : started ? `<input type="number" inputmode="numeric" min="0" id="rh-${m.id}" value="${m.result ? m.result.h : ""}"><input type="number" inputmode="numeric" min="0" id="ra-${m.id}" value="${m.result ? m.result.a : ""}">
+      <button class="btn small ${m.result ? "" : "gold"}" data-res="${j.id}|${m.id}">${m.result ? "✓" : "Poner"}</button><button class="btn small danger" title="Aplazado: anular" data-anul="${j.id}|${m.id}|1">🚫</button>` : `<span class="chip">Sin empezar</span><button class="btn small danger" title="Aplazado: anular" data-anul="${j.id}|${m.id}|1">🚫</button>`}</div>`;
     }).join("")}</div>`).join("") : `<div class="card muted">Crea una jornada para poder meter resultados.</div>`}
   <h2 class="sec">Todas las jornadas</h2>
   <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">${esc(jName(j))} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
@@ -1482,7 +1497,7 @@ function checkDuels() {
   if (fin) { seen.push("res:" + fin.id); ls.set("porra_duels", JSON.stringify(seen.slice(-80))); showHeist(fin); return; }
   // gran final: cuando acaba la jornada 38, a todos les sale la entrega del balón de oro (una vez)
   const j38 = (S.data.jornadas || []).find((j) => !j.extra && j.num === 38);
-  if (j38 && j38.matches.length && j38.matches.every((m) => m.result) && S.data.table.length && !seen.includes("final")) {
+  if (j38 && jDone(j38) && S.data.table.length && !seen.includes("final")) {
     seen.push("final"); ls.set("porra_duels", JSON.stringify(seen.slice(-80))); showFinal(); return;
   }
   // campeón de jornada (solo la primera vez que entras tras ganarla)
@@ -1781,6 +1796,11 @@ function bindMain() {
     try { setData(await api("deleteJornada", { id: S.editJ.id })); S.editJ = null; S.jornada = null; setData(S.data); render(); toast("Jornada borrada"); }
     catch (err) { toast(err.message, true); }
   };
+  document.querySelectorAll("[data-anul]").forEach((b) => (b.onclick = async () => {
+    const [jid, mid, v] = b.dataset.anul.split("|");
+    if (v === "1" && !confirm("¿Marcar este partido como aplazado? Quedará ANULADO y no contará para nadie.")) return;
+    try { setData(await api("setCancelled", { jornada: jid, match: mid, cancelled: v === "1" })); render(); toast(v === "1" ? "Partido anulado" : "Partido reactivado"); } catch (err) { toast(err.message, true); }
+  }));
   document.querySelectorAll("[data-res]").forEach((b) => (b.onclick = async () => {
     const [jid, mid] = b.dataset.res.split("|");
     const h = $("#rh-" + mid).value, a = $("#ra-" + mid).value;
