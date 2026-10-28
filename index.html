@@ -172,6 +172,11 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .resbar.x2 .rb-h b{color:var(--gold)} .resbar.rt .rb-h b{color:#ff7b7b}
 .invite{margin-bottom:14px;border-color:rgba(255,214,102,.4);background:linear-gradient(160deg,rgba(255,214,102,.1),var(--card) 60%)}
 .code-box{font-family:"Barlow Condensed";font-weight:800;font-size:40px;letter-spacing:.35em;text-align:center;padding:10px 0 10px .35em;border-radius:14px;background:rgba(0,0,0,.35);border:1px dashed rgba(255,214,102,.5);color:var(--gold)}
+.fridama{display:flex;align-items:center;gap:12px;margin:14px 2px 4px}
+.fridama img{width:52px;height:52px;border-radius:24%;box-shadow:0 0 0 1px rgba(255,214,102,.45),0 6px 16px rgba(0,0,0,.4)}
+.fridama b{display:block;font-family:"Barlow Condensed";font-weight:800;font-size:28px;line-height:1;text-transform:uppercase;letter-spacing:.04em;
+  background:linear-gradient(180deg,#fff6c8,#ffd65c 45%,#e8a61c 65%,#b0700a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fridama span{font-size:13px;color:var(--mut);font-weight:600}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -868,6 +873,7 @@ function tablaView() {
     })()}`;
   }
   return `
+  <div class="fridama"><img src="icons/icon-192.png" alt=""><div><b>La Porra de Fridama</b><span>Temporada 2026-27</span></div></div>
   ${jornadaBlock}
   <h2 class="sec">Clasificación general ${done.length ? `<span class="chip">tras ${done.length} jornada${done.length > 1 ? "s" : ""}</span>` : ""}</h2>
   ${finished ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:30px">🏆</span><div><b style="font-size:18px">¡${esc(t[0].name)}, campeón de La Porra 2026-27!</b><span class="muted">${t[0].pts} puntos tras la jornada 38</span></div></div>`
