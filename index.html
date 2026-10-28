@@ -302,6 +302,10 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .heist .btn-heist{position:relative;border:0;border-radius:14px;padding:14px 26px;font-family:"Barlow Condensed";font-weight:800;font-size:21px;letter-spacing:.06em;text-transform:uppercase;opacity:0;animation:dUp .5s 1.9s ease-out forwards}
 .heist.win .btn-heist{color:#2a1d00;background:linear-gradient(180deg,#ffe08a,#f0a12a);box-shadow:0 6px 0 #6a4206,0 0 26px rgba(255,190,60,.45)}
 .heist.lose .btn-heist{color:#fff;background:linear-gradient(180deg,#e2474f,#a3161f);box-shadow:0 6px 0 #4a070b}
+.wn{display:flex;flex-direction:column;min-width:0}
+.bd{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--mut)}
+.bd i{font-style:normal;opacity:.8}
+.bd .rw{color:var(--ok)}.bd .rl{color:var(--zero)}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -398,6 +402,20 @@ function picksGrid(j, rows) {
   }).join("");
   return `<h2 class="sec">Resultados de cada jugador</h2><div class="card"><div class="scrollx"><table class="tbl grid"><thead><tr><th>Jugador</th>${head}<th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>
     <div class="legend"><span><i class="lgd g3"></i>exacto</span><span><i class="lgd g1"></i>signo</span><span><i class="lgd g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
+}
+
+// Desglose de puntos de un jugador en una jornada
+function bdLine(r, j) {
+  const b = (r.bd && r.bd[j.id]) || (r.retoJ && j.id in r.retoJ ? { partidos: 0, unico: 0, pleno: 0, reto: r.retoJ[j.id], exactos: 0, signos: 0 } : null);
+  if (!b) return "";
+  const parts = [];
+  parts.push(`<span title="Puntos de los partidos (incluye partidos de oro y comodines)">⚽ ${b.partidos}${b.exactos || b.signos ? ` <i>(${b.exactos ? b.exactos + "🎯" : ""}${b.exactos && b.signos ? " " : ""}${b.signos ? b.signos + "✓" : ""})</i>` : ""}</span>`);
+  if (b.unico) parts.push(`<span title="Acierto único">🦄 +${b.unico}</span>`);
+  if (b.pleno) parts.push(`<span title="Pleno de jornada">${b.pleno === 3 ? "🏆" : "🎉"} +${b.pleno}</span>`);
+  const lost = r.lostJ && r.lostJ[j.id], won = r.retoJ && j.id in r.retoJ && !lost;
+  if (lost) parts.push(`<span title="Reto perdido" class="rl">⚔️ −${Math.abs(b.reto)}</span>`);
+  else if (won) parts.push(`<span title="Reto ganado" class="rw">⚔️ +${b.reto}</span>`);
+  return parts.length ? `<small class="bd">${parts.join("")}</small>` : "";
 }
 
 /* ---------- Normas ---------- */
@@ -1019,9 +1037,9 @@ function tablaView(mode) {
         <button class="btn" data-tj="${ji + 1}" ${ji >= jlist.length - 1 ? "disabled" : ""} aria-label="Siguiente">›</button></div>
       ${finished && best > 0 ? (() => { const ws = rowsJ.filter((r) => r.jp === best); return `<div class="winner">${ws.map((w) => avatar(w.name, w.photo, "md")).join("")}<div><span>🏆 ${ws.length > 1 ? "Ganadores" : "Ganador"} · ${esc(jNameLow(tj))}</span><b>${ws.map((w) => esc(w.name)).join(" y ")}</b><small>${best} puntos</small></div></div>`; })() : ""}
       <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
-      ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] > 0 ? " ⚔️" : ""}${r.lostJ && r.lostJ[tj.id] ? " 💀" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
+      ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<span class="wn"><b>${esc(r.name)}</b>${bdLine(r, tj)}</span>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] > 0 ? " ⚔️" : ""}${r.lostJ && r.lostJ[tj.id] ? " 💀" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
       </tbody></table>
-      <div class="legend"><span>⭐ mejor de la jornada</span><span>🎉🏆 pleno</span><span>⚔️ ganó un reto</span><span>💀 perdió un reto (se queda a 0)</span></div>
+      <div class="legend"><span>⚽ puntos de los partidos (🎯 exactos · ✓ signos; incluye partidos de oro y comodines)</span><span>🦄 acierto único</span><span>🎉🏆 pleno</span><span>⚔️ reto ganado/perdido</span><span>⭐ mejor de la jornada</span><span>💀 perdió un reto</span></div>
     </div>
     ${picksGrid(tj, rowsJ)}
     ${(() => {
@@ -1081,6 +1099,20 @@ function picksGrid(j, rows) {
   }).join("");
   return `<h2 class="sec">Resultados de cada jugador</h2><div class="card"><div class="scrollx"><table class="tbl grid"><thead><tr><th>Jugador</th>${head}<th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>
     <div class="legend"><span><i class="lgd g3"></i>exacto</span><span><i class="lgd g1"></i>signo</span><span><i class="lgd g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
+}
+
+// Desglose de puntos de un jugador en una jornada
+function bdLine(r, j) {
+  const b = (r.bd && r.bd[j.id]) || (r.retoJ && j.id in r.retoJ ? { partidos: 0, unico: 0, pleno: 0, reto: r.retoJ[j.id], exactos: 0, signos: 0 } : null);
+  if (!b) return "";
+  const parts = [];
+  parts.push(`<span title="Puntos de los partidos (incluye partidos de oro y comodines)">⚽ ${b.partidos}${b.exactos || b.signos ? ` <i>(${b.exactos ? b.exactos + "🎯" : ""}${b.exactos && b.signos ? " " : ""}${b.signos ? b.signos + "✓" : ""})</i>` : ""}</span>`);
+  if (b.unico) parts.push(`<span title="Acierto único">🦄 +${b.unico}</span>`);
+  if (b.pleno) parts.push(`<span title="Pleno de jornada">${b.pleno === 3 ? "🏆" : "🎉"} +${b.pleno}</span>`);
+  const lost = r.lostJ && r.lostJ[j.id], won = r.retoJ && j.id in r.retoJ && !lost;
+  if (lost) parts.push(`<span title="Reto perdido" class="rl">⚔️ −${Math.abs(b.reto)}</span>`);
+  else if (won) parts.push(`<span title="Reto ganado" class="rw">⚔️ +${b.reto}</span>`);
+  return parts.length ? `<small class="bd">${parts.join("")}</small>` : "";
 }
 
 /* ---------- Normas ---------- */

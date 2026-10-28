@@ -206,6 +206,9 @@ function buildState(me, data) {
         if (!p) continue;
         const sc = scoreFor(p, m, ec, j.extra);
         r.byJ[j.id] += sc.pts; r.pts += sc.pts; r.played++;
+        const bd = ((r.bd = r.bd || {})[j.id] = r.bd[j.id] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 });
+        bd.partidos += sc.pts - (sc.unique ? 1 : 0); bd.unico += sc.unique ? 1 : 0;
+        if (sc.base === 3) bd.exactos++; else if (sc.base === 1) bd.signos++;
         if (sc.base === 3) r.exact++; else if (sc.base === 1) r.signs++;
         if (sc.unique) r.unique = (r.unique || 0) + 1;
       }
@@ -221,6 +224,7 @@ function buildState(me, data) {
         if (!bonus) continue;
         r.byJ[j.id] += bonus; r.pts += bonus;
         (r.plenos = r.plenos || {})[j.id] = bonus;
+        ((r.bd = r.bd || {})[j.id] = r.bd[j.id] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 }).pleno += bonus;
       }
     }
   }
@@ -250,7 +254,10 @@ function buildState(me, data) {
     }
     retoOut.push(o);
   }
-  for (const r of table) if (r.retoPts) { r.pts += r.retoPts; for (const jid in r.retoJ) r.byJ[jid] += r.retoJ[jid]; }
+  for (const r of table) if (r.retoPts) {
+    r.pts += r.retoPts;
+    for (const jid in r.retoJ) { r.byJ[jid] += r.retoJ[jid]; ((r.bd = r.bd || {})[jid] = r.bd[jid] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 }).reto += r.retoJ[jid]; }
+  }
 
   // Campeón de jornada: el que más puntos hace en cada jornada de Liga terminada (empates cuentan para todos)
   for (const j of jornadas) {
