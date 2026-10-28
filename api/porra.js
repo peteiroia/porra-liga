@@ -222,7 +222,8 @@ function buildState(me, data) {
     }
   }
   // Retos: cuando la jornada tiene todos los resultados, quien gana el duelo
-  // suma también los puntos de esa jornada del que pierde. Empate: nada extra.
+  // se lleva los puntos de esa jornada del que pierde, y el que pierde se queda
+  // con 0 en esa jornada. Empate: cada uno se queda con lo suyo.
   const retoOut = [];
   for (const r of retos) {
     const j = jornadas.find((x) => x.id === r.jornada);
@@ -234,10 +235,13 @@ function buildState(me, data) {
       const pa = A.byJ[j.id] || 0, pb = B.byJ[j.id] || 0;
       o.ptsFrom = pa; o.ptsTo = pb;
       if (pa !== pb) {
-        const W = pa > pb ? A : B, gain = Math.min(pa, pb);
-        o.winner = W.name; o.gain = gain;
+        const W = pa > pb ? A : B, L = pa > pb ? B : A, gain = Math.min(pa, pb);
+        o.winner = W.name; o.loser = L.name; o.gain = gain;
         W.retoJ = W.retoJ || {}; W.retoJ[j.id] = (W.retoJ[j.id] || 0) + gain;
         W.retoPts = (W.retoPts || 0) + gain;
+        L.retoJ = L.retoJ || {}; L.retoJ[j.id] = (L.retoJ[j.id] || 0) - gain;   // el perdedor se queda a 0
+        L.retoPts = (L.retoPts || 0) - gain;
+        L.lostJ = L.lostJ || {}; L.lostJ[j.id] = true;
       }
     }
     retoOut.push(o);
@@ -553,7 +557,7 @@ async function handle(body) {
       if (list.filter((r) => r.from === myK && r.to === target.key).length >= RETOS_MISMO) bad(`Ya has retado ${RETOS_MISMO} veces a ${target.name}`);
       list.push({ id: crypto.randomBytes(4).toString("hex"), jornada: j.id, from: myK, to: target.key, at: now });
       // aviso al retado
-      sendPush(target.key, { title: "⚔️ ¡Te han retado!", body: `${displayOf(me)} te reta en la jornada ${j.num}. Quien haga más puntos se lleva también los del otro.`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
+      sendPush(target.key, { title: "⚔️ ¡Te han retado!", body: `${displayOf(me)} te reta en la jornada ${j.num}. Quien haga más puntos se lleva los del otro y el que pierde se queda a 0.`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
     }
     await setJSON(P + "retos", list);
     return buildState(me, await loadAll());

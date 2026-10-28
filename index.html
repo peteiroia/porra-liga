@@ -839,7 +839,7 @@ function retosCard(j) {
       const taken = new Set((d.retados || {})[j.id] || []);
       const opts = d.users.filter((u) => u.name !== me.name && !taken.has(u.name) && (R.porRival[u.name] || 0) < R.max);
       action = opts.length ? `<div class="row" style="margin-top:8px"><select class="input" id="retoTo" style="flex:1;padding:10px 12px">${opts.map((u) => `<option value="${esc(u.name)}">${esc(u.name)}${R.porRival[u.name] ? ` (ya le retaste ${R.porRival[u.name]})` : ""}</option>`).join("")}</select><button class="btn gold" id="retoGo">⚔️ Retar</button></div>
-        <p class="dim" style="font-size:12px;margin:6px 0 0">Quien haga más puntos en la jornada se lleva también los del otro. Puedes retar hasta ${fmtWhen(new Date(j.retoDeadline).toISOString())}.</p>`
+        <p class="dim" style="font-size:12px;margin:6px 0 0">Quien haga más puntos en la jornada se lleva los del otro, y el que pierde se queda a 0. Puedes retar hasta ${fmtWhen(new Date(j.retoDeadline).toISOString())}.</p>`
         : `<p class="muted" style="margin:8px 0 0;font-size:14px">No queda nadie a quien retar esta jornada.</p>`;
     }
   }
@@ -906,9 +906,9 @@ function tablaView(mode) {
         <button class="btn" data-tj="${ji + 1}" ${ji >= jlist.length - 1 ? "disabled" : ""} aria-label="Siguiente">›</button></div>
       ${finished && best > 0 ? (() => { const ws = rowsJ.filter((r) => r.jp === best); return `<div class="winner">${ws.map((w) => avatar(w.name, w.photo, "md")).join("")}<div><span>🏆 ${ws.length > 1 ? "Ganadores" : "Ganador"} de la jornada ${tj.num}</span><b>${ws.map((w) => esc(w.name)).join(" y ")}</b><small>${best} puntos</small></div></div>`; })() : ""}
       <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
-      ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] ? " ⚔️" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
+      ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] > 0 ? " ⚔️" : ""}${r.lostJ && r.lostJ[tj.id] ? " 💀" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
       </tbody></table>
-      <div class="legend"><span>⭐ mejor de la jornada</span><span>🎉🏆 pleno</span><span>⚔️ ganó un reto</span></div>
+      <div class="legend"><span>⭐ mejor de la jornada</span><span>🎉🏆 pleno</span><span>⚔️ ganó un reto</span><span>💀 perdió un reto (se queda a 0)</span></div>
     </div>
     ${picksGrid(tj, rowsJ)}
     ${(() => {
@@ -985,7 +985,7 @@ function normasView() {
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
-    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. En cada jornada puedes retar a <b>un</b> jugador, antes de que empiece el primer partido. A cada jugador solo le puede retar <b>una</b> persona por jornada, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva también los puntos del otro</b>; el que pierde suma solo los suyos. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
+    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. En cada jornada puedes retar a <b>un</b> jugador, antes de que empiece el primer partido. A cada jugador solo le puede retar <b>una</b> persona por jornada, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
