@@ -114,7 +114,9 @@ function scoreFor(p, m, exactCount, extra) {
   const base = points(p, m.result);
   const mult = goldenOf(m) ? 2 : p.x2 ? 2 : 1; // el comodín no se suma en partidos de oro
   const unique = !extra && base === 3 && exactCount === 1 ? 1 : 0;
-  return { base, pts: base * mult + unique, mult, unique: !!unique };
+  // puntos que ha dado el comodín (solo si acertó algo; en partidos de oro no hay comodín)
+  const comodin = p.x2 && !goldenOf(m) ? base : 0;
+  return { base, pts: base * mult + unique, mult, unique: !!unique, comodin };
 }
 const exactCountOf = (m, users, preds) =>
   m.result ? users.filter((u) => { const p = (preds[u.key] || {})[m.id]; return p && p.h === m.result.h && p.a === m.result.a; }).length : 0;
@@ -206,8 +208,8 @@ function buildState(me, data) {
         if (!p) continue;
         const sc = scoreFor(p, m, ec, j.extra);
         r.byJ[j.id] += sc.pts; r.pts += sc.pts; r.played++;
-        const bd = ((r.bd = r.bd || {})[j.id] = r.bd[j.id] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 });
-        bd.partidos += sc.pts - (sc.unique ? 1 : 0); bd.unico += sc.unique ? 1 : 0;
+        const bd = ((r.bd = r.bd || {})[j.id] = r.bd[j.id] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0, comodin: 0 });
+        bd.partidos += sc.pts - (sc.unique ? 1 : 0) - sc.comodin; bd.unico += sc.unique ? 1 : 0; bd.comodin = (bd.comodin || 0) + sc.comodin;
         if (sc.base === 3) bd.exactos++; else if (sc.base === 1) bd.signos++;
         if (sc.base === 3) r.exact++; else if (sc.base === 1) r.signs++;
         if (sc.unique) r.unique = (r.unique || 0) + 1;
@@ -259,6 +261,7 @@ function buildState(me, data) {
     for (const jid in r.retoJ) { r.byJ[jid] += r.retoJ[jid]; ((r.bd = r.bd || {})[jid] = r.bd[jid] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 }).reto += r.retoJ[jid]; }
   }
 
+  const jWinners = {}, jTop = {};
   // Campeón de jornada: el que más puntos hace en cada jornada de Liga terminada (empates cuentan para todos)
   for (const j of jornadas) {
     if (j.extra || !j.matches.length || !j.matches.every((m) => m.result)) continue;
@@ -266,7 +269,7 @@ function buildState(me, data) {
     if (!played.length) continue;
     const top = Math.max(...played.map((r) => r.byJ[j.id] || 0));
     if (top <= 0) continue;
-    for (const r of played) if ((r.byJ[j.id] || 0) === top) r.jWins = (r.jWins || 0) + 1;
+    for (const r of played) if ((r.byJ[j.id] || 0) === top) { r.jWins = (r.jWins || 0) + 1; (jWinners[j.id] = jWinners[j.id] || []).push(r.name); jTop[j.id] = top; }
   }
 
   // Comodín de consolación: el último de cada jornada terminada (entre los que jugaron)
@@ -298,6 +301,7 @@ function buildState(me, data) {
     id: j.id, num: j.num, title: j.title || "", extra: !!j.extra, current: j.id === curId,
     myPleno: ((byKey[myKey] || {}).plenos || {})[j.id] || 0,
     lastBonus: (lastOf[j.id] || []).includes(myKey),
+    winners: jWinners[j.id] || [], winPts: jTop[j.id] || 0,
     retoDeadline: j.matches.length ? retoDeadline(j) : null,
     matches: j.matches.map((m) => {
       const locked = isLocked(m, now);
@@ -308,7 +312,7 @@ function buildState(me, data) {
       if (started) {
         for (const u of users) {
           const p = (preds[u.key] || {})[m.id];
-          if (p) { const sc = scoreFor(p, m, ec, j.extra); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false }; }
+          if (p) { const sc = scoreFor(p, m, ec, j.extra); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false, gold: !!(sc && sc.comodin) }; }
         }
       }
       const myP = (preds[myKey] || {})[m.id] || null;
