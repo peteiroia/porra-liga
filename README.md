@@ -1,4 +1,4 @@
-# ⚽ La Porra · Madrid · Barça · Depor · Celta
+# ⚽ La Porra Madrid · Barça · Depor · Celta
 
 Porra online para pronosticar cada jornada de Primera los partidos del Real Madrid, FC Barcelona, Deportivo y Celta. Se instala como app en iPhone y Android.
 
