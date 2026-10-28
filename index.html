@@ -261,6 +261,46 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
   background:linear-gradient(180deg,#ffe08a,#f0a12a 55%,#c66a0e);box-shadow:0 0 0 2px #3a1a06,0 8px 0 #5a2406,0 0 30px rgba(255,140,40,.5);opacity:0;animation:dUp .5s 1.9s ease-out forwards}
 .duel .btn-duel:active{transform:translateY(4px);box-shadow:0 0 0 2px #3a1a06,0 4px 0 #5a2406}
 @keyframes dUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* ---------- Resultado de reto: el caco ---------- */
+.heist{position:fixed;inset:0;z-index:81;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:24px 16px calc(24px + var(--safe-b));animation:dIn .4s ease-out both}
+.heist.win{background:radial-gradient(110% 70% at 50% 40%,#5a4210 0%,#241a06 50%,#0b0803 100%)}
+.heist.lose{background:radial-gradient(110% 70% at 50% 40%,#3b0d14 0%,#1a0609 50%,#080304 100%)}
+.heist .rays{position:absolute;inset:-30%;background:repeating-conic-gradient(from 0deg at 50% 45%,rgba(255,215,90,.10) 0 8deg,transparent 8deg 20deg);animation:spin 30s linear infinite}
+.heist.lose .rays{background:repeating-conic-gradient(from 0deg at 50% 45%,rgba(255,80,80,.07) 0 8deg,transparent 8deg 20deg)}
+.heist .kick{position:relative;font-family:"Barlow Condensed";font-weight:800;letter-spacing:.3em;font-size:13px;text-transform:uppercase;opacity:0;animation:dUp .5s .1s ease-out forwards}
+.heist.win .kick{color:#ffd36b}.heist.lose .kick{color:#ff8a8a}
+.heist h1{position:relative;margin:4px 0 0;font-family:"Barlow Condensed";font-weight:800;font-size:clamp(36px,10.5vw,56px);line-height:.95;text-align:center;text-transform:uppercase;opacity:0;animation:dUp .5s .25s ease-out forwards}
+.heist.win h1{background:linear-gradient(180deg,#fff6d6,#ffd36b 45%,#d8901c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #3a2504)}
+.heist.lose h1{color:#ff5a5a;text-shadow:0 3px 0 #3a0508,0 0 22px rgba(255,60,60,.45)}
+.heist .stage{position:relative;z-index:1;width:min(100%,400px);height:230px;margin:6px 0 0}
+.heist .big,.heist p,.heist .btn-heist,.heist h1,.heist .kick{z-index:3}
+.heist .thief{position:absolute;bottom:6px;width:190px;height:210px}
+.heist.win .thief{left:50%;margin-left:-95px;animation:tIn 1.2s .3s cubic-bezier(.3,.8,.4,1) both}
+.heist.lose .thief{left:50%;margin-left:-95px;animation:tOut 2.6s .5s cubic-bezier(.5,0,.6,1) both}
+@keyframes tIn{0%{transform:translateX(-120vw)}70%{transform:translateX(12px)}100%{transform:none}}
+@keyframes tOut{0%{transform:translateX(0)}25%{transform:translateX(0)}100%{transform:translateX(130vw)}}
+.heist .thief .legs{animation:run .25s linear infinite;transform-origin:95px 150px}
+@keyframes run{50%{transform:scaleY(.94) translateY(3px)}}
+.heist .thief .bob{animation:bob .25s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.heist.win .thief .legs,.heist.win .thief .bob{animation-iteration-count:5}
+.heist .coin{position:absolute;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffcf3e 45%,#c88a0c);box-shadow:inset 0 0 0 3px rgba(150,95,0,.55),0 2px 4px rgba(0,0,0,.5);opacity:0}
+.heist .coin::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid rgba(154,98,0,.55)}
+.heist.win .coin{top:-30px;animation:fall 1.6s ease-in forwards}
+@keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0)}80%{opacity:1}100%{opacity:0;transform:translateY(var(--y)) rotate(540deg)}}
+.heist.lose .coin{animation:fly 1.1s ease-out forwards}
+@keyframes fly{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(400deg)}}
+.heist .big{position:relative;font-family:"Barlow Condensed";font-weight:800;font-size:clamp(96px,30vw,150px);line-height:.9;letter-spacing:-.02em;opacity:0;transform:scale(.3);animation:pop .6s 1.1s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes pop{to{opacity:1;transform:scale(1)}}
+.heist.win .big{background:linear-gradient(180deg,#fffbe6,#ffe07a 40%,#f0a51c 70%,#9a5a06);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 0 #3a2504) drop-shadow(0 0 30px rgba(255,200,60,.6))}
+.heist.lose .big{color:#ff4d4d;text-shadow:0 5px 0 #3a0508,0 0 30px rgba(255,50,50,.5)}
+.heist .big small{font-size:.32em;letter-spacing:.06em;margin-left:6px}
+.heist p{position:relative;max-width:360px;text-align:center;color:#f3e2c8;font-size:15px;line-height:1.4;margin:6px 0 16px;opacity:0;animation:dUp .5s 1.6s ease-out forwards}
+.heist.lose p{color:#f3cfcf}
+.heist p b{color:#ffd36b}.heist.lose p b{color:#ff8a8a}
+.heist .btn-heist{position:relative;border:0;border-radius:14px;padding:14px 26px;font-family:"Barlow Condensed";font-weight:800;font-size:21px;letter-spacing:.06em;text-transform:uppercase;opacity:0;animation:dUp .5s 1.9s ease-out forwards}
+.heist.win .btn-heist{color:#2a1d00;background:linear-gradient(180deg,#ffe08a,#f0a12a);box-shadow:0 6px 0 #6a4206,0 0 26px rgba(255,190,60,.45)}
+.heist.lose .btn-heist{color:#fff;background:linear-gradient(180deg,#e2474f,#a3161f);box-shadow:0 6px 0 #4a070b}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1197,13 +1237,61 @@ function showDuel(r) {
     }, 380);
   };
 }
+// Caco original (dibujo propio): gorro, antifaz, jersey de rayas y saco de monedas
+const THIEF_SVG = `<svg viewBox="0 0 190 210" class="thief-svg">
+  <g class="legs"><path d="M78 150 L64 196" stroke="#1d1d2b" stroke-width="15" stroke-linecap="round"/><path d="M104 150 L122 194" stroke="#1d1d2b" stroke-width="15" stroke-linecap="round"/>
+    <ellipse cx="60" cy="200" rx="15" ry="7" fill="#111"/><ellipse cx="127" cy="198" rx="15" ry="7" fill="#111"/></g>
+  <g class="bob">
+    <g transform="translate(118 40) rotate(14)"><path d="M10 30 C-8 52 -6 98 30 104 C70 108 82 64 56 30 Z" fill="#c9a26a" stroke="#6b4b22" stroke-width="3"/>
+      <path d="M14 30 C26 22 44 22 56 30" stroke="#6b4b22" stroke-width="5" fill="none"/><path d="M22 26 L16 10 M48 26 L56 10" stroke="#6b4b22" stroke-width="4"/>
+      <text x="33" y="78" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="800" font-size="34" fill="#6b4b22">€</text>
+      <circle cx="22" cy="18" r="7" fill="#ffcf3e" stroke="#b07a08" stroke-width="2"/><circle cx="38" cy="14" r="7" fill="#ffd95a" stroke="#b07a08" stroke-width="2"/><circle cx="52" cy="19" r="7" fill="#ffcf3e" stroke="#b07a08" stroke-width="2"/></g>
+    <path d="M64 92 C62 74 76 66 92 66 C108 66 122 74 120 92 L122 152 C110 160 74 160 62 152 Z" fill="#fff"/>
+    <clipPath id="torso"><path d="M64 92 C62 74 76 66 92 66 C108 66 122 74 120 92 L122 152 C110 160 74 160 62 152 Z"/></clipPath>
+    <g clip-path="url(#torso)" fill="#1d1d2b">${[74, 92, 110, 128, 146].map((y) => `<rect x="50" y="${y}" width="90" height="9"/>`).join("")}</g>
+    <path d="M118 90 C134 92 138 74 132 64" stroke="#e8b48a" stroke-width="13" stroke-linecap="round" fill="none"/>
+    <path d="M66 92 C52 106 50 120 62 128" stroke="#e8b48a" stroke-width="13" stroke-linecap="round" fill="none"/>
+    <circle cx="92" cy="46" r="26" fill="#f1c39a"/>
+    <path d="M66 40 C66 16 118 16 118 40 Z" fill="#1d1d2b"/><rect x="64" y="36" width="56" height="9" rx="4" fill="#2c2c40"/><circle cx="92" cy="14" r="6" fill="#2c2c40"/>
+    <rect x="68" y="44" width="48" height="13" rx="6" fill="#111"/><circle cx="82" cy="50" r="3.2" fill="#fff"/><circle cx="102" cy="50" r="3.2" fill="#fff"/>
+    <path d="M84 62 Q92 69 101 62" stroke="#7a3b2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g></svg>`;
+function showHeist(r) {
+  if (document.querySelector(".heist") || document.querySelector(".duel")) return;
+  const me = S.data.me.name, win = r.winner === me, rival = win ? r.loser : r.winner, n = r.gain || 0;
+  const el = document.createElement("div");
+  el.className = "heist " + (win ? "win" : "lose");
+  const coins = win
+    ? Array.from({ length: 22 }, () => `<i class="coin" style="left:${Math.random() * 92}%;--y:${330 + Math.random() * 150}px;animation-delay:${(0.9 + Math.random() * 1.2).toFixed(2)}s"></i>`).join("")
+    : Array.from({ length: 16 }, () => `<i class="coin" style="left:${40 + Math.random() * 20}%;top:${40 + Math.random() * 30}%;--x:${(Math.random() * 300 - 40).toFixed(0)}px;--y:${(-60 - Math.random() * 160).toFixed(0)}px;animation-delay:${(0.6 + Math.random() * 1.4).toFixed(2)}s"></i>`).join("");
+  el.innerHTML = `<div class="rays"></div>
+    <div class="kick">⚔️ Reto · jornada ${r.num} ⚔️</div>
+    <h1>${win ? "¡Botín<br>conseguido!" : "¡Te han<br>robado!"}</h1>
+    <div class="stage">${coins}<div class="thief">${THIEF_SVG}</div></div>
+    <div class="big"><span class="cnt">${win ? "+" : "−"}0</span><small>pts</small></div>
+    <p>${win ? `Has ganado el reto a <b>${esc(rival)}</b> y te llevas todos sus puntos de la jornada.` : `<b>${esc(rival)}</b> te ha ganado el reto y se ha llevado todos tus puntos de la jornada.`}</p>
+    <button class="btn-heist">${win ? "💰 ¡A por más!" : "😤 Me vengaré"}</button>`;
+  document.body.appendChild(el);
+  // contador que sube hasta el número robado
+  const cnt = el.querySelector(".cnt"), sign = win ? "+" : "−";
+  setTimeout(() => {
+    const t0 = performance.now(), dur = 900;
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur); cnt.textContent = sign + Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+    if (navigator.vibrate) navigator.vibrate(win ? [40, 30, 40, 30, 120] : [200]);
+  }, 1150);
+  el.querySelector(".btn-heist").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
+}
 function checkDuels() {
   if (!S.data || !S.data.me) return;
   let seen = [];
   try { seen = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
-  const nuevo = (S.data.retos || []).find((r) => r.to === S.data.me.name && !r.done && !seen.includes(r.id));
+  const me = S.data.me.name;
+  const fin = (S.data.retos || []).find((r) => r.done && r.winner && (r.winner === me || r.loser === me) && !seen.includes("res:" + r.id));
+  if (fin) { seen.push("res:" + fin.id); ls.set("porra_duels", JSON.stringify(seen.slice(-80))); showHeist(fin); return; }
+  const nuevo = (S.data.retos || []).find((r) => r.to === me && !r.done && !seen.includes(r.id));
   if (!nuevo) return;
-  seen.push(nuevo.id); ls.set("porra_duels", JSON.stringify(seen.slice(-50)));
+  seen.push(nuevo.id); ls.set("porra_duels", JSON.stringify(seen.slice(-80)));
   showDuel(nuevo);
 }
 
