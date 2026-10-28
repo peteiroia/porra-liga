@@ -744,7 +744,7 @@ function jornadaView() {
   return `
   <div class="jnav">
     <button class="btn" data-j="${idx - 1}" ${idx <= 0 ? "disabled" : ""} aria-label="Jornada anterior">‹</button>
-    <div class="jt"><b>Jornada ${j.num}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}</small></div>
+    <div class="jt"><b>${esc(jName(j))}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}${j.extra ? ` · <span style="color:var(--gold);font-weight:700">jornada extra</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
   ${myResources(j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0))}
@@ -822,8 +822,11 @@ function myResources(extraX2 = 0) {
   return `<div class="card res-card">${resBar("⚡", "Comodines x2", c.total, c.used + extraX2, "x2")}${resBar("⚔️", "Retos", r.total, r.used, "rt")}
     <p class="dim" style="font-size:11px;margin:6px 0 0;text-align:right">🔒 Solo tú ves lo que te queda</p></div>`;
 }
+const jName = (j) => (j.extra ? `⭐ ${j.title || "Jornada extra"}` : `Jornada ${j.num}`);
+const jNameLow = (j) => (j.extra ? (j.title || "jornada extra") : `jornada ${j.num}`);
 // ---------- Retos ----------
 function retosCard(j) {
+  if (j.extra) return `<div class="banner" style="border-color:rgba(255,214,102,.4)"><span style="font-size:24px">⭐</span><div><b>Jornada extra</b><span class="muted">Partido suelto: suma a la general. Se puede usar comodín, pero no hay retos ni bonus.</span></div></div>`;
   const d = S.data, me = d.me, R = me.retos || { total: 10, max: 2, used: 0, porRival: {} };
   const list = (d.retos || []).filter((r) => r.jornada === j.id);
   const now = serverNow();
@@ -862,7 +865,7 @@ function jornadaPoints(j) {
   const rows = S.data.table.map((r) => ({ ...r, jp: r.byJ[j.id] || 0 })).sort((a, b) => b.jp - a.jp || a.name.localeCompare(b.name));
   const fin = j.matches.every((m) => m.result), top = rows.length ? rows[0].jp : 0;
   const ws = fin && top > 0 ? rows.filter((r) => r.jp === top) : [];
-  return `<h2 class="sec">Puntos de la jornada ${j.num}</h2><div class="card">
+  return `<h2 class="sec">Puntos · ${esc(jNameLow(j))}</h2><div class="card">
     ${ws.length ? `<div class="winner">${ws.map((w) => avatar(w.name, w.photo, "md")).join("")}<div><span>🏆 ${ws.length > 1 ? "Ganadores" : "Ganador"} de la jornada</span><b>${ws.map((w) => esc(w.name)).join(" y ")}</b><small>${top} puntos</small></div></div>` : ""}
     ${rows.map((r, i) => `<div class="orow" style="background:${r.name === S.data.me.name ? "rgba(61,220,132,.08)" : ""}"><span class="cond" style="width:22px;font-weight:800;font-size:18px;color:var(--dim)">${i + 1}</span>${avatar(r.name, r.photo, "sm")}<span class="nm">${esc(r.name)}</span><span class="cond tot" style="font-size:20px;font-weight:800;color:var(--gold)">${r.jp}</span></div>`).join("")}
   </div>`;
@@ -873,9 +876,10 @@ function tablaView(mode) {
   const d = S.data, t = d.table;
   if (!t.length) return `<div class="card empty">Todavía no hay jugadores.</div>`;
   const done = d.jornadas.filter((j) => j.matches.some((m) => m.result));
-  const last = done[done.length - 1];
+  const doneLiga = done.filter((j) => !j.extra);
+  const last = doneLiga[doneLiga.length - 1];
   const podium = t.slice(0, 3);
-  const finalJ = d.jornadas.find((j) => j.num === 38);
+  const finalJ = d.jornadas.find((j) => !j.extra && j.num === 38);
   const finished = finalJ && finalJ.matches.length && finalJ.matches.every((m) => m.result);
   const pod = (r, g) => r ? `<div class="pod g${g}">${g === 1 ? `<div class="crown">👑</div>` : ""}${avatar(r.name, r.photo, g === 1 ? "lg" : "md")}<div class="nm">${esc(r.name)}</div><div class="pp" style="color:${g === 1 ? "var(--gold)" : "#fff"}">${r.pts} pts</div><div class="step">${g}</div></div>` : `<div></div>`;
   const mv = (r) => {
@@ -902,9 +906,9 @@ function tablaView(mode) {
     jornadaBlock = `<h2 class="sec">Clasificación de la jornada</h2>
     <div class="card">
       <div class="jnav" style="margin:0 0 10px"><button class="btn" data-tj="${ji - 1}" ${ji <= 0 ? "disabled" : ""} aria-label="Anterior">‹</button>
-        <div class="jt"><b style="font-size:22px">Jornada ${tj.num}</b><small>${finished ? "Terminada" : started ? "En curso · puntos provisionales" : tj.current ? "Abierta · aún sin resultados" : "Próximamente"}</small></div>
+        <div class="jt"><b style="font-size:22px">${esc(jName(tj))}</b><small>${finished ? "Terminada" : started ? "En curso · puntos provisionales" : tj.current ? "Abierta · aún sin resultados" : "Próximamente"}</small></div>
         <button class="btn" data-tj="${ji + 1}" ${ji >= jlist.length - 1 ? "disabled" : ""} aria-label="Siguiente">›</button></div>
-      ${finished && best > 0 ? (() => { const ws = rowsJ.filter((r) => r.jp === best); return `<div class="winner">${ws.map((w) => avatar(w.name, w.photo, "md")).join("")}<div><span>🏆 ${ws.length > 1 ? "Ganadores" : "Ganador"} de la jornada ${tj.num}</span><b>${ws.map((w) => esc(w.name)).join(" y ")}</b><small>${best} puntos</small></div></div>`; })() : ""}
+      ${finished && best > 0 ? (() => { const ws = rowsJ.filter((r) => r.jp === best); return `<div class="winner">${ws.map((w) => avatar(w.name, w.photo, "md")).join("")}<div><span>🏆 ${ws.length > 1 ? "Ganadores" : "Ganador"} · ${esc(jNameLow(tj))}</span><b>${ws.map((w) => esc(w.name)).join(" y ")}</b><small>${best} puntos</small></div></div>`; })() : ""}
       <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
       ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] > 0 ? " ⚔️" : ""}${r.lostJ && r.lostJ[tj.id] ? " 💀" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
       </tbody></table>
@@ -916,7 +920,7 @@ function tablaView(mode) {
       if (!rl.length) return "";
       const ph = Object.fromEntries(d.users.map((u) => [u.name, u.photo]));
       const pj = Object.fromEntries(t.map((r) => [r.name, (r.byJ[tj.id] || 0) - ((r.retoJ || {})[tj.id] || 0)]));
-      return `<h2 class="sec">Retos de la jornada ${tj.num}</h2><div class="card"><div class="others" style="margin:0">${rl.map((r) => {
+      return `<h2 class="sec">Retos · ${esc(jNameLow(tj))}</h2><div class="card"><div class="others" style="margin:0">${rl.map((r) => {
         const a = r.done ? r.ptsFrom : pj[r.from] || 0, b = r.done ? r.ptsTo : pj[r.to] || 0;
         const lead = a > b ? r.from : b > a ? r.to : null;
         const res = r.done ? (r.winner ? `<span class="chip pts p3">${r.gain ? `${esc(r.winner)} +${r.gain}` : `Gana ${esc(r.winner)}`}</span>` : `<span class="chip">Empate</span>`) : `<span class="chip">${lead ? `Va ganando ${esc(lead)}` : "Empatados"}</span>`;
@@ -926,7 +930,7 @@ function tablaView(mode) {
   }
   if (mode === "jornada") return tj ? jornadaBlock : `<div class="card empty"><span class="ball">⚽</span><p class="muted">Aún no hay jornadas en juego.</p></div>`;
   return `
-  <h2 class="sec">Clasificación general ${done.length ? `<span class="chip">tras ${done.length} jornada${done.length > 1 ? "s" : ""}</span>` : ""}</h2>
+  <h2 class="sec">Clasificación general ${doneLiga.length ? `<span class="chip">tras ${doneLiga.length} jornada${doneLiga.length > 1 ? "s" : ""}</span>` : ""}</h2>
   ${finished ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:30px">🏆</span><div><b style="font-size:18px">¡${esc(t[0].name)}, campeón de La Porra 2026-27!</b><span class="muted">${t[0].pts} puntos tras la jornada 38</span></div></div>`
     : `<p class="dim" style="font-size:13px;margin:-4px 2px 10px">🏆 Gana quien más puntos tenga al acabar la jornada 38 de la Liga 2026-27.</p>`}
   ${(() => { const mx = Math.max(0, ...t.map((r) => r.retoWins || 0)); if (!mx) return ""; const ks = t.filter((r) => (r.retoWins || 0) === mx);
@@ -939,7 +943,7 @@ function tablaView(mode) {
       <td class="tot">${r.pts}</td><td>${r.exact}</td><td>${r.signs}</td><td>${r.retoWins || 0}</td>${last ? `<td class="muted">+${r.byJ[last.id] || 0}</td>` : ""}</tr>`).join("")}</tbody></table>
     <div class="legend"><span>🎯 resultados exactos (3 pts)</span><span>1X2 signo acertado (1 pt)</span><span>⚔️ retos ganados</span><span>Los puntos incluyen comodines, bonus y retos</span><span>Empate a puntos: más exactos</span></div>
   </div>
-  ${done.length > 1 ? `<h2 class="sec">Jornada a jornada</h2><div class="card"><div class="scrollx"><table class="tbl matrix"><thead><tr><th>#</th><th>Jugador</th>${done.map((j) => `<th>J${j.num}</th>`).join("")}<th>Total</th></tr></thead>
+  ${done.length > 1 ? `<h2 class="sec">Jornada a jornada</h2><div class="card"><div class="scrollx"><table class="tbl matrix"><thead><tr><th>#</th><th>Jugador</th>${done.map((j) => `<th>${j.extra ? "⭐" : "J" + j.num}</th>`).join("")}<th>Total</th></tr></thead>
     <tbody>${t.map((r) => {
       const best = (jid) => Math.max(...t.map((x) => x.byJ[jid] || 0));
       return `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${r.pos}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>${done.map((j) => {
@@ -987,6 +991,8 @@ function normasView() {
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
     <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. En cada jornada puedes retar a <b>un</b> jugador, antes de que empiece el primer partido. A cada jugador solo le puede retar <b>una</b> persona por jornada, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
+    <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
+    <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último.</li>
     <li>La clasificación suma todas las jornadas. Si hay empate a puntos, va delante quien tenga más resultados exactos.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
@@ -1008,11 +1014,13 @@ function adminView() {
   const e = S.editJ;
   let form = "";
   if (e) {
-    form = `<div class="card"><h2 class="sec" style="margin-top:0">${e.id ? "Editar" : "Nueva"} jornada</h2>
-      <div class="row"><label class="field" style="flex:0 0 96px;margin:0"><span>Nº</span><input class="input" id="ejNum" type="number" min="1" max="60" value="${e.num}"></label>
-      <label class="field" style="flex:1;margin:0"><span>Nombre (opcional)</span><input class="input" id="ejTitle" maxlength="40" value="${esc(e.title)}" placeholder="Ej. El Clásico"></label></div>
+    form = `<div class="card"><h2 class="sec" style="margin-top:0">${e.id ? "Editar" : "Nueva"} ${e.extra ? "jornada extra ⭐" : "jornada"}</h2>
+      ${e.extra ? `<label class="field" style="margin:0"><span>Nombre</span><input class="input" id="ejTitle" maxlength="40" value="${esc(e.title)}" placeholder="Ej. Final de Champions, España–Italia, Copa del Rey…"></label>
+        <p class="dim" style="font-size:12px;margin:8px 0 0">Partido suelto: suma a la general, se puede usar comodín, sin retos ni bonus. Se abre 7 días antes y no depende de la jornada de Liga.</p>`
+      : `<div class="row"><label class="field" style="flex:0 0 96px;margin:0"><span>Nº</span><input class="input" id="ejNum" type="number" min="1" max="60" value="${e.num}"></label>
+      <label class="field" style="flex:1;margin:0"><span>Nombre (opcional)</span><input class="input" id="ejTitle" maxlength="40" value="${esc(e.title)}" placeholder="Ej. El Clásico"></label></div>`}
       <p class="muted" style="font-size:13px;margin:12px 0 4px">Añade un partido de:</p>
-      <div class="quick">${FOUR.map((c) => `<button class="btn small" data-addm="${c.name}">+ ${c.flag}</button>`).join("")}<button class="btn small" data-addm="">+ Otro</button></div>
+      <div class="quick">${e.extra ? "" : FOUR.map((c) => `<button class="btn small" data-addm="${c.name}">+ ${c.flag}</button>`).join("")}<button class="btn small" data-addm="">+ ${e.extra ? "Añadir partido" : "Otro"}</button></div>
       <div id="ejMatches">${e.matches.map((m, i) => `<div class="mrow" data-i="${i}">
         <input class="input" list="teams" data-f="home" value="${esc(m.home)}" placeholder="Local">
         <input class="input" list="teams" data-f="away" value="${esc(m.away)}" placeholder="Visitante">
@@ -1032,11 +1040,11 @@ function adminView() {
     <div class="code-box" id="leagueCode">${S.leagueCode ? esc(S.leagueCode) : "······"}</div>
     <button class="btn gold block" id="invShare" style="margin-top:10px">📤 Enviar invitación</button>
     <div class="row" style="margin-top:8px"><button class="btn small" style="flex:1" id="invCopy">📋 Copiar mensaje</button><button class="btn small" style="flex:1" id="invRegen">🔄 Cambiar código</button></div></div>` : ""}
-  ${!e ? `<div class="row"><button class="btn primary" style="flex:1" id="newJ">+ Nueva jornada</button><button class="btn" id="syncCal" title="Volver a cargar el calendario oficial">🔄 Calendario</button></div>
+  ${!e ? `<div class="row"><button class="btn primary" style="flex:1" id="newJ">+ Nueva jornada</button><button class="btn gold" id="newX">⭐ Extra</button><button class="btn" id="syncCal" title="Volver a cargar el calendario oficial">🔄 Calendario</button></div>
   <p class="dim" style="font-size:12px;margin:8px 2px 0">Los partidos de Madrid, Barça, Depor y Celta se cargan solos del calendario oficial. Puedes añadir partidos extra o cambiar horas editando una jornada.</p>` : ""}
   <h2 class="sec">Resultados</h2>
   ${js.length ? js.filter((j) => j.matches.some((m) => Date.parse(m.kickoff) <= now + 7 * 864e5)).reverse().map((j) => `<div class="card">
-    <div class="row" style="justify-content:space-between;margin-bottom:4px"><b class="cond" style="font-size:20px;text-transform:uppercase">Jornada ${j.num}${j.title ? ` · <span class="muted">${esc(j.title)}</span>` : ""}</b><button class="btn small" data-editj="${j.id}">Editar</button></div>
+    <div class="row" style="justify-content:space-between;margin-bottom:4px"><b class="cond" style="font-size:20px;text-transform:uppercase">${j.extra ? esc(jName(j)) : `Jornada ${j.num}`}${!j.extra && j.title ? ` · <span class="muted">${esc(j.title)}</span>` : ""}</b><button class="btn small" data-editj="${j.id}">Editar</button></div>
     ${j.matches.map((m) => {
       const started = Date.parse(m.kickoff) <= now;
       return `<div class="res-row"><div class="tm">${esc(m.home)} – ${esc(m.away)}<div class="dim" style="font-size:12px;text-transform:capitalize">${m.tbc ? "Hora por confirmar" : fmtWhen(m.kickoff)} · ${m.count} pronósticos</div></div>
@@ -1044,7 +1052,7 @@ function adminView() {
       <button class="btn small ${m.result ? "" : "gold"}" data-res="${j.id}|${m.id}">${m.result ? "✓" : "Poner"}</button>` : `<span class="chip">Sin empezar</span>`}</div>`;
     }).join("")}</div>`).join("") : `<div class="card muted">Crea una jornada para poder meter resultados.</div>`}
   <h2 class="sec">Todas las jornadas</h2>
-  <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">Jornada ${j.num} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
+  <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">${esc(jName(j))} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
   <h2 class="sec">Jugadores <span class="chip">${d.users.length}</span></h2>
   <div class="card">${d.users.map((u) => `<div class="urow">${avatar(u.name, u.photo, "sm")}<span class="nm">${esc(u.name)}${u.admin ? ` <span class="chip" style="color:var(--gold)">admin</span>` : ""}${u.username && u.username !== u.name ? `<br><span class="dim" style="font-size:12px;font-weight:500">usuario: ${esc(u.username)}</span>` : ""}</span>
     <button class="btn small" data-upin="${esc(u.name)}" title="Cambiar contraseña">🔑</button>
@@ -1283,12 +1291,14 @@ function bindMain() {
   const nj = $("#newJ");
   if (nj) nj.onclick = () => {
     const nums = S.data.jornadas.map((x) => x.num);
-    S.editJ = { id: null, num: nums.length ? Math.max(...nums) + 1 : 1, title: "", matches: [] };
+    S.editJ = { id: null, num: nums.length ? Math.max(...nums.filter((n) => n < 1000), 0) + 1 : 1, title: "", matches: [] };
     render(); window.scrollTo(0, 0);
   };
+  const nx = $("#newX");
+  if (nx) nx.onclick = () => { S.editJ = { id: null, extra: true, num: 0, title: "", matches: [{ home: "", away: "", kickoff: "" }] }; render(); window.scrollTo(0, 0); };
   document.querySelectorAll("[data-editj]").forEach((b) => (b.onclick = () => {
     const x = S.data.jornadas.find((q) => q.id === b.dataset.editj);
-    S.editJ = { id: x.id, num: x.num, title: x.title, matches: x.matches.map((m) => ({ id: m.id, home: m.home, away: m.away, kickoff: m.kickoff, result: m.result })) };
+    S.editJ = { id: x.id, extra: !!x.extra, num: x.num, title: x.title, matches: x.matches.map((m) => ({ id: m.id, home: m.home, away: m.away, kickoff: m.kickoff, result: m.result })) };
     render(); window.scrollTo(0, 0);
   }));
   document.querySelectorAll("[data-addm]").forEach((b) => (b.onclick = () => {
@@ -1329,7 +1339,7 @@ function bindMain() {
     collectEdit(); es.disabled = true;
     try {
       const e = S.editJ;
-      setData(await api("saveJornada", { id: e.id, num: +e.num, title: e.title, matches: e.matches }));
+      setData(await api("saveJornada", { id: e.id, extra: !!e.extra, num: +e.num, title: e.title, matches: e.matches }));
       S.editJ = null; render(); toast("Jornada guardada");
     } catch (err) { toast(err.message, true); es.disabled = false; }
   };

@@ -109,25 +109,27 @@ function goldenOf(m) {
 // Puntos finales de un pronóstico:
 //   base (3 exacto · 1 signo · 0) × 2 si es partido de oro o si usó comodín (no se acumulan)
 //   + 1 extra si fue el ÚNICO en acertar el resultado exacto de ese partido
-function scoreFor(p, m, exactCount) {
+function scoreFor(p, m, exactCount, extra) {
   if (!p || !m.result) return null;
   const base = points(p, m.result);
   const mult = goldenOf(m) ? 2 : p.x2 ? 2 : 1; // el comodín no se suma en partidos de oro
-  const unique = base === 3 && exactCount === 1 ? 1 : 0;
+  const unique = !extra && base === 3 && exactCount === 1 ? 1 : 0;
   return { base, pts: base * mult + unique, mult, unique: !!unique };
 }
 const exactCountOf = (m, users, preds) =>
   m.result ? users.filter((u) => { const p = (preds[u.key] || {})[m.id]; return p && p.h === m.result.h && p.a === m.result.a; }).length : 0;
 const isLocked = (m, now) => !!m.result || (!!m.kickoff && Date.parse(m.kickoff) - CLOSE_BEFORE <= now);
 // Jornada en juego = la de número más bajo que aún tiene algún partido sin cerrar
+// (las jornadas extra van por libre y no cuentan aquí)
+const firstKo = (j) => Math.min(...j.matches.map((m) => Date.parse(m.kickoff) || Infinity));
 function currentJornadaId(jornadas, now) {
-  const open = jornadas.filter((j) => j.matches.some((m) => !isLocked(m, now))).sort((a, b) => a.num - b.num);
+  const open = jornadas.filter((j) => !j.extra && j.matches.some((m) => !isLocked(m, now))).sort((a, b) => a.num - b.num);
   return open.length ? open[0].id : null;
 }
 // open | soon (aún no han pasado a faltar 7 días) | next (no es la jornada siguiente) | closed
 function matchStatus(j, m, now, curId) {
   if (isLocked(m, now)) return "closed";
-  if (j.id !== curId) return "next";
+  if (!j.extra && j.id !== curId) return "next";
   if (m.tbc) return "tbc"; // hora por confirmar: no se abre hasta saber la hora
   if (!m.kickoff || Date.parse(m.kickoff) - OPEN_BEFORE > now) return "soon";
   return "open";
@@ -188,7 +190,8 @@ function buildState(me, data) {
   const { jornadas, preds, users, crests } = data;
   const retos = (data.retos || []).filter((r) => users.some((u) => u.key === r.from) && users.some((u) => u.key === r.to));
   const nameOf = Object.fromEntries(users.map((u) => [u.key, u.name]));
-  jornadas.sort((a, b) => a.num - b.num);
+  // orden por fecha (las extra se intercalan donde caigan)
+  jornadas.sort((a, b) => (a.extra || b.extra ? firstKo(a) - firstKo(b) : a.num - b.num));
   const photo = Object.fromEntries(users.map((u) => [u.name, u.photo ? u.key + "&v=" + u.photo : null]));
 
   const table = users.map((u) => ({ name: u.name, key: u.key, pts: 0, exact: 0, signs: 0, played: 0, byJ: {} }));
@@ -201,7 +204,7 @@ function buildState(me, data) {
       for (const r of table) {
         const p = (preds[r.key] || {})[m.id];
         if (!p) continue;
-        const sc = scoreFor(p, m, ec);
+        const sc = scoreFor(p, m, ec, j.extra);
         r.byJ[j.id] += sc.pts; r.pts += sc.pts; r.played++;
         if (sc.base === 3) r.exact++; else if (sc.base === 1) r.signs++;
         if (sc.unique) r.unique = (r.unique || 0) + 1;
@@ -209,7 +212,7 @@ function buildState(me, data) {
     }
     // Pleno de jornada (cuando están todos los resultados):
     //   todos los signos acertados → +1 · todos los resultados exactos → +3 (en lugar del +1)
-    if (j.matches.length && j.matches.every((m) => m.result)) {
+    if (!j.extra && j.matches.length && j.matches.every((m) => m.result)) {
       for (const r of table) {
         const ps = j.matches.map((m) => (preds[r.key] || {})[m.id]);
         if (ps.some((p) => !p)) continue;
@@ -254,7 +257,7 @@ function buildState(me, data) {
   // si todos empatan, nadie.
   const extraX2 = {}, lastOf = {};
   for (const j of jornadas) {
-    if (!j.matches.length || !j.matches.every((m) => m.result)) continue;
+    if (j.extra || !j.matches.length || !j.matches.every((m) => m.result)) continue;
     const played = table.filter((r) => j.matches.some((m) => (preds[r.key] || {})[m.id]));
     if (played.length < 2) continue;
     const pts = played.map((r) => r.byJ[j.id] || 0), min = Math.min(...pts), max = Math.max(...pts);
@@ -275,7 +278,7 @@ function buildState(me, data) {
 
   const curId = currentJornadaId(jornadas, now);
   const outJ = jornadas.map((j) => ({
-    id: j.id, num: j.num, title: j.title || "", current: j.id === curId,
+    id: j.id, num: j.num, title: j.title || "", extra: !!j.extra, current: j.id === curId,
     myPleno: ((byKey[myKey] || {}).plenos || {})[j.id] || 0,
     lastBonus: (lastOf[j.id] || []).includes(myKey),
     retoDeadline: j.matches.length ? retoDeadline(j) : null,
@@ -288,11 +291,11 @@ function buildState(me, data) {
       if (started) {
         for (const u of users) {
           const p = (preds[u.key] || {})[m.id];
-          if (p) { const sc = scoreFor(p, m, ec); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false }; }
+          if (p) { const sc = scoreFor(p, m, ec, j.extra); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false }; }
         }
       }
       const myP = (preds[myKey] || {})[m.id] || null;
-      const mySc = scoreFor(myP, m, ec);
+      const mySc = scoreFor(myP, m, ec, j.extra);
       const ko = m.kickoff ? Date.parse(m.kickoff) : null;
       return {
         id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.result || null, tbc: !!m.tbc,
@@ -541,6 +544,7 @@ async function handle(body) {
     const now = Date.now();
     const j = jornadas.find((x) => x.id === body.jornada);
     if (!j) bad("Jornada no encontrada");
+    if (j.extra) bad("En las jornadas extra no hay retos");
     if (j.id !== currentJornadaId(jornadas, now)) bad("Solo puedes retar en la jornada que está abierta");
     if (j.matches.some((m) => m.tbc)) bad("Aún faltan horarios por confirmar en esta jornada");
     if (now >= retoDeadline(j)) bad("Ya no se puede: la jornada ha empezado");
@@ -604,14 +608,19 @@ async function handle(body) {
   const jornadas = await getJSON(P + "jornadas", []);
 
   if (a === "saveJornada") {
-    const num = Number(body.num);
-    if (!Number.isInteger(num) || num < 1 || num > 60) bad("Número de jornada no válido");
+    const isExtra = !!body.extra;
+    let num = Number(body.num);
+    if (isExtra) {
+      if (!normName(body.title)) bad("Ponle nombre a la jornada extra (ej. Final de Champions)");
+      const ex = body.id && jornadas.find((x) => x.id === body.id);
+      num = ex && ex.extra ? ex.num : 1000 + jornadas.filter((x) => x.extra).length + 1;
+    } else if (!Number.isInteger(num) || num < 1 || num > 60) bad("Número de jornada no válido");
     const matches = cleanMatches(body.matches);
     let j = body.id ? jornadas.find((x) => x.id === body.id) : null;
     if (jornadas.some((x) => x.num === num && (!j || x.id !== j.id))) bad("Ya existe la jornada " + num);
     if (j) {
       const old = Object.fromEntries(j.matches.map((m) => [m.id, m]));
-      j.num = num; j.title = normName(body.title).slice(0, 40);
+      j.num = num; j.title = normName(body.title).slice(0, 40); j.extra = isExtra;
       j.matches = matches.map((m) => {
         const o = old[m.id];
         const out = o && o.result && !m.result ? { ...m, result: o.result } : { ...m };
@@ -621,7 +630,7 @@ async function handle(body) {
         return out;
       });
     } else {
-      j = { id: crypto.randomBytes(5).toString("hex"), num, title: normName(body.title).slice(0, 40), matches: matches.map((m) => ({ ...m, manual: true })) };
+      j = { id: crypto.randomBytes(5).toString("hex"), num, extra: isExtra, title: normName(body.title).slice(0, 40), matches: matches.map((m) => ({ ...m, manual: true })) };
       jornadas.push(j);
     }
     await setJSON(P + "jornadas", jornadas);
