@@ -209,21 +209,22 @@ async function migrations() {
 async function loadAll() {
   await migrations();
   await syncCalendar();
-  const [jornadas, predsRaw, userKeys, crestsRaw, retos] = await Promise.all([
+  const [jornadas, predsRaw, userKeys, crestsRaw, retos, anuncio] = await Promise.all([
     getJSON(P + "jornadas", []),
     redis(["HGETALL", P + "preds"]),
     redis(["SMEMBERS", P + "users"]),
     redis(["HGETALL", P + "crests"]),
     getJSON(P + "retos", []),
+    getJSON(P + "anuncio", null),
   ]);
   const crests = hgetallObj(crestsRaw);
   const preds = hgetallObj(predsRaw);
   const users = [];
   for (const k of userKeys || []) {
     const u = await getUser(k);
-    if (u) users.push({ key: k, name: displayOf(u), username: u.username, admin: !!u.admin, photo: u.photo || 0 });
+    if (u) users.push({ key: k, name: displayOf(u), username: u.username, admin: !!u.admin, photo: u.photo || 0, bonusX2: u.bonusX2 || 0 });
   }
-  return { jornadas, preds, users, crests, retos };
+  return { jornadas, preds, users, crests, retos, anuncio };
 }
 
 function buildState(me, data) {
@@ -388,7 +389,7 @@ function buildState(me, data) {
 
   return {
     me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
-      comodines: { total: COMODINES + (extraX2[myKey] || 0), extra: extraX2[myKey] || 0, used: Object.entries(preds[myKey] || {}).filter(([mid, p]) => p && p.x2 && !cancelledIds.has(mid)).length },
+      comodines: { total: COMODINES + (extraX2[myKey] || 0) + (me.bonusX2 || 0), extra: (extraX2[myKey] || 0) + (me.bonusX2 || 0), used: Object.entries(preds[myKey] || {}).filter(([mid, p]) => p && p.x2 && !cancelledIds.has(mid)).length },
       retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
     // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
@@ -399,7 +400,8 @@ function buildState(me, data) {
     jornadas: outJ,
     // los retos y comodines de cada uno son secretos: no se envían los de los demás
     table: table.map(({ key, retoPts, ...r }) => ({ ...r, photo: photo[r.name] })),
-    users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username } : {}) })),
+    users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username, bonusX2: u.bonusX2 } : {}) })),
+    anuncio: data.anuncio || null,
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
@@ -748,6 +750,29 @@ async function handle(body) {
       if (!/^[A-Z0-9]{4,12}$/.test(custom)) bad("El código debe tener entre 4 y 12 letras o números");
     }
     return { code: await leagueCode(!!body.regen, custom) };
+  }
+
+  // Aviso a todos: notificación al móvil + mensaje dentro de la app
+  if (a === "broadcast") {
+    const title = normName(body.title).slice(0, 60) || "📢 La Porra";
+    const text = String(body.body || "").trim().slice(0, 300);
+    if (!text) bad("Escribe el mensaje");
+    const an = { id: crypto.randomBytes(4).toString("hex"), title, body: text, at: Date.now() };
+    await setJSON(P + "anuncio", an);
+    const { users } = await loadAll();
+    let sent = 0;
+    for (const u of users) sent += await sendPush(u.key, { title, body: text, tag: "anuncio-" + an.id, url: "./" }).catch(() => 0);
+    return { sent, ...buildState(me, await loadAll()) };
+  }
+  if (a === "clearAnuncio") { await redis(["DEL", P + "anuncio"]); return buildState(me, await loadAll()); }
+  // Regalar (o quitar) comodines a un jugador
+  if (a === "giveX2") {
+    const u = await findByDisplay(body.name);
+    if (!u) bad("Usuario no encontrado");
+    u.bonusX2 = Math.max(0, (u.bonusX2 || 0) + (Number(body.n) || 1));
+    await setJSON(P + "user:" + keyName(u.username), u);
+    if ((Number(body.n) || 1) > 0) sendPush(keyName(u.username), { title: "🎁 ¡Comodín extra!", body: "El administrador te ha regalado un comodín x2. ¡Úsalo bien!", tag: "regalo", url: "./" }).catch(() => {});
+    return buildState(me, await loadAll());
   }
 
   if (a === "resetRetos") { await redis(["DEL", P + "retos"]); return buildState(me, await loadAll()); }

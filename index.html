@@ -940,6 +940,7 @@ function jornadaView() {
     <div class="jt"><b>${esc(jName(j))}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}${j.extra ? ` · <span style="color:var(--gold);font-weight:700">jornada extra</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
+  ${S.data.anuncio ? `<div class="banner" style="border-color:rgba(255,214,102,.45)"><span style="font-size:24px">📢</span><div><b>${esc(S.data.anuncio.title)}</b><span class="muted">${esc(S.data.anuncio.body)}</span></div></div>` : ""}
   ${myResources(j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0))}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
   ${retosCard(j)}
@@ -1273,11 +1274,20 @@ function adminView() {
     }).join("")}</div>`).join("") : `<div class="card muted">Crea una jornada para poder meter resultados.</div>`}
   <h2 class="sec">Todas las jornadas</h2>
   <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">${esc(jName(j))} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
+  <h2 class="sec">📢 Aviso a todos</h2>
+  <div class="card">
+    <label class="field" style="margin-top:0"><span>Título</span><input class="input" id="anTitle" maxlength="60" value="🎁 ¡Comodín extra en juego!"></label>
+    <label class="field"><span>Mensaje</span><textarea class="input" id="anBody" rows="3" maxlength="300" style="resize:vertical">Si convences a Pablo para que juegue a La Porra, te llevas un comodín x2 extra. ¡A por él! ⚽</textarea></label>
+    <button class="btn gold block" id="anSend">📢 Enviar a todos</button>
+    ${d.anuncio ? `<p class="dim" style="font-size:12px;margin:10px 0 0">Aviso activo en la app: «${esc(d.anuncio.title)}» <button class="btn small" id="anClear" style="margin-left:6px">Quitar</button></p>` : ""}
+    <p class="dim" style="font-size:12px;margin:8px 0 0">Llega como notificación a quien tenga los avisos activados, y a todos les sale dentro de la app la próxima vez que la abran.</p>
+  </div>
   <h2 class="sec">Retos</h2>
   <div class="card"><p class="muted" style="font-size:14px;margin:0 0 10px">Borra todos los retos (lanzados, ganados y perdidos). Cada jugador vuelve a tener sus 10 retos y la clasificación se recalcula sin ellos.</p>
     <button class="btn danger block" id="resetRetos">♻️ Reiniciar todos los retos</button></div>
   <h2 class="sec">Jugadores <span class="chip">${d.users.length}</span></h2>
   <div class="card">${d.users.map((u) => `<div class="urow">${avatar(u.name, u.photo, "sm")}<span class="nm">${esc(u.name)}${u.admin ? ` <span class="chip" style="color:var(--gold)">admin</span>` : ""}${u.username && u.username !== u.name ? `<br><span class="dim" style="font-size:12px;font-weight:500">usuario: ${esc(u.username)}</span>` : ""}</span>
+    <button class="btn small" data-gift="${esc(u.name)}" title="Regalar un comodín x2">🎁${u.bonusX2 ? " " + u.bonusX2 : ""}</button>
     <button class="btn small" data-upin="${esc(u.name)}" title="Cambiar contraseña">🔑</button>
     ${u.name !== d.me.name ? `<button class="btn small" data-uadm="${esc(u.name)}|${u.admin ? 0 : 1}">${u.admin ? "Quitar admin" : "Hacer admin"}</button><button class="btn small danger" data-udel="${esc(u.name)}">✕</button>` : ""}</div>`).join("")}</div>
   <p class="dim" style="font-size:13px;text-align:center;margin-top:16px">Los partidos se abren solos 7 días antes y se cierran 1 minuto antes de empezar.<br>Los puntos se suman en cuanto pones el resultado.</p>`;
@@ -1493,8 +1503,15 @@ function showFinal(win) {
   setTimeout(() => fx.firework(0.5, 0.25), 3100);
   el.querySelector(".btn-final").onclick = () => { fx.stop(); el.style.transition = "opacity .4s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 400); };
 }
+function showAnuncio(an) {
+  openSheet(`<div style="text-align:center"><div style="font-size:46px">📢</div><h2 class="cond" style="margin:6px 0;font-size:26px">${esc(an.title)}</h2>
+    <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
+    (el, close) => { $("[data-close]", el).onclick = close; });
+}
 function checkDuels() {
   if (!S.data || !S.data.me) return;
+  { const an = S.data.anuncio; let seenA = []; try { seenA = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
+    if (an && !seenA.includes("an:" + an.id) && !document.querySelector(".duel,.heist,.champ,.final,.sheet-bg")) { seenA.push("an:" + an.id); ls.set("porra_duels", JSON.stringify(seenA.slice(-80))); showAnuncio(an); return; } }
   let seen = [];
   try { seen = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
   const me = S.data.me.name;
@@ -1782,6 +1799,19 @@ function bindMain() {
       catch (err) { toast(err.message, true); }
     };
   }
+  const as = $("#anSend");
+  if (as) as.onclick = async () => {
+    const title = $("#anTitle").value, body = $("#anBody").value;
+    if (!confirm("¿Enviar este aviso a todos los participantes?")) return;
+    as.disabled = true;
+    try { const r = await api("broadcast", { title, body }); setData(r); render(); toast(`Aviso enviado (${r.sent} notificaciones al móvil)`); } catch (err) { toast(err.message, true); as.disabled = false; }
+  };
+  const ac = $("#anClear"); if (ac) ac.onclick = async () => { try { setData(await api("clearAnuncio")); render(); } catch (err) { toast(err.message, true); } };
+  document.querySelectorAll("[data-gift]").forEach((b) => (b.onclick = async () => {
+    const n = b.dataset.gift;
+    if (!confirm(`¿Regalar un comodín x2 extra a ${n}?`)) return;
+    try { setData(await api("giveX2", { name: n, n: 1 })); render(); toast(`🎁 Comodín regalado a ${n}`); } catch (err) { toast(err.message, true); }
+  }));
   const rr = $("#resetRetos");
   if (rr) rr.onclick = async () => {
     if (!confirm("¿Reiniciar TODOS los retos? Se borran los lanzados y los resultados, y la clasificación se recalcula. No se puede deshacer.")) return;
