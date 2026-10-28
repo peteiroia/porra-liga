@@ -242,6 +242,7 @@ function buildState(me, data) {
         L.retoJ = L.retoJ || {}; L.retoJ[j.id] = (L.retoJ[j.id] || 0) - gain;   // el perdedor se queda a 0
         L.retoPts = (L.retoPts || 0) - gain;
         L.lostJ = L.lostJ || {}; L.lostJ[j.id] = true;
+        W.retoWins = (W.retoWins || 0) + 1;
       }
     }
     retoOut.push(o);
