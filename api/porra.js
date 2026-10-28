@@ -252,6 +252,16 @@ function buildState(me, data) {
   }
   for (const r of table) if (r.retoPts) { r.pts += r.retoPts; for (const jid in r.retoJ) r.byJ[jid] += r.retoJ[jid]; }
 
+  // Campeón de jornada: el que más puntos hace en cada jornada de Liga terminada (empates cuentan para todos)
+  for (const j of jornadas) {
+    if (j.extra || !j.matches.length || !j.matches.every((m) => m.result)) continue;
+    const played = table.filter((r) => j.matches.some((m) => (preds[r.key] || {})[m.id]));
+    if (!played.length) continue;
+    const top = Math.max(...played.map((r) => r.byJ[j.id] || 0));
+    if (top <= 0) continue;
+    for (const r of played) if ((r.byJ[j.id] || 0) === top) r.jWins = (r.jWins || 0) + 1;
+  }
+
   // Comodín de consolación: el último de cada jornada terminada (entre los que jugaron)
   // gana un comodín x2 extra. Si hay empate en la última plaza, se lo llevan todos;
   // si todos empatan, nadie.

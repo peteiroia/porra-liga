@@ -187,13 +187,15 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .grid td.pc small{display:block;font-size:10px;color:var(--mut);margin-top:2px}
 .pk2{display:inline-block;min-width:40px;padding:3px 6px;border-radius:8px;font-family:"Barlow Condensed";font-weight:800;font-size:16px;background:rgba(255,255,255,.06)}
 .pk2.g3{background:var(--gold);color:#2a1d00}.pk2.g1{background:rgba(92,184,255,.22);color:var(--sign)}.pk2.g0{background:rgba(255,107,107,.15);color:var(--zero)}
-.lg{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px}
-.lg.g3{background:var(--gold)}.lg.g1{background:rgba(92,184,255,.5)}.lg.g0{background:rgba(255,107,107,.45)}
+.lgd{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px}
+.lgd.g3{background:var(--gold)}.lgd.g1{background:rgba(92,184,255,.5)}.lgd.g0{background:rgba(255,107,107,.45)}
 .winner{display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:10px;border-radius:14px;background:linear-gradient(135deg,rgba(255,214,102,.22),rgba(255,214,102,.05));border:1px solid rgba(255,214,102,.45)}
 .winner span{display:block;font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.06em}
 .winner b{display:block;font-family:"Barlow Condensed";font-size:24px;line-height:1.05}
 .winner small{color:var(--mut);font-weight:600}
 .winner .av+.av{margin-left:-18px}
+.gen th small{display:block;font-size:9px;letter-spacing:.04em;margin-top:2px}
+.gen td{font-weight:700}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -289,7 +291,7 @@ function picksGrid(j, rows) {
     return `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>${cells}<td class="tot">${r.jp}</td></tr>`;
   }).join("");
   return `<h2 class="sec">Resultados de cada jugador</h2><div class="card"><div class="scrollx"><table class="tbl grid"><thead><tr><th>Jugador</th>${head}<th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>
-    <div class="legend"><span><i class="lg g3"></i>exacto</span><span><i class="lg g1"></i>signo</span><span><i class="lg g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
+    <div class="legend"><span><i class="lgd g3"></i>exacto</span><span><i class="lgd g1"></i>signo</span><span><i class="lgd g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
 }
 
 /* ---------- Normas ---------- */
@@ -937,11 +939,11 @@ function tablaView(mode) {
     return `<div class="winner" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(226,59,59,.2),rgba(226,59,59,.04));border-color:rgba(255,123,123,.45)">${ks.map((k) => avatar(k.name, k.photo, "md")).join("")}<div><span style="color:#ff8a8a">⚔️ ${ks.length > 1 ? "Reyes" : "Rey"} de los retos</span><b>${ks.map((k) => esc(k.name)).join(" y ")}</b><small>${mx} reto${mx > 1 ? "s" : ""} ganado${mx > 1 ? "s" : ""}</small></div></div>`; })()}
   ${done.length ? `<div class="card"><div class="podium">${pod(podium[1], 2)}${pod(podium[0], 1)}${pod(podium[2], 3)}</div></div>` : ""}
   <div class="card">
-    <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th><th title="Resultados exactos">🎯</th><th title="Aciertos 1X2">1X2</th><th title="Retos ganados">⚔️</th>${last ? `<th>J${last.num}</th>` : ""}</tr></thead>
+    <table class="tbl gen"><thead><tr><th>#</th><th>Jugador</th><th title="Resultados exactos">🎯<small>Exactos</small></th><th title="Jornadas ganadas">🏆<small>Jornadas</small></th><th title="Retos ganados">⚔️<small>Retos</small></th><th>Pts</th></tr></thead>
     <tbody>${t.map((r) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${r.pos}${mv(r)}</td>
       <td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>
-      <td class="tot">${r.pts}</td><td>${r.exact}</td><td>${r.signs}</td><td>${r.retoWins || 0}</td>${last ? `<td class="muted">+${r.byJ[last.id] || 0}</td>` : ""}</tr>`).join("")}</tbody></table>
-    <div class="legend"><span>🎯 resultados exactos (3 pts)</span><span>1X2 signo acertado (1 pt)</span><span>⚔️ retos ganados</span><span>Los puntos incluyen comodines, bonus y retos</span><span>Empate a puntos: más exactos</span></div>
+      <td>${r.exact}</td><td>${r.jWins || 0}</td><td>${r.retoWins || 0}</td><td class="tot">${r.pts}</td></tr>`).join("")}</tbody></table>
+    <div class="legend"><span>🎯 resultados exactos</span><span>🏆 veces campeón de jornada</span><span>⚔️ retos ganados</span><span>Los puntos incluyen comodines, bonus y retos · empate a puntos: más exactos</span></div>
   </div>
   ${done.length > 1 ? `<h2 class="sec">Jornada a jornada</h2><div class="card"><div class="scrollx"><table class="tbl matrix"><thead><tr><th>#</th><th>Jugador</th>${done.map((j) => `<th>${j.extra ? "⭐" : "J" + j.num}</th>`).join("")}<th>Total</th></tr></thead>
     <tbody>${t.map((r) => {
@@ -971,7 +973,7 @@ function picksGrid(j, rows) {
     return `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>${cells}<td class="tot">${r.jp}</td></tr>`;
   }).join("");
   return `<h2 class="sec">Resultados de cada jugador</h2><div class="card"><div class="scrollx"><table class="tbl grid"><thead><tr><th>Jugador</th>${head}<th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>
-    <div class="legend"><span><i class="lg g3"></i>exacto</span><span><i class="lg g1"></i>signo</span><span><i class="lg g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
+    <div class="legend"><span><i class="lgd g3"></i>exacto</span><span><i class="lgd g1"></i>signo</span><span><i class="lgd g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
 }
 
 /* ---------- Normas ---------- */
