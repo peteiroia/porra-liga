@@ -201,7 +201,13 @@ async function syncCalendar(force) {
   return true;
 }
 
+async function migrations() {
+  // Reinicio de retos pedido por el administrador (se ejecuta una sola vez)
+  const ok = await redis(["SET", P + "mig:retosReset1", String(Date.now()), "NX"]);
+  if (ok) await redis(["DEL", P + "retos"]);
+}
 async function loadAll() {
+  await migrations();
   await syncCalendar();
   const [jornadas, predsRaw, userKeys, crestsRaw, retos] = await Promise.all([
     getJSON(P + "jornadas", []),
@@ -387,7 +393,8 @@ function buildState(me, data) {
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
     // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
     retos: retoOut.filter((r) => r.started || r.from === displayOf(me) || r.to === displayOf(me)),
-    retados: Object.fromEntries(jornadas.map((j) => [j.id, retos.filter((r) => r.jornada === j.id).map((r) => nameOf[r.to])])),
+    // jugadores que ya tienen reto en cada jornada (retando o retados), sin decir con quién
+    retados: Object.fromEntries(jornadas.map((j) => [j.id, [...new Set(retos.filter((r) => r.jornada === j.id).flatMap((r) => [nameOf[r.from], nameOf[r.to]]))]])),
     now,
     jornadas: outJ,
     // los retos y comodines de cada uno son secretos: no se envían los de los demás
@@ -632,8 +639,11 @@ async function handle(body) {
       const target = users.find((u) => u.name.toLowerCase() === normName(body.to).toLowerCase());
       if (!target) bad("Jugador no encontrado");
       if (target.key === myK) bad("No puedes retarte a ti mismo");
-      if (list.some((r) => r.jornada === j.id && r.from === myK)) bad("Ya has retado a alguien en esta jornada");
-      if (list.some((r) => r.jornada === j.id && r.to === target.key)) bad(`${target.name} ya tiene un reto esta jornada. Reta a otro`);
+      // Un solo reto por jornada y jugador: si retas no te pueden retar, y si te retan no puedes retar
+      const busy = (k) => list.some((r) => r.jornada === j.id && (r.from === k || r.to === k));
+      if (list.some((r) => r.jornada === j.id && r.to === myK)) bad("Ya te han retado en esta jornada: solo puedes tener un reto por jornada");
+      if (busy(myK)) bad("Ya tienes un reto en esta jornada");
+      if (busy(target.key)) bad(`${target.name} ya tiene un reto esta jornada. Reta a otro`);
       if (list.filter((r) => r.from === myK).length >= RETOS) bad(`Ya has usado tus ${RETOS} retos de la temporada`);
       if (list.filter((r) => r.from === myK && r.to === target.key).length >= RETOS_MISMO) bad(`Ya has retado ${RETOS_MISMO} veces a ${target.name}`);
       list.push({ id: crypto.randomBytes(4).toString("hex"), jornada: j.id, from: myK, to: target.key, at: now });
@@ -739,6 +749,8 @@ async function handle(body) {
     }
     return { code: await leagueCode(!!body.regen, custom) };
   }
+
+  if (a === "resetRetos") { await redis(["DEL", P + "retos"]); return buildState(me, await loadAll()); }
 
   if (a === "syncCalendar") { await syncCalendar(true); return buildState(me, await loadAll()); }
 

@@ -1031,11 +1031,13 @@ function retosCard(j) {
   const now = serverNow();
   const canRet = j.current && j.retoDeadline && now < j.retoDeadline && !j.matches.some((m) => m.tbc);
   const mine = list.find((r) => r.from === me.name);
+  const vsMe = list.find((r) => r.to === me.name);
   const ph = Object.fromEntries(d.users.map((u) => [u.name, u.photo]));
   if (!list.length && !canRet) return "";
   let action = "";
   if (canRet) {
     if (mine) action = `<div class="row" style="justify-content:space-between;margin-top:8px"><span>Has retado a <b>${esc(mine.to)}</b></span><button class="btn small danger" id="retoCancel">Quitar reto</button></div>`;
+    else if (vsMe) action = `<p class="muted" style="margin:8px 0 0;font-size:14px">⚔️ <b>${esc(vsMe.from)}</b> te ha retado. Solo se puede tener un reto por jornada, así que esta jornada no puedes retar a nadie.</p>`;
     else if (R.used >= R.total) action = `<p class="muted" style="margin:8px 0 0;font-size:14px">Ya has usado tus ${R.total} retos.</p>`;
     else {
       const taken = new Set((d.retados || {})[j.id] || []);
@@ -1206,7 +1208,7 @@ function normasView() {
     <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
-    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. En cada jornada puedes retar a <b>un</b> jugador, antes de que empiece el primer partido. A cada jugador solo le puede retar <b>una</b> persona por jornada, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
+    <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. Cada jugador solo puede tener <b>un reto por jornada</b>: si retas a alguien ya no te pueden retar, y si te retan ya no puedes retar. Hay que retar antes de que empiece el primer partido, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>
     <li>🚫 <b>Partidos aplazados</b>: si aplazan un partido, queda <b>anulado</b>. No suma puntos a nadie, no cuenta para los plenos y, si le pusiste el comodín, se te devuelve.</li>
     <li>📅 <b>Cambios de fecha</b>: si un partido se adelanta o se retrasa, pasa a la <b>jornada más cercana</b> a la fecha en que se juega.</li>
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
@@ -1271,6 +1273,9 @@ function adminView() {
     }).join("")}</div>`).join("") : `<div class="card muted">Crea una jornada para poder meter resultados.</div>`}
   <h2 class="sec">Todas las jornadas</h2>
   <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">${esc(jName(j))} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
+  <h2 class="sec">Retos</h2>
+  <div class="card"><p class="muted" style="font-size:14px;margin:0 0 10px">Borra todos los retos (lanzados, ganados y perdidos). Cada jugador vuelve a tener sus 10 retos y la clasificación se recalcula sin ellos.</p>
+    <button class="btn danger block" id="resetRetos">♻️ Reiniciar todos los retos</button></div>
   <h2 class="sec">Jugadores <span class="chip">${d.users.length}</span></h2>
   <div class="card">${d.users.map((u) => `<div class="urow">${avatar(u.name, u.photo, "sm")}<span class="nm">${esc(u.name)}${u.admin ? ` <span class="chip" style="color:var(--gold)">admin</span>` : ""}${u.username && u.username !== u.name ? `<br><span class="dim" style="font-size:12px;font-weight:500">usuario: ${esc(u.username)}</span>` : ""}</span>
     <button class="btn small" data-upin="${esc(u.name)}" title="Cambiar contraseña">🔑</button>
@@ -1777,6 +1782,11 @@ function bindMain() {
       catch (err) { toast(err.message, true); }
     };
   }
+  const rr = $("#resetRetos");
+  if (rr) rr.onclick = async () => {
+    if (!confirm("¿Reiniciar TODOS los retos? Se borran los lanzados y los resultados, y la clasificación se recalcula. No se puede deshacer.")) return;
+    try { setData(await api("resetRetos")); render(); toast("Retos reiniciados"); } catch (err) { toast(err.message, true); }
+  };
   const sc = $("#syncCal");
   if (sc) sc.onclick = async () => {
     sc.disabled = true;
