@@ -268,7 +268,7 @@ function buildState(me, data) {
       if (started) {
         for (const u of users) {
           const p = (preds[u.key] || {})[m.id];
-          if (p) { const sc = scoreFor(p, m, ec); others[u.name] = { h: p.h, a: p.a, x2: !!p.x2, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false }; }
+          if (p) { const sc = scoreFor(p, m, ec); others[u.name] = { h: p.h, a: p.a, pts: sc ? sc.pts : null, unique: sc ? sc.unique : false }; }
         }
       }
       const myP = (preds[myKey] || {})[m.id] || null;
@@ -289,10 +289,12 @@ function buildState(me, data) {
       comodines: { total: COMODINES, used: Object.values(preds[myKey] || {}).filter((p) => p && p.x2).length },
       retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
-    retos: retoOut,
+    retos: retoOut.filter((r) => r.from === displayOf(me) || r.to === displayOf(me)),
+    retados: Object.fromEntries(jornadas.map((j) => [j.id, retos.filter((r) => r.jornada === j.id).map((r) => nameOf[r.to])])),
     now,
     jornadas: outJ,
-    table: table.map(({ key, ...r }) => ({ ...r, photo: photo[r.name] })),
+    // los retos y comodines de cada uno son secretos: no se envían los de los demás
+    table: table.map(({ key, retoJ, retoPts, ...r }) => ({ ...r, photo: photo[r.name], ...(key === myKey ? { retoJ, retoPts } : {}) })),
     users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username } : {}) })),
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
