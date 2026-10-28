@@ -91,17 +91,16 @@ def render(S=1024, tema="oro"):
     img.paste(ball_shaded, (0, 0), bm)
     # --- cinta estilizada azul grisácea con letras doradas
     d = ImageDraw.Draw(img)
-    by = int(W * .765); bh = int(W * .13); bx0 = int(W * .1); bx1 = W - bx0; fold = W * .045
+    by = int(W * .76); bh = int(W * .135); bx0 = int(W * .135); bx1 = W - bx0; fold = 0
+    # sombra del óvalo
+    so = Image.new("L", (W, W), 0); ImageDraw.Draw(so).rounded_rectangle([bx0, by + W*.012, bx1, by + bh + W*.012], radius=bh // 2, fill=150)
+    img.paste((0, 0, 0, 255), (0, 0), so.filter(ImageFilter.GaussianBlur(W * .012)))
     slate, slate_d = (58, 72, 96), (34, 44, 62)
-    for s in (1, -1):  # colas con muesca
-        xa = bx0 if s == 1 else bx1
-        d.polygon([(xa - fold*1.4*s, by + fold), (xa + fold*s, by + fold), (xa + fold*s, by + bh + fold), (xa - fold*1.4*s, by + bh + fold), (xa - fold*.6*s, by + bh/2 + fold)], fill=slate_d)
-        d.polygon([(xa + fold*s, by + bh), (xa + fold*s, by + bh + fold), (xa + fold*2*s, by + bh)], fill=(22, 28, 40))
     rb = grad_img(W, [(0, (92, 110, 140)), (.5, slate), (1, slate_d)], "y", by / W, (by + bh) / W)
-    rm = Image.new("L", (W, W), 0); ImageDraw.Draw(rm).rounded_rectangle([bx0 + fold, by, bx1 - fold, by + bh], radius=int(bh*.18), fill=255)
+    rm = Image.new("L", (W, W), 0); ImageDraw.Draw(rm).rounded_rectangle([bx0 + fold, by, bx1 - fold, by + bh], radius=bh // 2, fill=255)
     img.paste(rb, (0, 0), rm)
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle([bx0 + fold, by, bx1 - fold, by + bh], radius=int(bh*.18), outline=(255, 214, 96), width=int(W*.005))
+    d.rounded_rectangle([bx0 + fold, by, bx1 - fold, by + bh], radius=bh // 2, outline=(255, 214, 96), width=int(W*.006))
     f = ImageFont.truetype(F_BLACK, int(bh * .72)); txt = "LA PORRA"
     tw = d.textlength(txt, font=f); bb = d.textbbox((0, 0), txt, font=f)
     tx = (W - tw) / 2; ty = by + (bh - (bb[3] - bb[1])) / 2 - bb[1]
