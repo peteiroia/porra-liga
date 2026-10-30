@@ -375,6 +375,37 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .banner.tort{background:linear-gradient(135deg,rgba(255,170,40,.2),rgba(255,214,102,.06));border-color:rgba(255,190,60,.5);margin:0 0 12px}
 .tbl tr.tortrow td{background:rgba(255,120,40,.12)}
 .chip.tortchip{color:#ffb347;border-color:rgba(255,179,71,.5);background:rgba(255,179,71,.12);font-size:11px}
+/* ---------- Presentación: ¡hay tortilla! ---------- */
+.tort-show{position:fixed;inset:0;z-index:84;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:20px 16px calc(20px + var(--safe-b));
+  background:radial-gradient(100% 70% at 50% 40%,#5a3410 0%,#2a1606 50%,#0e0703 100%);animation:dIn .45s ease-out both}
+.tort-show .rays{position:absolute;inset:-30%;background:repeating-conic-gradient(from 0deg at 50% 42%,rgba(255,200,90,.10) 0 7deg,transparent 7deg 18deg);animation:spin 40s linear infinite}
+.tort-show .kick{position:relative;font-family:"Barlow Condensed";font-weight:800;letter-spacing:.3em;font-size:13px;color:#ffcf7a;text-transform:uppercase;opacity:0;animation:dUp .5s .15s forwards}
+.tort-show h1{position:relative;margin:4px 0 0;font-family:"Barlow Condensed";font-weight:800;font-size:clamp(40px,11.5vw,62px);line-height:.92;text-align:center;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff6d6,#ffd36b 45%,#e08a1c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 #2a1204) drop-shadow(0 0 24px rgba(255,170,50,.5));
+  opacity:0;transform:scale(1.6);animation:slam .5s .35s cubic-bezier(.2,1.6,.4,1) forwards}
+.tort-show .dish{position:relative;width:min(92vw,360px);aspect-ratio:1.15;margin:4px 0 0;opacity:0;animation:dishIn .9s .1s cubic-bezier(.2,1.2,.4,1) forwards}
+@keyframes dishIn{from{opacity:0;transform:translateY(40px) scale(.7)}to{opacity:1;transform:none}}
+.tort-show .dish svg{width:100%;height:100%;overflow:visible}
+.tort-show .dish.photo{width:min(88vw,370px);aspect-ratio:745/440;margin:22px 0 18px}
+.tort-show .dish .ph{position:absolute;inset:0;border-radius:26px;overflow:hidden;box-shadow:0 0 0 4px rgba(255,214,102,.75),0 24px 50px rgba(0,0,0,.6),0 0 70px rgba(255,170,50,.55)}
+.tort-show .dish .ph img{width:100%;height:100%;object-fit:cover;animation:tortZoom 9s ease-out forwards}
+.tort-show .dish .ph::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 40% 45%,transparent 55%,rgba(30,12,0,.45));pointer-events:none}
+.tort-show .dish .ph::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35) 48%,transparent 60%);transform:translateX(-120%);animation:glare 4.5s 1.2s ease-in-out infinite}
+@keyframes tortZoom{from{transform:scale(1.12)}to{transform:scale(1)}}
+.tort-show .dish .steam{position:absolute;left:0;right:0;top:-70px;height:120px;width:100%;z-index:2}
+.tort-show .steam path{fill:none;stroke:rgba(255,255,255,.55);stroke-width:5;stroke-linecap:round;filter:blur(1.5px);opacity:0;animation:steam 2.6s ease-in-out infinite}
+.tort-show .steam path:nth-child(2){animation-delay:.8s}.tort-show .steam path:nth-child(3){animation-delay:1.6s}
+@keyframes steam{0%{opacity:0;transform:translateY(14px)}30%{opacity:.85}100%{opacity:0;transform:translateY(-34px)}}
+.tort-show .wedge{animation:wedge 1s 1s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes wedge{from{transform:translate(0,0)}to{transform:translate(16px,10px)}}
+.tort-show .shine{animation:shine 2.4s 1.4s ease-in-out infinite}
+.tort-show .names{position:relative;margin-top:2px;text-align:center;opacity:0;animation:dUp .5s 1.2s forwards}
+.tort-show .names b{display:block;font-family:"Barlow Condensed";font-weight:800;font-size:clamp(30px,9vw,44px);line-height:1.05;color:#fff;text-transform:uppercase;text-shadow:0 3px 0 #2a1204,0 0 18px rgba(255,170,50,.5)}
+.tort-show .names span{display:block;color:#ffcf7a;font-weight:700;font-size:15px;letter-spacing:.06em;margin-top:6px;text-transform:uppercase}
+.tort-show p{position:relative;max-width:360px;text-align:center;color:#f6dfc0;font-size:15px;line-height:1.45;margin:10px 0 16px;opacity:0;animation:dUp .5s 1.5s forwards}
+.tort-show p b{color:#ffcf7a}
+.tort-show .btn-tort{position:relative;border:0;border-radius:14px;padding:14px 28px;font-family:"Barlow Condensed";font-weight:800;font-size:21px;letter-spacing:.06em;text-transform:uppercase;color:#2a1204;
+  background:linear-gradient(180deg,#ffe08a,#f0a12a);box-shadow:0 6px 0 #6a3a06,0 0 26px rgba(255,170,50,.45);opacity:0;animation:dUp .5s 1.8s forwards}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1571,6 +1602,63 @@ function showFinal(win) {
   setTimeout(() => fx.firework(0.5, 0.25), 3100);
   el.querySelector(".btn-final").onclick = () => { fx.stop(); el.style.transition = "opacity .4s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 400); };
 }
+// Tortilla dibujada (original): plato, tortilla gorda y dorada con una cuña cortada que deja ver el interior jugoso
+const TORTILLA_SVG = `<svg viewBox="0 0 360 310"><defs>
+  <radialGradient id="tTop" cx=".42" cy=".38" r=".75"><stop offset="0" stop-color="#ffd27a"/><stop offset=".45" stop-color="#f0a83c"/><stop offset=".8" stop-color="#c9781f"/><stop offset="1" stop-color="#9a5512"/></radialGradient>
+  <linearGradient id="tSide" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d98c2c"/><stop offset=".55" stop-color="#b8681a"/><stop offset="1" stop-color="#8a4a10"/></linearGradient>
+  <linearGradient id="tIn" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".5" stop-color="#ffe27a"/><stop offset="1" stop-color="#f3c955"/></linearGradient>
+  <radialGradient id="plate" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset=".75" stop-color="#eef0f3"/><stop offset="1" stop-color="#c9ced6"/></radialGradient>
+  <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
+  <clipPath id="tclip"><path d="M180 92 L180 196 L322 168 A142 76 0 0 1 180 244 A142 76 0 0 1 38 168 A142 76 0 0 1 180 92 Z"/></clipPath></defs>
+  <ellipse cx="180" cy="250" rx="172" ry="52" fill="rgba(0,0,0,.45)" filter="url(#soft)"/>
+  <ellipse cx="180" cy="230" rx="170" ry="68" fill="url(#plate)"/><ellipse cx="180" cy="222" rx="140" ry="52" fill="none" stroke="#d6dbe2" stroke-width="3"/>
+  <!-- cuerpo de la tortilla (sin la cuña) -->
+  <g clip-path="url(#tclip)">
+    <path d="M38 168 L38 200 A142 76 0 0 0 322 200 L322 168 Z" fill="url(#tSide)"/>
+    <ellipse cx="180" cy="168" rx="142" ry="76" fill="url(#tTop)"/>
+    <g fill="#8a4a10" opacity=".55">${[[120,150,9,5],[200,135,7,4],[240,170,10,5],[150,190,8,4],[95,175,6,3],[215,200,7,3],[265,150,5,3],[175,160,6,3]].map(([x,y,a,b]) => `<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}"/>`).join("")}</g>
+    <ellipse class="shine" cx="140" cy="128" rx="46" ry="14" fill="#fff6d0" opacity=".35"/>
+  </g>
+  <!-- corte: interior cremoso con láminas de patata -->
+  <path d="M180 168 L322 168 L322 200 L180 200 Z" fill="url(#tIn)"/>
+  <path d="M180 168 L180 92 L180 124 L180 200 Z" fill="url(#tIn)"/>
+  <path d="M180 92 L180 200 L185 200 L185 96 Z" fill="#e8b84a"/>
+  <g fill="#f7e2a0" stroke="#e2bf63" stroke-width="1.2">${[[200,184,14,5],[232,178,16,5],[268,186,15,5],[300,180,12,4],[214,194,12,3],[255,196,13,3]].map(([x,y,a,b]) => `<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}"/>`).join("")}</g>
+  <path d="M180 168 L322 168" stroke="#c9781f" stroke-width="3"/>
+  <!-- cuña separada -->
+  <g class="wedge">
+    <path d="M196 176 L338 176 L338 204 L196 204 Z" fill="url(#tIn)"/>
+    <g fill="#f7e2a0" stroke="#e2bf63" stroke-width="1.2">${[[222,192,12,4],[258,188,14,4],[300,194,13,4],[322,186,9,3]].map(([x,y,a,b]) => `<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}"/>`).join("")}</g>
+    <path d="M196 176 L338 176 A142 76 0 0 1 300 228 L196 204 Z" fill="none"/>
+    <path d="M338 176 A142 76 0 0 1 196 252 L196 204 L338 204 Z" fill="url(#tSide)" opacity=".95"/>
+    <path d="M196 176 L338 176 A142 76 0 0 1 196 252 Z" fill="url(#tTop)" transform="translate(0,-2)" opacity="0"/>
+    <path d="M196 176 L338 176 A142 76 0 0 0 196 100 Z" fill="url(#tTop)"/>
+    <ellipse cx="262" cy="140" rx="9" ry="4" fill="#8a4a10" opacity=".5"/><ellipse cx="300" cy="160" rx="7" ry="3" fill="#8a4a10" opacity=".5"/>
+    <path d="M196 176 L338 176" stroke="#c9781f" stroke-width="3"/>
+  </g>
+  <g class="steam"><path d="M140 96 C128 76 152 64 140 40"/><path d="M182 84 C170 64 194 52 182 28"/><path d="M226 98 C214 78 238 66 226 42"/></g>
+</svg>`;
+function showTortilla(p) {
+  if (document.querySelector(".tort-show")) return;
+  const me = S.data.me.name, pl = p.losers.length > 1, mine = p.losers.includes(me);
+  const lista = p.losers.map(esc).join(", ").replace(/, ([^,]*)$/, " y $1");
+  const dia = new Date(p.friday).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+  const el = document.createElement("div");
+  el.className = "tort-show";
+  el.innerHTML = `<div class="rays"></div>
+    <div class="kick">🥘 Cierre de ${esc(p.label)}</div>
+    <h1>¡El viernes<br>hay tortilla!</h1>
+    <div class="dish photo"><div class="ph"><img src="img/tortilla.jpg" alt="Tortilla de patatas"></div>
+      <svg class="steam" viewBox="0 0 360 120"><path d="M110 110 C96 84 124 70 110 40"/><path d="M180 104 C166 78 194 64 180 34"/><path d="M250 110 C236 84 264 70 250 40"/></svg></div>
+    <div class="names"><b>${lista}</b><span>${pl ? "traen" : "trae"} la tortilla · ${esc(dia)}</span></div>
+    <p>${mine
+      ? `Esta vez ${pl ? "os ha tocado" : "te ha tocado"}… pero el honor de alimentar a los campeones es solo para los valientes. Que quede <b>jugosa</b> y bien cuajadita en el centro. 🥔🍳`
+      : `Un aplauso para ${lista}, que con su sacrificio nos van a alegrar el viernes. Que quede <b>jugosa</b> y bien cuajadita en el centro. 🙌`}</p>
+    <button class="btn-tort">${mine ? "🥔 A pelar patatas" : "😋 ¡Qué hambre!"}</button>`;
+  document.body.appendChild(el);
+  if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+  el.querySelector(".btn-tort").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
+}
 function showAnuncio(an) {
   openSheet(`<div style="text-align:center"><div style="font-size:46px">📢</div><h2 class="cond" style="margin:6px 0;font-size:26px">${esc(an.title)}</h2>
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
@@ -1590,6 +1678,13 @@ function checkDuels() {
   if (j38 && jDone(j38) && S.data.table.length && !seen.includes("final")) {
     seen.push("final"); ls.set("porra_duels", JSON.stringify(seen.slice(-80))); showFinal(); return;
   }
+  // tortilla: las 2 primeras veces que abres la app tras el cierre del mes (hasta el día siguiente al viernes)
+  { const T = S.data.tortilla; const nowMs = serverNow();
+    const pc = T && T.periods.filter((p) => p.closed && p.losers.length && nowMs < p.friday + 864e5).pop();
+    if (pc && !S.tortShown) {
+      let cnt = 0; try { cnt = Number(ls.get("porra_tort_" + pc.id) || 0); } catch (e) {}
+      if (cnt < 2) { ls.set("porra_tort_" + pc.id, String(cnt + 1)); S.tortShown = true; showTortilla(pc); return; }
+    } }
   // campeón de jornada (solo la primera vez que entras tras ganarla)
   const won = (S.data.jornadas || []).filter((j) => !j.extra && (j.winners || []).includes(me) && !seen.includes("win:" + j.id)).pop();
   if (won) { seen.push("win:" + won.id); ls.set("porra_duels", JSON.stringify(seen.slice(-80))); showChamp(won); return; }

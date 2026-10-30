@@ -1,6 +1,6 @@
 // La Porra · service worker: app instalable, funciona offline la portada y recibe avisos
-const CACHE = "porra-v17";
-const SHELL = ["./", "index.html", "manifest.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/logo.png", "img/cracks.webp", "img/cracks.jpg", "img/duel-l.jpg", "img/duel-r.jpg"];
+const CACHE = "porra-v18";
+const SHELL = ["./", "index.html", "manifest.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/logo.png", "img/cracks.webp", "img/cracks.jpg", "img/duel-l.jpg", "img/duel-r.jpg", "img/tortilla.jpg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

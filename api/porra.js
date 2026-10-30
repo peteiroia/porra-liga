@@ -531,7 +531,9 @@ async function tortillaNotify(all) {
     if (!ok) continue;
     const dia = new Date(p.friday).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" });
     const lista = p.losers.join(", ").replace(/, ([^,]*)$/, " y $1");
-    for (const u of all.users) sent += await sendPush(u.key, { title: "🥘 ¡Cierre del mes de la tortilla!", body: `${lista} ${p.losers.length > 1 ? "traen" : "trae"} tortilla el ${dia}. ¡Que aproveche!`, tag: "tortilla-" + p.id, url: "./#tortilla" }).catch(() => 0);
+    const pl = p.losers.length > 1;
+    const body = `Se acabó el mes de ${p.label.split(" ")[0]}. ${lista}, ${pl ? "os toca" : "te toca"}: el ${dia} queremos una tortilla jugosa y bien cuajadita en el centro. ${pl ? "Vuestro" : "Tu"} sacrificio alimentará a los campeones. ¡Gracias, ${pl ? "héroes" : "héroe"}! 🥔🍳`;
+    for (const u of all.users) sent += await sendPush(u.key, { title: "🥘 ¡El viernes hay tortilla!", body, tag: "tortilla-" + p.id, url: "./#tortilla" }).catch(() => 0);
   }
   return sent;
 }
