@@ -453,6 +453,10 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .call .cb.no span{background:#e5383b}.call .cb.si span{background:#2ecc71;animation:bounceC 1s ease-in-out infinite}
 @keyframes bounceC{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .call .timer{font-size:18px;color:#a9bde0;font-variant-numeric:tabular-nums}
+.aftercall h1{margin-top:6px}
+.aftercall .wink{position:relative;font-size:64px;line-height:1;margin:8px 0 18px;opacity:0;animation:wink 1.6s .9s ease-out forwards}
+@keyframes wink{0%{opacity:0;transform:scale(.3) rotate(-30deg)}40%{opacity:1;transform:scale(1.25) rotate(10deg)}60%{transform:scale(.95) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.aftercall .btn-tort{animation-delay:1.4s}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1670,7 +1674,8 @@ function showCall(c) {
     if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
   };
   ring(); ringT = setInterval(ring, 3000);
-  const end = () => { clearInterval(ringT); try { speechSynthesis.cancel(); } catch (e) {} el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 300); };
+  let ended = false;
+  const end = () => { if (ended) return; ended = true; clearInterval(ringT); try { speechSynthesis.cancel(); } catch (e) {} el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); showAfterCall(); }, 300); };
   el.querySelector(".no").onclick = end;
   el.querySelector(".si").onclick = () => {
     clearInterval(ringT); if (navigator.vibrate) navigator.vibrate(0);
@@ -1687,6 +1692,19 @@ function showCall(c) {
     } catch (e) { setTimeout(end, 3500); }
     setTimeout(() => { if (el.isConnected) end(); }, 12000);
   };
+}
+// Al colgar: la tortilla y un guiño
+function showAfterCall() {
+  const el = document.createElement("div");
+  el.className = "tort-show aftercall";
+  el.innerHTML = `<div class="rays"></div>
+    <div class="dish photo"><div class="ph"><img src="img/tortilla.jpg" alt="Tortilla de patatas"></div>
+      <svg class="steam" viewBox="0 0 360 120"><path d="M110 110 C96 84 124 70 110 40"/><path d="M180 104 C166 78 194 64 180 34"/><path d="M250 110 C236 84 264 70 250 40"/></svg></div>
+    <h1 style="font-size:clamp(34px,10vw,52px)">No serás tú<br>el que invita… ¿no?</h1>
+    <div class="wink">😉</div>
+    <button class="btn-tort">😅 Ni de broma</button>`;
+  document.body.appendChild(el);
+  el.querySelector(".btn-tort").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
 }
 function showAnuncio(an) {
   openSheet(`<div style="text-align:center"><div style="font-size:46px">📢</div><h2 class="cond" style="margin:6px 0;font-size:26px">${esc(an.title)}</h2>
