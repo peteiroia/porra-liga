@@ -1739,7 +1739,7 @@ function showCall(c) {
       msg.style.fontSize = g.big ? "34px" : "24px"; msg.textContent = g.t;
       if (g.big) crowd.cheer();
       try {
-        const u = new SpeechSynthesisUtterance(g.t); u.lang = "es-ES"; u.rate = g.r; u.pitch = g.p; u.volume = 1;
+        const u = new SpeechSynthesisUtterance(g.t); u.lang = "es-ES"; u.rate = 1; u.pitch = 1; u.volume = 1;   // voz normal
         if (voice) u.voice = voice;
         u.onend = () => setTimeout(next, 180); u.onerror = () => setTimeout(next, 1500);
         speechSynthesis.speak(u);
