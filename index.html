@@ -1678,6 +1678,7 @@ function stadium() {
 // Pantalla de llamada entrante: suena el tono y, al contestar, una voz dice el mensaje
 function showCall(c) {
   if (document.querySelector(".call")) return;
+  try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); } catch (e) {}
   const el = document.createElement("div");
   el.className = "call";
   el.innerHTML = `<div class="who"><small>Llamada entrante…</small><b>La Porra</b><div class="ava"><i></i><i></i><i></i><img src="icons/icon-192.png" alt=""></div></div>
@@ -1730,8 +1731,18 @@ function showCall(c) {
     ];
     const crowd = stadium(); let i = 0;
     const msg = el.querySelector(".msg");
+    // Voz dulce y natural: preferimos voces femeninas de calidad (Premium/Mejorada/Natural) en español de España
     const voices = (() => { try { return speechSynthesis.getVoices(); } catch (e) { return []; } })();
-    const voice = voices.find((x) => /^es(-|_)ES/i.test(x.lang) && /male|hombre|jorge|pablo|diego|alvaro|enrique/i.test(x.name)) || voices.find((x) => /^es(-|_)ES/i.test(x.lang)) || voices.find((x) => /^es/i.test(x.lang));
+    const score = (v) => {
+      let sc = 0; const n = v.name || "";
+      if (/^es(-|_)ES/i.test(v.lang)) sc += 50; else if (/^es/i.test(v.lang)) sc += 20; else return -1;
+      if (/premium|mejorad|enhanced|natural|neural|online/i.test(n)) sc += 30;
+      if (/m[oó]nica|marisol|luc[ií]a|elvira|helena|laura|paulina|carmen|esperanza|dalia|sara|female|mujer|eea|eef|eec/i.test(n)) sc += 25;
+      if (/jorge|pablo|diego|[aá]lvaro|enrique|juan|male\b|hombre|eed/i.test(n)) sc -= 25;
+      if (/google/i.test(n)) sc += 8;
+      return sc;
+    };
+    const voice = voices.map((v) => [score(v), v]).filter(([sc]) => sc >= 0).sort((a, b) => b[0] - a[0]).map(([, v]) => v)[0];
     const next = () => {
       if (!el.isConnected) return;
       if (i >= guion.length) { crowd.horn(); setTimeout(() => { crowd.stop(); end(); }, 1600); return; }
@@ -1739,7 +1750,7 @@ function showCall(c) {
       msg.style.fontSize = g.big ? "34px" : "24px"; msg.textContent = g.t;
       if (g.big) crowd.cheer();
       try {
-        const u = new SpeechSynthesisUtterance(g.t); u.lang = "es-ES"; u.rate = 1; u.pitch = 1; u.volume = 1;   // voz normal
+        const u = new SpeechSynthesisUtterance(g.t); u.lang = "es-ES"; u.rate = 0.95; u.pitch = 1.05; u.volume = 1;   // voz dulce y pausada
         if (voice) u.voice = voice;
         u.onend = () => setTimeout(next, 180); u.onerror = () => setTimeout(next, 1500);
         speechSynthesis.speak(u);
