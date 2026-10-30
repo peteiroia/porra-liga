@@ -1686,33 +1686,34 @@ function showCall(c) {
     <div class="btns"><button class="cb no"><span>📵</span>Rechazar</button><button class="cb si"><span>📞</span>Contestar</button></div>`;
   document.body.appendChild(el);
   let ac = null, ringT = null;
-  const ring = () => { // tono curioso: silbato de árbitro + «oé, oé, oé» en marimba
+  const ring = () => { // tono de llamada: silbato de árbitro (pi, pi, piiiiii)
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
       if (ac.state === "suspended") ac.resume();
-      const t0 = ac.currentTime + .05, out = ac.createGain(); out.gain.value = .5; out.connect(ac.destination);
-      // silbato: tono agudo con vibrato rápido, dos pitidos (corto + largo)
-      [[0, .18], [.28, .55]].forEach(([st, du]) => {
-        const o = ac.createOscillator(), g = ac.createGain(), vib = ac.createOscillator(), vg = ac.createGain();
-        o.type = "sine"; o.frequency.value = 2900; vib.frequency.value = 38; vg.gain.value = 120; vib.connect(vg); vg.connect(o.frequency);
-        g.gain.setValueAtTime(0, t0 + st); g.gain.linearRampToValueAtTime(.35, t0 + st + .02); g.gain.setValueAtTime(.35, t0 + st + du - .03); g.gain.linearRampToValueAtTime(0, t0 + st + du);
-        o.connect(g); g.connect(out); o.start(t0 + st); vib.start(t0 + st); o.stop(t0 + st + du + .02); vib.stop(t0 + st + du + .02);
-      });
-      // «oé, oé, oé, oé» (mi-do mi-do mi-do re-mi) en marimba
-      const notes = [[659, 0], [523, .22], [659, .52], [523, .74], [659, 1.04], [523, 1.26], [587, 1.56], [659, 1.78]];
-      notes.forEach(([f, st]) => {
-        const t = t0 + .95 + st, o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain();
-        o.type = "sine"; o.frequency.value = f; o2.type = "sine"; o2.frequency.value = f * 4; 
-        const g2 = ac.createGain(); g2.gain.value = .25; o2.connect(g2); g2.connect(g);
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.55, t + .008); g.gain.exponentialRampToValueAtTime(.001, t + .34);
-        o.connect(g); g.connect(out); o.start(t); o2.start(t); o.stop(t + .36); o2.stop(t + .36);
+      const t0 = ac.currentTime + .05, out = ac.createGain(); out.gain.value = .55; out.connect(ac.destination);
+      // ruido de soplido para que suene a silbato de verdad
+      const nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      [[0, .16], [.26, .16], [.52, 1.1]].forEach(([st, du]) => {
+        const t = t0 + st, end = t + du, g = ac.createGain();
+        // la «bolita» del silbato: trino rápido de volumen
+        const trill = ac.createOscillator(), tg = ac.createGain(); trill.frequency.value = 34; tg.gain.value = .45; trill.connect(tg); tg.connect(g.gain);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.55, t + .015); g.gain.setValueAtTime(.55, end - .04); g.gain.linearRampToValueAtTime(0, end);
+        g.connect(out);
+        [2650, 3050].forEach((f, k) => { // dos cámaras del silbato
+          const o = ac.createOscillator(), og = ac.createGain(); o.type = "sine"; o.frequency.setValueAtTime(f * .97, t); o.frequency.linearRampToValueAtTime(f, t + .04);
+          og.gain.value = k ? .35 : .6; o.connect(og); og.connect(g); o.start(t); o.stop(end + .02);
+        });
+        const n = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain(); n.buffer = nb; bp.type = "bandpass"; bp.frequency.value = 2800; bp.Q.value = 6; ng.gain.value = .25;
+        n.connect(bp); bp.connect(ng); ng.connect(g); n.start(t); n.stop(end + .02);
+        trill.start(t); trill.stop(end + .02);
       });
     } catch (e) {}
-    if (navigator.vibrate) navigator.vibrate([150, 80, 400, 200, 120, 60, 120, 60, 120]);
+    if (navigator.vibrate) navigator.vibrate([160, 100, 160, 100, 1100]);
   };
   // si el móvil bloquea el sonido hasta tocar la pantalla, suena en el primer toque
   el.addEventListener("pointerdown", () => { try { if (ac && ac.state === "suspended") { ac.resume(); } } catch (e) {} }, { once: true });
-  ring(); ringT = setInterval(ring, 3600);
+  ring(); ringT = setInterval(ring, 2800);
   let ended = false;
   const end = () => { if (ended) return; ended = true; clearInterval(ringT); try { speechSynthesis.cancel(); } catch (e) {} el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); showAfterCall(); }, 300); };
   el.querySelector(".no").onclick = end;
