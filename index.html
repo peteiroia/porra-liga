@@ -29,7 +29,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Barlow,system-ui,sans-serif;font-size:16px}
 body{min-height:100vh;min-height:100dvh;overflow-x:hidden}
-button,input,select{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 .cond{font-family:"Barlow Condensed",Barlow,sans-serif;letter-spacing:.02em}
 
@@ -366,6 +366,12 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .match.anulado{opacity:.6}
 .match.anulado .crest{filter:grayscale(1)}
 .moved{margin:-2px -2px 10px;padding:6px 10px;border-radius:10px;text-align:center;font-size:12.5px;font-weight:700;color:#cfe3ff;background:rgba(92,184,255,.12);border:1px solid rgba(92,184,255,.35)}
+.input{color:#fff;caret-color:var(--gold)}
+.input::placeholder{color:rgba(255,255,255,.45)}
+.msgcard{border-color:rgba(255,214,102,.5);background:linear-gradient(160deg,rgba(255,214,102,.1),var(--card) 60%)}
+.msgcard .field>span{color:#fff;font-size:14px}
+.msgcard .input{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);font-size:17px}
+.msgcard .input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,214,102,.25)}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1275,9 +1281,9 @@ function adminView() {
   <h2 class="sec">Todas las jornadas</h2>
   <div class="card" style="padding:8px 12px">${js.map((j) => `<div class="urow"><span class="nm">${esc(jName(j))} <span class="dim" style="font-weight:500;font-size:13px">· ${j.matches.length} partidos${j.matches.some((m) => m.tbc) ? " · horas por confirmar" : ""}</span></span><button class="btn small" data-editj="${j.id}">Editar</button></div>`).join("")}</div>
   <h2 class="sec">📢 Aviso a todos</h2>
-  <div class="card">
-    <label class="field" style="margin-top:0"><span>Título</span><input class="input" id="anTitle" maxlength="60" value="🎁 ¡Comodín extra en juego!"></label>
-    <label class="field"><span>Mensaje</span><textarea class="input" id="anBody" rows="3" maxlength="300" style="resize:vertical">Si convences a Pablo para que juegue a La Porra, te llevas un comodín x2 extra. ¡A por él! ⚽</textarea></label>
+  <div class="card msgcard">
+    <label class="field" style="margin-top:0"><span>Título</span><input class="input" id="anTitle" maxlength="60" placeholder="Ej. 🎁 ¡Comodín extra en juego!"></label>
+    <label class="field"><span>Mensaje</span><textarea class="input" id="anBody" rows="4" maxlength="300" placeholder="Escribe aquí el mensaje para todos los participantes…" style="resize:vertical"></textarea></label>
     <button class="btn gold block" id="anSend">📢 Enviar a todos</button>
     ${d.anuncio ? `<p class="dim" style="font-size:12px;margin:10px 0 0">Aviso activo en la app: «${esc(d.anuncio.title)}» <button class="btn small" id="anClear" style="margin-left:6px">Quitar</button></p>` : ""}
     <p class="dim" style="font-size:12px;margin:8px 0 0">Llega como notificación a quien tenga los avisos activados, y a todos les sale dentro de la app la próxima vez que la abran.</p>
@@ -1801,7 +1807,8 @@ function bindMain() {
   }
   const as = $("#anSend");
   if (as) as.onclick = async () => {
-    const title = $("#anTitle").value, body = $("#anBody").value;
+    const title = $("#anTitle").value.trim(), body = $("#anBody").value.trim();
+    if (!body) { toast("Escribe el mensaje antes de enviarlo", true); $("#anBody").focus(); return; }
     if (!confirm("¿Enviar este aviso a todos los participantes?")) return;
     as.disabled = true;
     try { const r = await api("broadcast", { title, body }); setData(r); render(); toast(`Aviso enviado (${r.sent} notificaciones al móvil)`); } catch (err) { toast(err.message, true); as.disabled = false; }
