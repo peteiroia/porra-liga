@@ -445,7 +445,7 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .call .ava i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,214,102,.6);animation:ring 1.8s ease-out infinite}
 .call .ava i:nth-child(2){animation-delay:.6s}.call .ava i:nth-child(3){animation-delay:1.2s}
 @keyframes ring{from{transform:scale(1);opacity:.9}to{transform:scale(1.9);opacity:0}}
-.call .msg{min-height:110px;max-width:340px;text-align:center;font-family:"Barlow Condensed";font-weight:800;font-size:32px;line-height:1.1;text-transform:uppercase;
+.call .msg{min-height:150px;max-width:340px;transition:font-size .2s;text-align:center;font-family:"Barlow Condensed";font-weight:800;font-size:32px;line-height:1.1;text-transform:uppercase;
   background:linear-gradient(180deg,#fff6d6,#ffd36b 45%,#e08a1c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,170,50,.4))}
 .call .btns{display:flex;justify-content:space-around;width:100%;max-width:320px}
 .call .cb{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;color:#cfdaf0;background:none;border:0}
@@ -1653,6 +1653,28 @@ function showTortilla(p) {
   if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
   el.querySelector(".btn-tort").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
 }
+// Ambiente de estadio: murmullo de grada, oleadas de ánimo y bocina final (todo sintetizado)
+function stadium() {
+  let ac; try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return { cheer() {}, horn() {}, stop() {} }; }
+  const master = ac.createGain(); master.gain.value = 0.0; master.connect(ac.destination);
+  master.gain.linearRampToValueAtTime(0.22, ac.currentTime + 1.2);
+  const len = ac.sampleRate * 2, buf = ac.createBuffer(2, len, ac.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let k = 0; k < len; k++) d[k] = Math.random() * 2 - 1; }
+  const noise = ac.createBufferSource(); noise.buffer = buf; noise.loop = true;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 0.6;
+  const lfo = ac.createOscillator(), lfoG = ac.createGain(); lfo.frequency.value = 0.35; lfoG.gain.value = 300; lfo.connect(lfoG); lfoG.connect(bp.frequency);
+  const crowdG = ac.createGain(); crowdG.gain.value = 0.55;
+  noise.connect(bp); bp.connect(crowdG); crowdG.connect(master); noise.start(); lfo.start();
+  return {
+    cheer() { const t = ac.currentTime; crowdG.gain.cancelScheduledValues(t); crowdG.gain.setValueAtTime(crowdG.gain.value, t); crowdG.gain.linearRampToValueAtTime(1.4, t + .4); crowdG.gain.linearRampToValueAtTime(.6, t + 2.6); },
+    horn() {
+      const t = ac.currentTime, g = ac.createGain(); g.connect(master); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + .05); g.gain.setValueAtTime(.9, t + 1.1); g.gain.linearRampToValueAtTime(0, t + 1.4);
+      [233, 294, 349].forEach((f) => { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1800; o.connect(lp); lp.connect(g); o.start(t); o.stop(t + 1.45); });
+      this.cheer();
+    },
+    stop() { try { const t = ac.currentTime; master.gain.linearRampToValueAtTime(0, t + .6); setTimeout(() => ac.close(), 800); } catch (e) {} },
+  };
+}
 // Pantalla de llamada entrante: suena el tono y, al contestar, una voz dice el mensaje
 function showCall(c) {
   if (document.querySelector(".call")) return;
@@ -1663,17 +1685,33 @@ function showCall(c) {
     <div class="btns"><button class="cb no"><span>📵</span>Rechazar</button><button class="cb si"><span>📞</span>Contestar</button></div>`;
   document.body.appendChild(el);
   let ac = null, ringT = null;
-  const ring = () => { // tono de llamada (dos pitidos), suena si el navegador lo permite
+  const ring = () => { // tono curioso: silbato de árbitro + «oé, oé, oé» en marimba
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-      const beep = (t) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 440; o.connect(g); g.connect(ac.destination);
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.18, t + .02); g.gain.setValueAtTime(.18, t + .38); g.gain.linearRampToValueAtTime(0, t + .4); o.start(t); o.stop(t + .42);
-        const o2 = ac.createOscillator(); o2.frequency.value = 480; o2.connect(g); o2.start(t); o2.stop(t + .42); };
-      const t = ac.currentTime; beep(t); beep(t + .6);
+      if (ac.state === "suspended") ac.resume();
+      const t0 = ac.currentTime + .05, out = ac.createGain(); out.gain.value = .5; out.connect(ac.destination);
+      // silbato: tono agudo con vibrato rápido, dos pitidos (corto + largo)
+      [[0, .18], [.28, .55]].forEach(([st, du]) => {
+        const o = ac.createOscillator(), g = ac.createGain(), vib = ac.createOscillator(), vg = ac.createGain();
+        o.type = "sine"; o.frequency.value = 2900; vib.frequency.value = 38; vg.gain.value = 120; vib.connect(vg); vg.connect(o.frequency);
+        g.gain.setValueAtTime(0, t0 + st); g.gain.linearRampToValueAtTime(.35, t0 + st + .02); g.gain.setValueAtTime(.35, t0 + st + du - .03); g.gain.linearRampToValueAtTime(0, t0 + st + du);
+        o.connect(g); g.connect(out); o.start(t0 + st); vib.start(t0 + st); o.stop(t0 + st + du + .02); vib.stop(t0 + st + du + .02);
+      });
+      // «oé, oé, oé, oé» (mi-do mi-do mi-do re-mi) en marimba
+      const notes = [[659, 0], [523, .22], [659, .52], [523, .74], [659, 1.04], [523, 1.26], [587, 1.56], [659, 1.78]];
+      notes.forEach(([f, st]) => {
+        const t = t0 + .95 + st, o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain();
+        o.type = "sine"; o.frequency.value = f; o2.type = "sine"; o2.frequency.value = f * 4; 
+        const g2 = ac.createGain(); g2.gain.value = .25; o2.connect(g2); g2.connect(g);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.55, t + .008); g.gain.exponentialRampToValueAtTime(.001, t + .34);
+        o.connect(g); g.connect(out); o.start(t); o2.start(t); o.stop(t + .36); o2.stop(t + .36);
+      });
     } catch (e) {}
-    if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+    if (navigator.vibrate) navigator.vibrate([150, 80, 400, 200, 120, 60, 120, 60, 120]);
   };
-  ring(); ringT = setInterval(ring, 3000);
+  // si el móvil bloquea el sonido hasta tocar la pantalla, suena en el primer toque
+  el.addEventListener("pointerdown", () => { try { if (ac && ac.state === "suspended") { ac.resume(); } } catch (e) {} }, { once: true });
+  ring(); ringT = setInterval(ring, 3600);
   let ended = false;
   const end = () => { if (ended) return; ended = true; clearInterval(ringT); try { speechSynthesis.cancel(); } catch (e) {} el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); showAfterCall(); }, 300); };
   el.querySelector(".no").onclick = end;
@@ -1682,15 +1720,33 @@ function showCall(c) {
     el.querySelector(".who small").innerHTML = '<span class="timer">00:00</span>';
     el.querySelector(".si").remove(); el.querySelector(".no").lastChild.textContent = "Colgar";
     const t0 = Date.now(), tm = setInterval(() => { const s2 = Math.floor((Date.now() - t0) / 1000); const sp = el.querySelector(".timer"); if (sp) sp.textContent = `00:${String(s2).padStart(2, "0")}`; else clearInterval(tm); }, 500);
-    el.querySelector(".msg").textContent = c.text;
-    try {
-      const u = new SpeechSynthesisUtterance(c.text); u.lang = "es-ES"; u.rate = 0.95; u.pitch = 0.9;
-      const v = speechSynthesis.getVoices().find((x) => /^es(-|_)ES/i.test(x.lang)) || speechSynthesis.getVoices().find((x) => /^es/i.test(x.lang));
-      if (v) u.voice = v;
-      u.onend = () => setTimeout(end, 900);
-      speechSynthesis.speak(u);
-    } catch (e) { setTimeout(end, 3500); }
-    setTimeout(() => { if (el.isConnected) end(); }, 12000);
+    // Guion de locutor de carrusel: primero el cachondeo de pronósticos, luego el mensaje (la tortilla)
+    const guion = [
+      { t: "¡Buenas noches, porreros y porreras! Conectamos en directo con el carrusel de La Porra.", r: 1.12, p: 1.0 },
+      { t: "Atención, que hay movimiento en la clasificación: alguien ha puesto un cinco a cero al Depor… ¡por amor al escudo!", r: 1.16, p: 1.08 },
+      { t: "Y otro ha gastado el comodín en un empate a cero. ¡Valiente, valiente, valiente!", r: 1.18, p: 1.12 },
+      { t: "Recuerden: el que no pronostica, no puntúa… y el que no puntúa… ¡pela patatas!", r: 1.1, p: 1.0 },
+      ...String(c.text).split(/(?<=[.!?])\s+/).filter(Boolean).map((t, i) => ({ t, r: 1.05 + i * .05, p: 1.15 + i * .05, big: true })),
+    ];
+    const crowd = stadium(); let i = 0;
+    const msg = el.querySelector(".msg");
+    const voices = (() => { try { return speechSynthesis.getVoices(); } catch (e) { return []; } })();
+    const voice = voices.find((x) => /^es(-|_)ES/i.test(x.lang) && /male|hombre|jorge|pablo|diego|alvaro|enrique/i.test(x.name)) || voices.find((x) => /^es(-|_)ES/i.test(x.lang)) || voices.find((x) => /^es/i.test(x.lang));
+    const next = () => {
+      if (!el.isConnected) return;
+      if (i >= guion.length) { crowd.horn(); setTimeout(() => { crowd.stop(); end(); }, 1600); return; }
+      const g = guion[i++];
+      msg.style.fontSize = g.big ? "34px" : "24px"; msg.textContent = g.t;
+      if (g.big) crowd.cheer();
+      try {
+        const u = new SpeechSynthesisUtterance(g.t); u.lang = "es-ES"; u.rate = g.r; u.pitch = g.p; u.volume = 1;
+        if (voice) u.voice = voice;
+        u.onend = () => setTimeout(next, 180); u.onerror = () => setTimeout(next, 1500);
+        speechSynthesis.speak(u);
+      } catch (e) { setTimeout(next, 2600); }
+    };
+    next();
+    setTimeout(() => { if (el.isConnected) { crowd.stop(); end(); } }, 45000);
   };
 }
 // Al colgar: la tortilla y un guiño
