@@ -150,7 +150,7 @@ function goals(v) {
 
 // ---------- Mes de la tortilla ----------
 // Cada periodo termina el ÚLTIMO MIÉRCOLES del mes a las 23:59:59 (hora de Madrid).
-// Los dos últimos (y los empatados con el penúltimo o por debajo) traen tortilla el viernes siguiente.
+// Los tres últimos (y los empatados con el antepenúltimo o por debajo) traen tortilla el viernes siguiente.
 function madridOffsetMin(ms) {
   try {
     const p = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Madrid", timeZoneName: "shortOffset" }).formatToParts(new Date(ms));
@@ -398,7 +398,8 @@ function buildState(me, data) {
     const rows = table.map((r) => ({ name: r.name, pts: (r.tm || {})[pid] || 0, photo: photo[r.name] }))
       .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
     let losers = [];
-    if (rows.length >= 3) { const asc = rows.map((r) => r.pts).sort((a, b) => a - b); const th = asc[1]; losers = rows.filter((r) => r.pts <= th).map((r) => r.name); }
+    // Los 3 últimos traen tortilla; con empate, todos los que tengan la puntuación del antepenúltimo o menos
+    if (rows.length >= 4) { const asc = rows.map((r) => r.pts).sort((a, b) => a - b); const th = asc[2]; losers = rows.filter((r) => r.pts <= th).map((r) => r.name); }
     return { ...info, closed: now > info.to, rows, losers };
   }) };
 

@@ -1209,7 +1209,7 @@ function tortillaView() {
   const lista = (arr) => arr.map(esc).join(", ").replace(/, ([^,]*)$/, " y $1");
   const aviso = p.closed
     ? `<div class="banner tort"><span style="font-size:30px">🍳</span><div><b>${p.losers.length ? `${lista(p.losers)} ${p.losers.length > 1 ? "traen" : "trae"} tortilla el ${fmtDia(p.friday)}` : "Este mes no hay tortilla"}</b><span class="muted">${p.losers.includes(me) ? "¡Te toca! A pelar patatas 🥔🔪" : "¡Que aproveche!"}</span></div></div>`
-    : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los dos últimos traen tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: miércoles ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
+    : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los tres últimos traen tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: miércoles ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
   return `
   <h2 class="sec">🍳 Clasificación tortilla del mes</h2>
   <div class="card">
@@ -1220,7 +1220,7 @@ function tortillaView() {
     <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
     ${p.rows.map((r, k) => `<tr class="${r.name === me ? "me" : ""} ${lost.has(r.name) ? "tortrow" : ""}"><td class="pos">${k + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${lost.has(r.name) ? ` <span class="chip tortchip">🍳 ${p.closed ? "trae tortilla" : "zona tortilla"}</span>` : ""}</div></td><td class="tot">${r.pts}</td></tr>`).join("")}
     </tbody></table>
-    <div class="legend"><span>Suman todos los puntos de los partidos jugados en el periodo (comodines, bonus y retos incluidos).</span><span>Si hay empate abajo, traen tortilla todos los que tengan la misma puntuación que el penúltimo o menos.</span></div>
+    <div class="legend"><span>Suman todos los puntos de los partidos jugados en el periodo (comodines, bonus y retos incluidos).</span><span>Si hay empate abajo, traen tortilla todos los que tengan la misma puntuación que el antepenúltimo o menos.</span></div>
   </div>`;
 }
 
@@ -1244,7 +1244,7 @@ function normasView() {
     <li>🚫 <b>Partidos aplazados</b>: si aplazan un partido, queda <b>anulado</b>. No suma puntos a nadie, no cuenta para los plenos y, si le pusiste el comodín, se te devuelve.</li>
     <li>📅 <b>Cambios de fecha</b>: si un partido se adelanta o se retrasa, pasa a la <b>jornada más cercana</b> a la fecha en que se juega.</li>
     <li>ℹ️ <b>Aclaración</b>: el jugador <b>Castelao</b> es <b>Pablo Gómez</b> a todos los efectos.</li>
-    <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>dos últimos</b> traen una <b>tortilla</b> el viernes siguiente. Si hay empate abajo, la traen todos los que tengan la misma puntuación que el penúltimo o menos.</li>
+    <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>tres últimos</b> traen una <b>tortilla</b> el viernes siguiente. Si hay empate abajo, la traen todos los que tengan la misma puntuación que el antepenúltimo o menos.</li>
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
     <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último.</li>
     <li>La clasificación suma todas las jornadas. <b>Empates a puntos</b>: si empatan <b>dos</b>, va delante quien haya <b>ganado más retos entre ellos</b>; si siguen empatados, quien tenga <b>más resultados exactos</b>. Si empatan <b>tres o más</b>, va delante quien tenga <b>más resultados exactos</b>.</li>
