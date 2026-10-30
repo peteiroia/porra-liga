@@ -531,9 +531,10 @@ async function tortillaNotify(all) {
     const ok = await redis(["SET", P + "tortilla:notified:" + p.id, "1", "NX", "EX", "864000"]);
     if (!ok) continue;
     const dia = new Date(p.friday).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" });
-    const lista = p.losers.join(", ").replace(/, ([^,]*)$/, " y $1");
+    const ALIAS = { castelao: "Pablo Gómez" };
+    const lista = p.losers.map((n) => (ALIAS[n.toLowerCase()] ? `${n} (paga ${ALIAS[n.toLowerCase()]})` : n)).join(", ").replace(/, ([^,]*)$/, " y $1");
     const pl = p.losers.length > 1;
-    const body = `Se acabó el mes de ${p.label.split(" ")[0]}. ${lista}, ${pl ? "os toca" : "te toca"}: el ${dia} queremos una tortilla jugosa y bien cuajadita en el centro. ${pl ? "Vuestro" : "Tu"} sacrificio alimentará a los campeones. ¡Gracias, ${pl ? "héroes" : "héroe"}! 🥔🍳`;
+    const body = `Se acabó el mes de ${p.label.split(" ")[0]}. ${lista}, ${pl ? "os toca apañaros entre vosotros" : "te toca"}: el ${dia} queremos una tortilla jugosa y bien cuajadita en el centro. ${pl ? "Vuestro" : "Tu"} sacrificio alimentará a los campeones. ¡Gracias, ${pl ? "héroes" : "héroe"}! 🥔🍳`;
     for (const u of all.users) sent += await sendPush(u.key, { title: "🍳 ¡El viernes hay tortilla!", body, tag: "tortilla-" + p.id, url: "./#tortilla" }).catch(() => 0);
   }
   return sent;
