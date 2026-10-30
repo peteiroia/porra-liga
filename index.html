@@ -406,6 +406,34 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .tort-show p b{color:#ffcf7a}
 .tort-show .btn-tort{position:relative;border:0;border-radius:14px;padding:14px 28px;font-family:"Barlow Condensed";font-weight:800;font-size:21px;letter-spacing:.06em;text-transform:uppercase;color:#2a1204;
   background:linear-gradient(180deg,#ffe08a,#f0a12a);box-shadow:0 6px 0 #6a3a06,0 0 26px rgba(255,170,50,.45);opacity:0;animation:dUp .5s 1.8s forwards}
+/* ---------- Halloween (temporal) ---------- */
+#hw{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
+#hw .web{position:absolute;width:118px;height:118px;opacity:.42}
+#hw .web.tl{top:calc(56px + var(--safe-t));left:0}
+#hw .web.tr{top:calc(56px + var(--safe-t));right:0;transform:scaleX(-1)}
+#hw .web.br{bottom:calc(64px + var(--safe-b));right:0;transform:scale(-1,-1);width:92px;height:92px;opacity:.32}
+#hw .web.bl{bottom:calc(64px + var(--safe-b));left:0;transform:scaleY(-1);width:80px;height:80px;opacity:.28}
+#hw .hang{position:absolute;top:calc(56px + var(--safe-t));left:64px;width:2px;transform-origin:top;animation:hang 7s ease-in-out infinite}
+#hw .hang i{display:block;width:1px;height:90px;margin:0 auto;background:rgba(255,255,255,.45)}
+#hw .hang svg{position:absolute;left:-14px;bottom:-20px;width:30px;height:30px}
+@keyframes hang{0%,100%{transform:scaleY(.35) rotate(2deg)}45%{transform:scaleY(1) rotate(-3deg)}55%{transform:scaleY(1) rotate(3deg)}}
+#hw .spider{position:absolute;left:0;top:0;width:38px;height:38px;will-change:transform}
+#hw .spider svg,#hw .hang svg{width:100%;height:100%;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.95)) drop-shadow(0 0 6px rgba(255,255,255,.35)) drop-shadow(0 3px 3px rgba(0,0,0,.6))}
+#hw .spider.walk .lg1{animation:legA .18s linear infinite alternate}
+#hw .spider.walk .lg2{animation:legB .18s linear infinite alternate}
+@keyframes legA{to{transform:rotate(9deg)}} @keyframes legB{to{transform:rotate(-9deg)}}
+#hw .pk{position:absolute;width:46px;height:46px;opacity:0;transform:scale(.4) rotate(-12deg);transition:opacity .7s,transform .7s cubic-bezier(.3,1.6,.5,1)}
+#hw .pk.on{opacity:.95;transform:scale(1) rotate(0)}
+#hw .pk svg{width:100%;height:100%;filter:drop-shadow(0 0 10px rgba(255,140,0,.55))}
+#hw .pk .eye{animation:flick 1.6s infinite}
+@keyframes flick{0%,100%{opacity:1}45%{opacity:.6}50%{opacity:1}72%{opacity:.75}}
+#hw .ghost{position:absolute;width:52px;height:62px;opacity:0}
+#hw .ghost svg{width:100%;height:100%}
+#hw .ghost.fly{animation:ghostFly 9s ease-in-out forwards}
+@keyframes ghostFly{0%{opacity:0;transform:translate(var(--x0),0)}10%{opacity:.6}50%{transform:translate(calc((var(--x0) + var(--x1))/2),-30px)}90%{opacity:.6}100%{opacity:0;transform:translate(var(--x1),10px)}}
+#hw .ghost .gb{animation:gbob 1.4s ease-in-out infinite}
+@keyframes gbob{50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){#hw{display:none}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1968,6 +1996,72 @@ function bindMain() {
     try { setData(await api("deleteUser", { name: b.dataset.udel })); render(); toast("Jugador eliminado"); } catch (err) { toast(err.message, true); }
   }));
 }
+
+/* ---------- Halloween: hasta el lunes 2/11/2026 a las 22:00 (Madrid) ---------- */
+const HALLOWEEN_END = Date.parse("2026-11-02T22:00:00+01:00");
+function halloween() {
+  let force = false; try { force = new URLSearchParams(location.search).has("halloween"); } catch (e) {}
+  if (!force && Date.now() > HALLOWEEN_END) return;
+  if (document.getElementById("hw")) return;
+  const web = `<svg viewBox="0 0 120 120" fill="none" stroke="#fff" stroke-width="1.1">
+    ${[0, 18, 36, 54, 72, 90].map((a) => { const r = a * Math.PI / 180; return `<line x1="0" y1="0" x2="${(130 * Math.cos(r)).toFixed(1)}" y2="${(130 * Math.sin(r)).toFixed(1)}"/>`; }).join("")}
+    ${[22, 44, 68, 94].map((R) => `<path d="${[0, 18, 36, 54, 72, 90].map((a, i) => { const r = a * Math.PI / 180, x = (R * Math.cos(r)).toFixed(1), y = (R * Math.sin(r)).toFixed(1); return (i ? "Q" + (R * 0.82 * Math.cos(r - 0.157)).toFixed(1) + " " + (R * 0.82 * Math.sin(r - 0.157)).toFixed(1) + " " : "M") + x + " " + y; }).join(" ")}"/>`).join("")}</svg>`;
+  const spider = `<svg viewBox="-20 -20 40 40"><g stroke="#111" stroke-width="2.2" stroke-linecap="round" fill="none">
+    <g class="lg1">${[[-4, -3, -16, -12], [-5, 0, -18, -2], [4, 3, 16, 12], [5, 0, 18, 2]].map(([a, b, c, d]) => `<path d="M${a} ${b} Q${(a + c) / 2} ${(b + d) / 2 - 6} ${c} ${d}"/>`).join("")}</g>
+    <g class="lg2">${[[-5, 2, -17, 9], [-4, 4, -13, 16], [5, -2, 17, -9], [4, -4, 13, -16]].map(([a, b, c, d]) => `<path d="M${a} ${b} Q${(a + c) / 2} ${(b + d) / 2 - 6} ${c} ${d}"/>`).join("")}</g></g>
+    <ellipse cx="0" cy="3" rx="6.5" ry="8" fill="#141414"/><circle cx="0" cy="-6" r="4.2" fill="#1d1d1d"/>
+    <circle cx="-1.5" cy="-7.5" r="1.1" fill="#ff3b3b"/><circle cx="1.5" cy="-7.5" r="1.1" fill="#ff3b3b"/></svg>`;
+  const pumpkin = `<svg viewBox="0 0 60 60"><path d="M30 12 C32 6 36 4 38 5" stroke="#3d6b1f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="18" cy="35" rx="13" ry="18" fill="#e8730c"/><ellipse cx="42" cy="35" rx="13" ry="18" fill="#e8730c"/><ellipse cx="30" cy="35" rx="14" ry="20" fill="#f58a1f"/>
+    <g class="eye" fill="#ffe14d"><path d="M19 30 l6 -6 l4 7z"/><path d="M41 30 l-6 -6 l-4 7z"/><path d="M17 40 q13 10 26 0 l-4 3 -3 -3 -3 4 -3 -4 -3 4 -3 -4 -3 3z"/></g></svg>`;
+  const ghost = `<svg viewBox="0 0 52 62"><g class="gb"><path d="M26 2 C12 2 4 13 4 27 L4 58 L11 52 L18 58 L26 52 L34 58 L41 52 L48 58 L48 27 C48 13 40 2 26 2Z" fill="rgba(255,255,255,.88)"/>
+    <ellipse cx="19" cy="25" rx="3.5" ry="5" fill="#1a1a2a"/><ellipse cx="33" cy="25" rx="3.5" ry="5" fill="#1a1a2a"/><ellipse cx="26" cy="37" rx="4" ry="3" fill="#1a1a2a"/></g></svg>`;
+  const hw = document.createElement("div");
+  hw.id = "hw"; hw.setAttribute("aria-hidden", "true");
+  hw.innerHTML = `<div class="web tl">${web}</div><div class="web tr">${web}</div><div class="web br">${web}</div><div class="web bl">${web}</div>
+    <div class="hang"><i></i>${spider}</div>
+    <div class="spider walk">${spider}</div>
+    <div class="pk" style="left:10px;bottom:calc(76px + var(--safe-b))">${pumpkin}</div>
+    <div class="pk" style="right:4px;top:calc(66px + var(--safe-t));width:38px;height:38px">${pumpkin}</div>
+    <div class="pk" style="right:14px;bottom:calc(150px + var(--safe-b))">${pumpkin}</div>
+    <div class="ghost">${ghost}</div>`;
+  document.body.appendChild(hw);
+  // araña paseando por toda la pantalla: camina a un punto, se para, sigue
+  const sp = hw.querySelector(".spider");
+  let x = innerWidth * 0.3, y = innerHeight * 0.5, tx = x, ty = y, ang = 0, pause = 0;
+  const pick = () => { tx = 20 + Math.random() * (innerWidth - 50); ty = 80 + Math.random() * (innerHeight - 180); };
+  pick();
+  const step = () => {
+    if (!hw.isConnected) return;
+    if (!force && Date.now() > HALLOWEEN_END) { hw.remove(); return; }
+    if (pause > 0) { pause--; sp.classList.remove("walk"); }
+    else {
+      sp.classList.add("walk");
+      const dx = tx - x, dy = ty - y, d = Math.hypot(dx, dy);
+      if (d < 3) { pause = 40 + Math.random() * 140; pick(); }
+      else { const v = 1.1; x += dx / d * v; y += dy / d * v; const target = Math.atan2(dy, dx) * 180 / Math.PI + 90; ang += ((target - ang + 540) % 360 - 180) * 0.12; }
+    }
+    sp.style.transform = `translate(${x - 19}px,${y - 19}px) rotate(${ang}deg)`;
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  // calabazas que aparecen y desaparecen por turnos
+  const pks = [...hw.querySelectorAll(".pk")]; let k = 0;
+  const cyclePk = () => { if (!hw.isConnected) return; pks.forEach((p, i) => p.classList.toggle("on", i === k % pks.length || i === (k + 1) % pks.length && Math.random() < .3)); k++; setTimeout(cyclePk, 3200 + Math.random() * 1800); };
+  setTimeout(cyclePk, 600);
+  // fantasma que cruza de vez en cuando
+  const gh = hw.querySelector(".ghost");
+  const boo = () => {
+    if (!hw.isConnected) return;
+    const ltr = Math.random() < .5; gh.style.top = (120 + Math.random() * (innerHeight * .45)) + "px"; gh.style.left = "0px";
+    gh.style.setProperty("--x0", (ltr ? -60 : innerWidth + 10) + "px"); gh.style.setProperty("--x1", (ltr ? innerWidth + 10 : -60) + "px");
+    gh.querySelector("svg").style.transform = ltr ? "" : "scaleX(-1)";
+    gh.classList.remove("fly"); void gh.offsetWidth; gh.classList.add("fly");
+    setTimeout(boo, 14000 + Math.random() * 12000);
+  };
+  setTimeout(boo, 2500);
+}
+halloween();
 
 /* ---------- Arranque ---------- */
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
