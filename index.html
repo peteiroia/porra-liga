@@ -482,74 +482,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:15px}
 .cracks-cap span{display:block;white-space:nowrap;font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .cracks.compact .cracks-cap{padding:20px 12px 10px}.cracks.compact .cracks-cap b{font-size:18px}
 .auth-stars{max-width:520px;margin:0 auto 14px;padding:0 16px}
-// Cuadrícula: lo que puso cada jugador en cada partido de la jornada
-function picksGrid(j, rows) {
-  const d = S.data;
-  const code = (n) => { const k = kitOf(n); return k ? k.short : initials(n).slice(0, 3); };
-  const head = j.matches.map((m) => `<th class="mcol"><div class="mc">${crest(m.home, true)}${crest(m.away, true)}</div><div>${esc(code(m.home))}-${esc(code(m.away))}</div>
-    <div class="mres ${m.result ? "" : "dim"}">${m.cancelled ? "anulado" : m.result ? `${m.result.h}-${m.result.a}` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
-  const body = rows.map((r) => {
-    const cells = j.matches.map((m) => {
-      const isMe = r.name === d.me.name;
-      let p = null, pts = null, uni = false;
-      let gold = false;
-      if (isMe && m.mine) { p = m.mine; pts = m.myScore ? m.myScore.pts : null; uni = m.myScore && m.myScore.unique; gold = !!(m.myScore && m.myScore.comodin); }
-      else if (m.others && m.others[r.name]) { const o = m.others[r.name]; p = o; pts = o.pts; uni = o.unique; gold = !!o.gold; }
-      if (m.cancelled) return `<td class="pc"><span class="dim" style="font-size:11px">anulado</span></td>`;
-      if (!p) return `<td class="pc">${m.started || isMe ? `<span class="dim">—</span>` : `<span title="Oculto hasta que empiece">🔒</span>`}</td>`;
-      const cls = pts == null ? "pend" : pts >= 3 ? "g3" : pts >= 1 ? "g1" : "g0";
-      return `<td class="pc"><span class="pk2 ${cls}">${p.h}-${p.a}</span>${pts != null ? `<small>+${pts}${gold ? '<i class="gball" title="Acertado con comodín"></i>' : ""}${uni ? "🦄" : ""}</small>` : ""}</td>`;
-    }).join("");
-    return `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>${cells}<td class="tot">${r.jp}</td></tr>`;
-  }).join("");
-  return `<h2 class="sec">Resultados de cada jugador</h2><div class="card"><div class="scrollx"><table class="tbl grid"><thead><tr><th>Jugador</th>${head}<th>Pts</th></tr></thead><tbody>${body}</tbody></table></div>
-    <div class="legend"><span><i class="gball" title="Acertado con comodín"></i> con comodín</span><span><i class="lgd g3"></i>exacto</span><span><i class="lgd g1"></i>signo</span><span><i class="lgd g0"></i>fallo</span><span>🔒 oculto hasta que empiece el partido</span></div></div>`;
-}
-
-// Desglose de puntos de un jugador en una jornada
-function bdLine(r, j) {
-  const b = (r.bd && r.bd[j.id]) || (r.retoJ && j.id in r.retoJ ? { partidos: 0, unico: 0, pleno: 0, reto: r.retoJ[j.id], exactos: 0, signos: 0 } : null);
-  if (!b) return "";
-  const parts = [];
-  parts.push(`<span title="Puntos de los partidos (incluye partidos de oro)">⚽ ${b.partidos}${b.exactos || b.signos ? ` <i>(${b.exactos ? b.exactos + "🎯" : ""}${b.exactos && b.signos ? " " : ""}${b.signos ? b.signos + "✓" : ""})</i>` : ""}</span>`);
-  if (b.comodin) parts.push(`<span title="Puntos extra del comodín"><i class="gball" title="Acertado con comodín"></i> +${b.comodin}</span>`);
-  if (b.unico) parts.push(`<span title="Acierto único">🦄 +${b.unico}</span>`);
-  if (b.pleno) parts.push(`<span title="Pleno de jornada">${b.pleno === 3 ? "🏆" : "🎉"} +${b.pleno}</span>`);
-  const lost = r.lostJ && r.lostJ[j.id], won = r.retoJ && j.id in r.retoJ && !lost;
-  if (lost) parts.push(`<span title="Reto perdido" class="rl">⚔️ −${Math.abs(b.reto)}</span>`);
-  else if (won) parts.push(`<span title="Reto ganado" class="rw">⚔️ +${b.reto}</span>`);
-  return parts.length ? `<small class="bd">${parts.join("")}</small>` : "";
-}
-
-/* ---------- Mes de la tortilla ---------- */
-const fmtDia = (ms) => new Date(ms).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
-function tortillaView() {
-  const T = S.data.tortilla;
-  if (!T || !T.periods.length) return `<div class="card empty">Aún no hay datos.</div>`;
-  const list = T.periods;
-  if (!S.tortP || !list.some((p) => p.id === S.tortP)) S.tortP = T.current;
-  const p = list.find((x) => x.id === S.tortP), i = list.indexOf(p);
-  const me = S.data.me.name, lost = new Set(p.losers);
-  const left = p.to - serverNow();
-  const lista = (arr) => arr.map(esc).join(", ").replace(/, ([^,]*)$/, " y $1");
-  const aviso = p.closed
-    ? `<div class="banner tort"><span style="font-size:30px">🍳</span><div><b>${p.losers.length ? `${lista(p.losers)} ${p.losers.length > 1 ? "traen" : "trae"} tortilla el ${fmtDia(p.friday)}` : "Este mes no hay tortilla"}</b><span class="muted">${p.losers.includes(me) ? "¡Te toca! A pelar patatas 🥔🔪" : "¡Que aproveche!"}</span></div></div>`
-    : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los dos últimos traen tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: miércoles ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
-  return `
-  <h2 class="sec">🍳 Clasificación tortilla del mes</h2>
-  <div class="card">
-    <div class="jnav" style="margin:0 0 10px"><button class="btn" data-tp="${i - 1}" ${i <= 0 ? "disabled" : ""} aria-label="Anterior">‹</button>
-      <div class="jt"><b style="font-size:24px;text-transform:capitalize">${esc(p.label)}</b><small>${new Date(p.from).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} – ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} · ${p.closed ? "cerrado" : "en juego"}</small></div>
-      <button class="btn" data-tp="${i + 1}" ${i >= list.length - 1 ? "disabled" : ""} aria-label="Siguiente">›</button></div>
-    ${aviso}
-    <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
-    ${p.rows.map((r, k) => `<tr class="${r.name === me ? "me" : ""} ${lost.has(r.name) ? "tortrow" : ""}"><td class="pos">${k + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${lost.has(r.name) ? ` <span class="chip tortchip">🍳 ${p.closed ? "trae tortilla" : "zona tortilla"}</span>` : ""}</div></td><td class="tot">${r.pts}</td></tr>`).join("")}
-    </tbody></table>
-    <div class="legend"><span>Suman todos los puntos de los partidos jugados en el periodo (comodines, bonus y retos incluidos).</span><span>Si hay empate abajo, traen tortilla todos los que tengan la misma puntuación que el penúltimo o menos.</span></div>
-  </div>`;
-}
-
-/* ---------- Normas ---------- */
+/* ---------- Normas (estilos) ---------- */
 .rules li{margin:8px 0;line-height:1.45}
 .rules b{color:#fff}
 
