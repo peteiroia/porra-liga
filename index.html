@@ -536,7 +536,7 @@ function tortillaView() {
     ? `<div class="banner tort"><span style="font-size:30px">🍳</span><div><b>${p.losers.length ? `${lista(p.losers)} ${p.losers.length > 1 ? "traen" : "trae"} tortilla el ${fmtDia(p.friday)}` : "Este mes no hay tortilla"}</b><span class="muted">${p.losers.includes(me) ? "¡Te toca! A pelar patatas 🥔🔪" : "¡Que aproveche!"}</span></div></div>`
     : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los dos últimos traen tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: miércoles ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
   return `
-  <h2 class="sec">🍳 Mes de la tortilla</h2>
+  <h2 class="sec">🍳 Clasificación tortilla del mes</h2>
   <div class="card">
     <div class="jnav" style="margin:0 0 10px"><button class="btn" data-tp="${i - 1}" ${i <= 0 ? "disabled" : ""} aria-label="Anterior">‹</button>
       <div class="jt"><b style="font-size:24px;text-transform:capitalize">${esc(p.label)}</b><small>${new Date(p.from).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} – ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} · ${p.closed ? "cerrado" : "en juego"}</small></div>
@@ -1278,7 +1278,7 @@ function tortillaView() {
     ? `<div class="banner tort"><span style="font-size:30px">🍳</span><div><b>${p.losers.length ? `${lista(p.losers)} ${p.losers.length > 1 ? "traen" : "trae"} tortilla el ${fmtDia(p.friday)}` : "Este mes no hay tortilla"}</b><span class="muted">${p.losers.includes(me) ? "¡Te toca! A pelar patatas 🥔🔪" : "¡Que aproveche!"}</span></div></div>`
     : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los dos últimos traen tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: miércoles ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
   return `
-  <h2 class="sec">🍳 Mes de la tortilla</h2>
+  <h2 class="sec">🍳 Clasificación tortilla del mes</h2>
   <div class="card">
     <div class="jnav" style="margin:0 0 10px"><button class="btn" data-tp="${i - 1}" ${i <= 0 ? "disabled" : ""} aria-label="Anterior">‹</button>
       <div class="jt"><b style="font-size:24px;text-transform:capitalize">${esc(p.label)}</b><small>${new Date(p.from).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} – ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} · ${p.closed ? "cerrado" : "en juego"}</small></div>
