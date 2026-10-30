@@ -434,6 +434,25 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 #hw .ghost .gb{animation:gbob 1.4s ease-in-out infinite}
 @keyframes gbob{50%{transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){#hw{display:none}}
+/* ---------- Llamada entrante ---------- */
+.call{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(70px + var(--safe-t)) 24px calc(60px + var(--safe-b));
+  background:radial-gradient(120% 80% at 50% 25%,#1d3a63 0%,#0b1630 55%,#050913 100%);color:#fff;animation:dIn .35s ease-out both}
+.call .who{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.call .who small{font-size:15px;color:#a9bde0;letter-spacing:.04em}
+.call .who b{font-family:"Barlow Condensed";font-size:40px;font-weight:800;letter-spacing:.02em}
+.call .ava{position:relative;width:132px;height:132px;margin-top:20px}
+.call .ava img{width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 4px rgba(255,214,102,.6),0 0 50px rgba(255,190,60,.45);position:relative;z-index:1;object-fit:cover}
+.call .ava i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,214,102,.6);animation:ring 1.8s ease-out infinite}
+.call .ava i:nth-child(2){animation-delay:.6s}.call .ava i:nth-child(3){animation-delay:1.2s}
+@keyframes ring{from{transform:scale(1);opacity:.9}to{transform:scale(1.9);opacity:0}}
+.call .msg{min-height:110px;max-width:340px;text-align:center;font-family:"Barlow Condensed";font-weight:800;font-size:32px;line-height:1.1;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff6d6,#ffd36b 45%,#e08a1c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,170,50,.4))}
+.call .btns{display:flex;justify-content:space-around;width:100%;max-width:320px}
+.call .cb{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;color:#cfdaf0;background:none;border:0}
+.call .cb span{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-size:32px;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.call .cb.no span{background:#e5383b}.call .cb.si span{background:#2ecc71;animation:bounceC 1s ease-in-out infinite}
+@keyframes bounceC{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.call .timer{font-size:18px;color:#a9bde0;font-variant-numeric:tabular-nums}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1346,6 +1365,12 @@ function adminView() {
     ${d.anuncio ? `<p class="dim" style="font-size:12px;margin:10px 0 0">Aviso activo en la app: «${esc(d.anuncio.title)}» <button class="btn small" id="anClear" style="margin-left:6px">Quitar</button></p>` : ""}
     <p class="dim" style="font-size:12px;margin:8px 0 0">Llega como notificación a quien tenga los avisos activados, y a todos les sale dentro de la app la próxima vez que la abran.</p>
   </div>
+  <h2 class="sec">📞 Llamada a todos</h2>
+  <div class="card msgcard">
+    <label class="field" style="margin-top:0"><span>Lo que dirá la voz al contestar</span><input class="input" id="callText" maxlength="200" placeholder="Ej. ¡A batir los huevos! La primera tortilla está en juego."></label>
+    <button class="btn gold block" id="callSend">📞 Llamar a todos</button>
+    <p class="dim" style="font-size:12px;margin:8px 0 0">Les llega una notificación de llamada entrante y, al abrir la app, sale la pantalla de llamada. Al contestar, una voz dice el mensaje.</p>
+  </div>
   <h2 class="sec">Retos</h2>
   <div class="card"><p class="muted" style="font-size:14px;margin:0 0 10px">Borra todos los retos (lanzados, ganados y perdidos). Cada jugador vuelve a tener sus 10 retos y la clasificación se recalcula sin ellos.</p>
     <button class="btn danger block" id="resetRetos">♻️ Reiniciar todos los retos</button></div>
@@ -1624,6 +1649,45 @@ function showTortilla(p) {
   if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
   el.querySelector(".btn-tort").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
 }
+// Pantalla de llamada entrante: suena el tono y, al contestar, una voz dice el mensaje
+function showCall(c) {
+  if (document.querySelector(".call")) return;
+  const el = document.createElement("div");
+  el.className = "call";
+  el.innerHTML = `<div class="who"><small>Llamada entrante…</small><b>La Porra</b><div class="ava"><i></i><i></i><i></i><img src="icons/icon-192.png" alt=""></div></div>
+    <div class="msg"></div>
+    <div class="btns"><button class="cb no"><span>📵</span>Rechazar</button><button class="cb si"><span>📞</span>Contestar</button></div>`;
+  document.body.appendChild(el);
+  let ac = null, ringT = null;
+  const ring = () => { // tono de llamada (dos pitidos), suena si el navegador lo permite
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const beep = (t) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 440; o.connect(g); g.connect(ac.destination);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.18, t + .02); g.gain.setValueAtTime(.18, t + .38); g.gain.linearRampToValueAtTime(0, t + .4); o.start(t); o.stop(t + .42);
+        const o2 = ac.createOscillator(); o2.frequency.value = 480; o2.connect(g); o2.start(t); o2.stop(t + .42); };
+      const t = ac.currentTime; beep(t); beep(t + .6);
+    } catch (e) {}
+    if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+  };
+  ring(); ringT = setInterval(ring, 3000);
+  const end = () => { clearInterval(ringT); try { speechSynthesis.cancel(); } catch (e) {} el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 300); };
+  el.querySelector(".no").onclick = end;
+  el.querySelector(".si").onclick = () => {
+    clearInterval(ringT); if (navigator.vibrate) navigator.vibrate(0);
+    el.querySelector(".who small").innerHTML = '<span class="timer">00:00</span>';
+    el.querySelector(".si").remove(); el.querySelector(".no").lastChild.textContent = "Colgar";
+    const t0 = Date.now(), tm = setInterval(() => { const s2 = Math.floor((Date.now() - t0) / 1000); const sp = el.querySelector(".timer"); if (sp) sp.textContent = `00:${String(s2).padStart(2, "0")}`; else clearInterval(tm); }, 500);
+    el.querySelector(".msg").textContent = c.text;
+    try {
+      const u = new SpeechSynthesisUtterance(c.text); u.lang = "es-ES"; u.rate = 0.95; u.pitch = 0.9;
+      const v = speechSynthesis.getVoices().find((x) => /^es(-|_)ES/i.test(x.lang)) || speechSynthesis.getVoices().find((x) => /^es/i.test(x.lang));
+      if (v) u.voice = v;
+      u.onend = () => setTimeout(end, 900);
+      speechSynthesis.speak(u);
+    } catch (e) { setTimeout(end, 3500); }
+    setTimeout(() => { if (el.isConnected) end(); }, 12000);
+  };
+}
 function showAnuncio(an) {
   openSheet(`<div style="text-align:center"><div style="font-size:46px">📢</div><h2 class="cond" style="margin:6px 0;font-size:26px">${esc(an.title)}</h2>
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
@@ -1631,6 +1695,8 @@ function showAnuncio(an) {
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
+  { const c = S.data.llamada; let seenC = []; try { seenC = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
+    if (c && !seenC.includes("call:" + c.id) && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) { seenC.push("call:" + c.id); ls.set("porra_duels", JSON.stringify(seenC.slice(-80))); showCall(c); return; } }
   { const an = S.data.anuncio; let seenA = []; try { seenA = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
     if (an && !seenA.includes("an:" + an.id) && !document.querySelector(".duel,.heist,.champ,.final,.sheet-bg")) { seenA.push("an:" + an.id); ls.set("porra_duels", JSON.stringify(seenA.slice(-80))); showAnuncio(an); return; } }
   let seen = [];
@@ -1942,6 +2008,13 @@ function bindMain() {
     if (!confirm(`¿Regalar un comodín x2 extra a ${n}?`)) return;
     try { setData(await api("giveX2", { name: n, n: 1 })); render(); toast(`🎁 Comodín regalado a ${n}`); } catch (err) { toast(err.message, true); }
   }));
+  const cs = $("#callSend");
+  if (cs) cs.onclick = async () => {
+    const text = $("#callText").value.trim();
+    if (!text) { toast("Escribe lo que dirá la llamada", true); return; }
+    if (!confirm("¿Llamar a todos los participantes con este mensaje?")) return;
+    try { setData(await api("llamar", { text })); render(); toast("📞 Llamando a todos…"); } catch (err) { toast(err.message, true); }
+  };
   const rr = $("#resetRetos");
   if (rr) rr.onclick = async () => {
     if (!confirm("¿Reiniciar TODOS los retos? Se borran los lanzados y los resultados, y la clasificación se recalcula. No se puede deshacer.")) return;

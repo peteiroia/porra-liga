@@ -236,17 +236,28 @@ async function migrations() {
   // Reinicio de retos pedido por el administrador (se ejecuta una sola vez)
   const ok = await redis(["SET", P + "mig:retosReset1", String(Date.now()), "NX"]);
   if (ok) await redis(["DEL", P + "retos"]);
+  // Llamada a todos: «¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.» (una sola vez)
+  const ok2 = await redis(["SET", P + "mig:llamada1", String(Date.now()), "NX"]);
+  if (ok2) await startCall("¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.", "tortilla1");
+}
+async function startCall(text, id) {
+  const call = { id: id || crypto.randomBytes(4).toString("hex"), text, at: Date.now(), until: Date.now() + 3 * 864e5 };
+  await setJSON(P + "llamada", call);
+  const keys = (await redis(["SMEMBERS", P + "users"])) || [];
+  for (const k of keys) await sendPush(k, { title: "📞 Llamada entrante de La Porra", body: "Abre la app para contestar…", tag: "llamada-" + call.id, url: "./" }).catch(() => 0);
+  return call;
 }
 async function loadAll() {
   await migrations();
   await syncCalendar();
-  const [jornadas, predsRaw, userKeys, crestsRaw, retos, anuncio] = await Promise.all([
+  const [jornadas, predsRaw, userKeys, crestsRaw, retos, anuncio, llamada] = await Promise.all([
     getJSON(P + "jornadas", []),
     redis(["HGETALL", P + "preds"]),
     redis(["SMEMBERS", P + "users"]),
     redis(["HGETALL", P + "crests"]),
     getJSON(P + "retos", []),
     getJSON(P + "anuncio", null),
+    getJSON(P + "llamada", null),
   ]);
   const crests = hgetallObj(crestsRaw);
   const preds = hgetallObj(predsRaw);
@@ -255,7 +266,7 @@ async function loadAll() {
     const u = await getUser(k);
     if (u) users.push({ key: k, name: displayOf(u), username: u.username, admin: !!u.admin, photo: u.photo || 0, bonusX2: u.bonusX2 || 0 });
   }
-  return { jornadas, preds, users, crests, retos, anuncio };
+  return { jornadas, preds, users, crests, retos, anuncio, llamada };
 }
 
 function buildState(me, data) {
@@ -451,6 +462,7 @@ function buildState(me, data) {
     table: table.map(({ key, retoPts, ...r }) => ({ ...r, photo: photo[r.name] })),
     users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username, bonusX2: u.bonusX2 } : {}) })),
     anuncio: data.anuncio || null,
+    llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
     tortilla,
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
@@ -832,6 +844,12 @@ async function handle(body) {
     let sent = 0;
     for (const u of users) sent += await sendPush(u.key, { title, body: text, tag: "anuncio-" + an.id, url: "./" }).catch(() => 0);
     return { sent, ...buildState(me, await loadAll()) };
+  }
+  if (a === "llamar") {
+    const text = String(body.text || "").trim().slice(0, 200);
+    if (!text) bad("Escribe lo que dirá la llamada");
+    await startCall(text);
+    return buildState(me, await loadAll());
   }
   if (a === "clearAnuncio") { await redis(["DEL", P + "anuncio"]); return buildState(me, await loadAll()); }
   // Regalar (o quitar) comodines a un jugador
