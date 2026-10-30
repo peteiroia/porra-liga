@@ -1695,8 +1695,12 @@ function showAnuncio(an) {
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
-  { const c = S.data.llamada; let seenC = []; try { seenC = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
-    if (c && !seenC.includes("call:" + c.id) && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) { seenC.push("call:" + c.id); ls.set("porra_duels", JSON.stringify(seenC.slice(-80))); showCall(c); return; } }
+  // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
+  { const c = S.data.llamada;
+    if (c && !S.callShown && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) {
+      let n = 0; try { n = Number(ls.get("porra_call_" + c.id) || 0); } catch (e) {}
+      if (n < 5) { ls.set("porra_call_" + c.id, String(n + 1)); S.callShown = true; showCall(c); return; }
+    } }
   { const an = S.data.anuncio; let seenA = []; try { seenA = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
     if (an && !seenA.includes("an:" + an.id) && !document.querySelector(".duel,.heist,.champ,.final,.sheet-bg")) { seenA.push("an:" + an.id); ls.set("porra_duels", JSON.stringify(seenA.slice(-80))); showAnuncio(an); return; } }
   let seen = [];
