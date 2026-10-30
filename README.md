@@ -13,7 +13,7 @@ Porra online para pronosticar cada jornada de Primera los partidos del Real Madr
 - Si un partido cambia de fecha, pasa solo a la jornada más cercana a su nueva fecha.
 - Jornadas extra (selecciones, Champions, Copa…): partido suelto que suma a la general; se admite comodín, sin retos ni bonus.
 - Clasificación acumulada. Empate entre 2 → más retos ganados entre ellos, luego más exactos. Empate entre 3 o más → más exactos.
-- 🥘 **Mes de la tortilla**: clasificación mensual con corte el último miércoles de cada mes (23:59). Los dos últimos (y los empatados con el penúltimo o por debajo) traen tortilla el viernes siguiente.
+- 🍳 **Mes de la tortilla**: clasificación mensual con corte el último miércoles de cada mes (23:59). Los dos últimos (y los empatados con el penúltimo o por debajo) traen tortilla el viernes siguiente.
 - 🏆 **Gana quien tenga más puntos al acabar la jornada 38 de la Liga 2026-2027.**
 
 ## Cómo funciona
