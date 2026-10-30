@@ -122,6 +122,7 @@ const exactCountOf = (m, users, preds) =>
   m.result ? users.filter((u) => { const p = (preds[u.key] || {})[m.id]; return p && p.h === m.result.h && p.a === m.result.a; }).length : 0;
 // Partidos aplazados = anulados: no puntúan ni cuentan para nada
 const live = (j) => j.matches.filter((m) => !m.cancelled);
+const jEnd = (j) => Math.max(...live(j).map((m) => Date.parse(m.kickoff) || 0), 0);
 const allDone = (j) => live(j).length > 0 && live(j).every((m) => m.result);
 const isLocked = (m, now) => !!m.cancelled || !!m.result || (!!m.kickoff && Date.parse(m.kickoff) - CLOSE_BEFORE <= now);
 // Jornada en juego = la de número más bajo que aún tiene algún partido sin cerrar
@@ -145,6 +146,36 @@ function goals(v) {
   const n = Number(v);
   if (!Number.isInteger(n) || n < 0 || n > 30) bad("Marcador no válido");
   return n;
+}
+
+// ---------- Mes de la tortilla ----------
+// Cada periodo termina el ÚLTIMO MIÉRCOLES del mes a las 23:59:59 (hora de Madrid).
+// Los dos últimos (y los empatados con el penúltimo o por debajo) traen tortilla el viernes siguiente.
+function madridOffsetMin(ms) {
+  try {
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Madrid", timeZoneName: "shortOffset" }).formatToParts(new Date(ms));
+    const tz = (p.find((x) => x.type === "timeZoneName") || {}).value || "GMT+1";
+    const m = /GMT([+-]\d+)(?::(\d+))?/.exec(tz); return m ? Number(m[1]) * 60 + (m[1].startsWith("-") ? -1 : 1) * Number(m[2] || 0) : 60;
+  } catch (e) { return 60; }
+}
+function lastWednesday(y, m) { // m: 0-11
+  const last = new Date(Date.UTC(y, m + 1, 0)); const d = last.getUTCDate() - ((last.getUTCDay() - 3 + 7) % 7);
+  return d;
+}
+function cutMs(y, m) { // fin del periodo (y, m)
+  const d = lastWednesday(y, m); const guess = Date.UTC(y, m, d, 23, 59, 59);
+  return guess - madridOffsetMin(guess) * 60000;
+}
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+function periodOf(ms) {
+  const d = new Date(ms + madridOffsetMin(ms) * 60000); let y = d.getUTCFullYear(), m = d.getUTCMonth();
+  if (ms > cutMs(y, m)) { m++; if (m > 11) { m = 0; y++; } }
+  return { id: `${y}-${String(m + 1).padStart(2, "0")}`, y, m };
+}
+function periodInfo(y, m) {
+  const pm = m === 0 ? 11 : m - 1, py = m === 0 ? y - 1 : y;
+  const to = cutMs(y, m), from = cutMs(py, pm) + 1000, friday = to + 2 * 864e5;
+  return { id: `${y}-${String(m + 1).padStart(2, "0")}`, label: `${MESES[m]} ${y}`, from, to, friday };
 }
 
 // ---------- Recolocar partidos por fecha ----------
@@ -250,6 +281,7 @@ function buildState(me, data) {
         if (!p) continue;
         const sc = scoreFor(p, m, ec, j.extra);
         r.byJ[j.id] += sc.pts; r.pts += sc.pts; r.played++;
+        { const pid = periodOf(Date.parse(m.kickoff)).id; (r.tm = r.tm || {})[pid] = (r.tm[pid] || 0) + sc.pts; }
         const bd = ((r.bd = r.bd || {})[j.id] = r.bd[j.id] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0, comodin: 0 });
         bd.partidos += sc.pts - (sc.unique ? 1 : 0) - sc.comodin; bd.unico += sc.unique ? 1 : 0; bd.comodin = (bd.comodin || 0) + sc.comodin;
         if (sc.base === 3) bd.exactos++; else if (sc.base === 1) bd.signos++;
@@ -268,6 +300,7 @@ function buildState(me, data) {
         if (!bonus) continue;
         r.byJ[j.id] += bonus; r.pts += bonus;
         (r.plenos = r.plenos || {})[j.id] = bonus;
+        { const pid = periodOf(jEnd(j)).id; (r.tm = r.tm || {})[pid] = (r.tm[pid] || 0) + bonus; }
         ((r.bd = r.bd || {})[j.id] = r.bd[j.id] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 }).pleno += bonus;
       }
     }
@@ -300,7 +333,9 @@ function buildState(me, data) {
   }
   for (const r of table) if (r.retoPts) {
     r.pts += r.retoPts;
-    for (const jid in r.retoJ) { r.byJ[jid] += r.retoJ[jid]; ((r.bd = r.bd || {})[jid] = r.bd[jid] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 }).reto += r.retoJ[jid]; }
+    for (const jid in r.retoJ) {
+      { const jj = jornadas.find((x) => x.id === jid); if (jj) { const pid = periodOf(jEnd(jj)).id; (r.tm = r.tm || {})[pid] = (r.tm[pid] || 0) + r.retoJ[jid]; } }
+      r.byJ[jid] += r.retoJ[jid]; ((r.bd = r.bd || {})[jid] = r.bd[jid] || { partidos: 0, unico: 0, pleno: 0, reto: 0, exactos: 0, signos: 0 }).reto += r.retoJ[jid]; }
   }
 
   const jWinners = {}, jTop = {};
@@ -354,6 +389,19 @@ function buildState(me, data) {
     rankBy((r) => r.pts - (r.byJ[lastJ.id] || 0)).forEach((r, i) => (byKey[r.key].prevPos = i + 1));
   }
 
+  // Clasificación del mes de la tortilla
+  const played = jornadas.flatMap((j) => live(j).filter((m) => m.result).map((m) => Date.parse(m.kickoff)));
+  const curP = periodOf(now);
+  const pids = new Set(played.map((t) => periodOf(t).id)); pids.add(curP.id);
+  const tortilla = { current: curP.id, periods: [...pids].sort().map((pid) => {
+    const [y, mm] = pid.split("-").map(Number); const info = periodInfo(y, mm - 1);
+    const rows = table.map((r) => ({ name: r.name, pts: (r.tm || {})[pid] || 0, photo: photo[r.name] }))
+      .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
+    let losers = [];
+    if (rows.length >= 3) { const asc = rows.map((r) => r.pts).sort((a, b) => a - b); const th = asc[1]; losers = rows.filter((r) => r.pts <= th).map((r) => r.name); }
+    return { ...info, closed: now > info.to, rows, losers };
+  }) };
+
   const curId = currentJornadaId(jornadas, now);
   const outJ = jornadas.map((j) => ({
     id: j.id, num: j.num, title: j.title || "", extra: !!j.extra, current: j.id === curId,
@@ -402,6 +450,7 @@ function buildState(me, data) {
     table: table.map(({ key, retoPts, ...r }) => ({ ...r, photo: photo[r.name] })),
     users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username, bonusX2: u.bonusX2 } : {}) })),
     anuncio: data.anuncio || null,
+    tortilla,
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
@@ -472,9 +521,25 @@ async function sendPush(userKey, payload) {
   if (keep.length !== subs.length) await redis(["HSET", P + "push", userKey, JSON.stringify(keep)]);
   return sent;
 }
+async function tortillaNotify(all) {
+  if (!all.users.length) return 0;
+  const anyone = await getUser(all.users[0].key); if (!anyone) return 0;
+  const st = buildState(anyone, all), now = Date.now(); let sent = 0;
+  for (const p of st.tortilla.periods) {
+    if (!p.closed || now - p.to > 3 * 864e5 || !p.losers.length) continue;
+    const ok = await redis(["SET", P + "tortilla:notified:" + p.id, "1", "NX", "EX", "864000"]);
+    if (!ok) continue;
+    const dia = new Date(p.friday).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" });
+    const lista = p.losers.join(", ").replace(/, ([^,]*)$/, " y $1");
+    for (const u of all.users) sent += await sendPush(u.key, { title: "🥘 ¡Cierre del mes de la tortilla!", body: `${lista} ${p.losers.length > 1 ? "traen" : "trae"} tortilla el ${dia}. ¡Que aproveche!`, tag: "tortilla-" + p.id, url: "./#tortilla" }).catch(() => 0);
+  }
+  return sent;
+}
 async function runReminders() {
   const now = Date.now();
-  const { jornadas, preds, users } = await loadAll();
+  const all0 = await loadAll();
+  let sent0 = await tortillaNotify(all0).catch(() => 0);
+  const { jornadas, preds, users } = all0;
   const curId = currentJornadaId(jornadas, now);
   const subs = hgetallObj(await redis(["HGETALL", P + "push"]));
   let sent = 0;
@@ -498,7 +563,7 @@ async function runReminders() {
       }
     }
   }
-  return sent;
+  return sent + sent0;
 }
 
 // ---------- Acciones ----------
@@ -880,4 +945,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 };
-module.exports._test = { regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };
+module.exports._test = { periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };
