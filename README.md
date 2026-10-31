@@ -9,6 +9,7 @@ Porra online para pronosticar cada jornada de Primera los partidos del Real Madr
 - Los pronósticos del resto están **ocultos hasta que empieza el partido**.
 - **Aviso al móvil 1 hora antes** si te falta un pronóstico.
 - Cuenta el resultado a los 90 minutos (sin prórroga ni penaltis).
+- 🔴 Resultados en directo: mientras hay partido, el servidor consulta el marcador público de ESPN (como mucho cada 40 s) y la app muestra marcador y minuto. Al acabar se guarda solo el resultado a los 90 minutos; el administrador puede corregirlo.
 - Partido aplazado → anulado: no puntúa y se devuelve el comodín. En `data/calendario.json` se marca con `"postponed": true`.
 - Si un partido cambia de fecha, pasa solo a la jornada más cercana a su nueva fecha.
 - Jornadas extra (selecciones, Champions, Copa…): partido suelto que suma a la general; se admite comodín, sin retos ni bonus.

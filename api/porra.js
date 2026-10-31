@@ -232,6 +232,96 @@ async function syncCalendar(force) {
   return true;
 }
 
+
+// ---------- Resultados en directo (marcador público de ESPN, sin clave) ----------
+// Mientras hay un partido en juego, como mucho una consulta cada 40 s (la lanza quien tenga la app abierta
+// y, si no hay nadie, el aviso de cada 10 min). Al acabar, se guarda el resultado a los 90 minutos.
+const LIVE_LEAGUES = ["esp.1"];
+const EXTRA_LEAGUES = ["uefa.champions", "uefa.europa", "uefa.europa.conf", "esp.copa_del_rey", "esp.super_cup", "uefa.nations", "fifa.worldq.uefa", "fifa.world", "uefa.euro", "fifa.friendly"];
+const STOP = new Set(["fc", "cf", "rc", "cd", "ud", "sd", "sad", "club", "de", "del", "la", "el", "real", "ca", "rcd", "vigo", "balompie", "futbol", "the", "of"]);
+const ALIAS = { deportivo: "coruna", barca: "barcelona", bilbao: "athletic", vallecano: "rayo", santander: "racing", atletico: "atletico", atl: "atletico",
+  espana: "spain", alemania: "germany", francia: "france", italia: "italy", inglaterra: "england", paises: "netherlands", holanda: "netherlands", croacia: "croatia",
+  belgica: "belgium", suiza: "switzerland", escocia: "scotland", gales: "wales", turquia: "turkey", noruega: "norway", suecia: "sweden", dinamarca: "denmark", brasil: "brazil", marruecos: "morocco", japon: "japan", mexico: "mexico" };
+const teamToks = (n) => {
+  const raw = String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+  let t = raw.filter((w) => !STOP.has(w)); if (!t.length) t = raw;
+  if (t.length === 1 || t[0] !== "deportivo") t = t.map((w) => ALIAS[w] || w); else t = t.filter((w) => w !== "deportivo");
+  if (t.includes("atletico") || t.includes("athletic")) t = t.filter((w) => w !== "madrid" && w !== "club");
+  return new Set(t);
+};
+const sameTeam = (a, b) => { const A = teamToks(a), B = teamToks(b); for (const w of A) if (B.has(w)) return true; return false; };
+const etDate = (ms) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms)).replace(/-/g, "");
+function parseEspn(ev) {
+  const c = (ev.competitions || [])[0] || {}, cs = c.competitors || [];
+  const h = cs.find((x) => x.homeAway === "home"), a = cs.find((x) => x.homeAway === "away");
+  if (!h || !a) return null;
+  const st = (ev.status || c.status || {}), ty = st.type || {};
+  const name = String(ty.name || ""), state = ty.state || "pre";
+  const g = (x) => Number(x.score && typeof x.score === "object" ? x.score.value : x.score) || 0;
+  // a los 90 minutos: si hubo prórroga, solo cuentan las dos primeras partes
+  const g90 = (x) => { const ls = x.linescores || []; return ls.length >= 2 ? (Number(ls[0].value) || 0) + (Number(ls[1].value) || 0) : g(x); };
+  const et = /AET|PEN|EXTRA|SHOOTOUT/i.test(name) || Number(st.period) > 2;
+  return {
+    home: (h.team || {}).displayName || "", away: (a.team || {}).displayName || "", date: Date.parse(ev.date),
+    h: g(h), a: g(a), h90: et ? g90(h) : g(h), a90: et ? g90(a) : g(a),
+    state, done: !!ty.completed && state === "post" && !/POSTPONED|CANCELED|CANCELLED|SUSPENDED|ABANDONED/i.test(name),
+    ht: /HALFTIME/i.test(name), clock: st.displayClock || "", detail: ty.shortDetail || "", off: /POSTPONED|CANCELED|CANCELLED|SUSPENDED|ABANDONED|DELAYED/i.test(name),
+  };
+}
+async function fetchLeague(lg, day) {
+  try {
+    const ctl = typeof AbortController !== "undefined" ? new AbortController() : null; const to = ctl && setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${lg}/scoreboard?dates=${day}`, ctl ? { signal: ctl.signal } : {});
+    if (to) clearTimeout(to);
+    if (!r.ok) return [];
+    const j = await r.json();
+    return (j.events || []).map(parseEspn).filter(Boolean);
+  } catch (e) { return []; }
+}
+let liveFetch = fetchLeague; // se puede sustituir en las pruebas
+async function liveUpdate(jornadas, force) {
+  const now = Date.now();
+  const cands = [];
+  for (const j of jornadas) for (const m of j.matches) {
+    const ko = Date.parse(m.kickoff);
+    if (!ko || m.cancelled || m.result || m.noAuto) continue;
+    if (ko - 2 * 60e3 <= now && now <= ko + 4 * 3600e3) cands.push({ j, m, ko });
+  }
+  const liveMap = {};
+  for (const [id, v] of Object.entries(hgetallObj(await redis(["HGETALL", P + "live"])))) if (v) liveMap[id] = v;
+  if (!cands.length) {
+    if (Object.keys(liveMap).length && !jornadas.some((j) => j.matches.some((m) => liveMap[m.id] && !m.result))) await redis(["DEL", P + "live"]);
+    return { live: liveMap, changed: false };
+  }
+  if (!force && !(await redis(["SET", P + "live:lock", "1", "NX", "EX", "40"]))) return { live: liveMap, changed: false };
+  // qué ligas y qué días hay que mirar
+  const reqs = new Map();
+  for (const c of cands) for (const lg of c.j.extra ? EXTRA_LEAGUES : LIVE_LEAGUES) { const k = lg + "|" + etDate(c.ko); reqs.set(k, [lg, etDate(c.ko)]); }
+  const evs = (await Promise.all([...reqs.values()].map(([lg, d]) => liveFetch(lg, d)))).flat();
+  let changed = false;
+  for (const { m, ko } of cands) {
+    const e = evs.find((x) => sameTeam(x.home, m.home) && sameTeam(x.away, m.away) && Math.abs((x.date || ko) - ko) < 36 * 3600e3);
+    if (!e) continue;
+    if (e.done) {
+      m.result = { h: e.h90, a: e.a90 }; m.auto = true; changed = true;
+      await redis(["HDEL", P + "live", m.id]); delete liveMap[m.id];
+    } else if (e.state === "in" || e.ht) {
+      const min = e.ht ? "Descanso" : (e.clock || "").replace(/'+$/, "'");
+      liveMap[m.id] = { h: e.h, a: e.a, min, at: now };
+      await redis(["HSET", P + "live", m.id, JSON.stringify(liveMap[m.id])]);
+    }
+  }
+  if (changed) {
+    const fresh = await getJSON(P + "jornadas", []);
+    for (const j of fresh) for (const m of j.matches) {
+      const src = cands.find((c) => c.m.id === m.id);
+      if (src && src.m.result && !m.result && !m.noAuto) { m.result = src.m.result; m.auto = true; }
+    }
+    await setJSON(P + "jornadas", fresh);
+  }
+  return { live: liveMap, changed };
+}
+
 async function migrations() {
   // Reinicio de retos pedido por el administrador (se ejecuta una sola vez)
   const ok = await redis(["SET", P + "mig:retosReset1", String(Date.now()), "NX"]);
@@ -266,7 +356,9 @@ async function loadAll() {
     const u = await getUser(k);
     if (u) users.push({ key: k, name: displayOf(u), username: u.username, admin: !!u.admin, photo: u.photo || 0, bonusX2: u.bonusX2 || 0 });
   }
-  return { jornadas, preds, users, crests, retos, anuncio, llamada };
+  let live = {};
+  try { live = (await liveUpdate(jornadas)).live; } catch (e) { /* sin directo: no pasa nada */ }
+  return { jornadas, preds, users, crests, retos, anuncio, llamada, live };
 }
 
 function buildState(me, data) {
@@ -438,6 +530,7 @@ function buildState(me, data) {
       const ko = m.kickoff ? Date.parse(m.kickoff) : null;
       return {
         id: m.id, home: m.home, away: m.away, kickoff: m.kickoff || null, result: m.cancelled ? null : m.result || null, tbc: !!m.tbc,
+        live: !m.result && !m.cancelled && data.live && data.live[m.id] ? data.live[m.id] : null,
         cancelled: !!m.cancelled, movedFrom: m.movedFrom || null,
         locked, started, status: matchStatus(j, m, now, curId),
         opensAt: ko && ko - OPEN_BEFORE, closesAt: ko && ko - CLOSE_BEFORE,
@@ -887,8 +980,10 @@ async function handle(body) {
     const j = jornadas.find((x) => x.id === body.jornada);
     const m = j && j.matches.find((x) => x.id === body.match);
     if (!m) bad("Partido no encontrado");
-    if (body.clear) delete m.result;
+    delete m.auto;
+    if (body.clear) { delete m.result; m.noAuto = true; }
     else {
+      delete m.noAuto;
       if (Date.parse(m.kickoff) > Date.now()) bad("El partido aún no ha empezado");
       m.result = { h: goals(body.h), a: goals(body.a) };
     }
@@ -967,4 +1062,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 };
-module.exports._test = { periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };
+module.exports._test = { liveUpdate, parseEspn, sameTeam, setLiveFetch: (f) => (liveFetch = f), periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };

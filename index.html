@@ -151,6 +151,9 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .gbox .pm button{width:25px;height:24px;border-radius:8px;border:1px solid var(--line);background:var(--card2);font-weight:800;font-size:15px;line-height:1;padding:0}
 .bigscore{font-family:"Barlow Condensed";font-weight:800;font-size:44px;line-height:1;padding:0 6px;text-shadow:0 2px 10px rgba(0,0,0,.5)}
 .bigscore.pending{color:var(--dim);font-size:30px}
+.bigscore.livesc{color:#fff;animation:livePulse 2.4s ease-in-out infinite}
+.livemin{display:block;text-align:center;font:700 13px/1 "Barlow Condensed",sans-serif;letter-spacing:.06em;color:#ff6b6b;margin-top:4px;text-shadow:none}
+@keyframes livePulse{0%,100%{text-shadow:0 2px 10px rgba(0,0,0,.5)}50%{text-shadow:0 0 18px rgba(255,80,80,.55)}}
 .mfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px}
 .mypick b{font-family:"Barlow Condensed";font-size:18px}
 .others{margin-top:10px;display:grid;gap:6px}
@@ -1015,7 +1018,7 @@ function matchCard(j, m, drafts) {
   else if (st === "tbc") chip = `<span class="chip">🕒 Hora por confirmar</span>`;
   else if (st === "cancelled") chip = `<span class="chip anul">🚫 Anulado</span>`;
   else if (st === "closed") chip = `<span class="chip warn">🔒 Cerrado</span>`;
-  else if (st === "live") chip = `<span class="chip live">En juego</span>`;
+  else if (st === "live") chip = `<span class="chip live">En juego${m.live && m.live.min ? " · " + esc(m.live.min) : ""}</span>`;
   else chip = `<span class="chip done">Final</span>`;
 
   let center;
@@ -1026,6 +1029,7 @@ function matchCard(j, m, drafts) {
     center = `<div class="score">${g("h")}<span class="dash">:</span>${g("a")}</div>`;
   } else if (st === "cancelled") center = `<div class="bigscore pending cond" style="font-size:22px;color:var(--zero)">APLAZADO</div>`;
   else if (m.result) center = `<div class="bigscore cond">${m.result.h}<span style="color:var(--dim)">-</span>${m.result.a}</div>`;
+  else if (st === "live" && m.live) center = `<div class="bigscore livesc cond">${m.live.h}<span style="color:var(--dim)">-</span>${m.live.a}<span class="livemin">${m.live.min === "Descanso" ? "DESCANSO" : "EN DIRECTO"}</span></div>`;
   else center = `<div class="bigscore pending cond">${st === "live" ? "· ·" : "vs"}</div>`;
 
   let foot = "";
@@ -1213,7 +1217,7 @@ function picksGrid(j, rows) {
   const d = S.data;
   const code = (n) => { const k = kitOf(n); return k ? k.short : initials(n).slice(0, 3); };
   const head = j.matches.map((m) => `<th class="mcol"><div class="mc">${crest(m.home, true)}${crest(m.away, true)}</div><div>${esc(code(m.home))}-${esc(code(m.away))}</div>
-    <div class="mres ${m.result ? "" : "dim"}">${m.cancelled ? "anulado" : m.result ? `${m.result.h}-${m.result.a}` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
+    <div class="mres ${m.result ? "" : "dim"}">${m.cancelled ? "anulado" : m.result ? `${m.result.h}-${m.result.a}` : m.live ? `<span style="color:#ff6b6b">● ${m.live.h}-${m.live.a}</span>` : m.started ? "en juego" : "··"}</div>${m.golden ? `<div style="color:var(--gold)">⭐x2</div>` : ""}</th>`).join("");
   const body = rows.map((r) => {
     const cells = j.matches.map((m) => {
       const isMe = r.name === d.me.name;
@@ -1300,6 +1304,7 @@ function normasView() {
     <li>ℹ️ <b>Aclaración</b>: el jugador <b>Castelao</b> es <b>Pablo Gómez</b> a todos los efectos. Si Castelao pierde (tortilla, retos o lo que sea), <b>Pablo Gómez costea la derrota como suya</b>.</li>
     <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>tres últimos</b> se las apañan <b>entre ellos</b> para traer <b>una tortilla</b> el viernes siguiente. Si hay empate abajo, entran en el reparto todos los que tengan la misma puntuación que el antepenúltimo o menos.</li>
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
+    <li>🔴 <b>Resultados en directo</b>: mientras se juega verás el marcador y el minuto. Al pitar el final, el resultado se pone solo (si hubiera algún error, lo corrige el administrador).</li>
     <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último.</li>
     <li>La clasificación suma todas las jornadas. <b>Empates a puntos</b>: si empatan <b>dos</b>, va delante quien haya <b>ganado más retos entre ellos</b>; si siguen empatados, quien tenga <b>más resultados exactos</b>. Si empatan <b>tres o más</b>, va delante quien tenga <b>más resultados exactos</b>.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
@@ -2241,6 +2246,13 @@ setInterval(() => {
   lastSig = sig;
 }, 30000);
 setInterval(() => { if (!document.hidden && S.token) refresh(true); }, 5 * 60000);
+// Con un partido en juego, marcador en directo: se actualiza cada 45 s
+setInterval(() => {
+  if (document.hidden || !S.token || !S.data || S.editJ) return;
+  const now = serverNow();
+  const playing = S.data.jornadas.some((j) => j.matches.some((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) <= now && now - Date.parse(m.kickoff) < 4 * 3600e3));
+  if (playing && (!document.activeElement || !document.activeElement.matches("input"))) refresh(true);
+}, 45000);
 refresh();
 </script>
 </body>
