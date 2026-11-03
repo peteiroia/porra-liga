@@ -1,5 +1,5 @@
 {
- "version": "2026-11-01.1",
+ "version": "2026-11-03.1",
  "season": "2026-27",
  "note": "Horas oficiales hasta la jornada 13. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
  "jornadas": [
@@ -30,13 +30,21 @@
      "home": "Racing de Santander",
      "away": "Real Madrid",
      "kickoff": "2026-11-01T16:15:00+01:00",
-     "tbc": false
+     "tbc": false,
+     "result": {
+      "h": 0,
+      "a": 3
+     }
     },
     {
      "home": "Deportivo",
      "away": "Osasuna",
      "kickoff": "2026-11-02T21:00:00+01:00",
-     "tbc": false
+     "tbc": false,
+     "result": {
+      "h": 2,
+      "a": 1
+     }
     }
    ]
   },
