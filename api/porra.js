@@ -162,19 +162,31 @@ function lastWednesday(y, m) { // m: 0-11
   const last = new Date(Date.UTC(y, m + 1, 0)); const d = last.getUTCDate() - ((last.getUTCDay() - 3 + 7) % 7);
   return d;
 }
+const madridMs = (y, m, d, hh, mi, ss) => { const g = Date.UTC(y, m, d, hh, mi, ss); return g - madridOffsetMin(g) * 60000; };
+// Primer mes de la tortilla y fechas especiales (mes 0-11):
+// el primer corte es el martes 1 de diciembre de 2026 a las 23:59 y esa tortilla se trae el viernes 11 de diciembre.
+const TORT_FIRST = "2026-11";
+const TORT_CUSTOM = { "2026-11": { cut: [2026, 11, 1], friday: [2026, 11, 11] } };
+const pid = (y, m) => `${y}-${String(m + 1).padStart(2, "0")}`;
 function cutMs(y, m) { // fin del periodo (y, m)
-  const d = lastWednesday(y, m); const guess = Date.UTC(y, m, d, 23, 59, 59);
-  return guess - madridOffsetMin(guess) * 60000;
+  const c = TORT_CUSTOM[pid(y, m)];
+  if (c && c.cut) return madridMs(c.cut[0], c.cut[1], c.cut[2], 23, 59, 59);
+  return madridMs(y, m, lastWednesday(y, m), 23, 59, 59);
 }
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 function periodOf(ms) {
   const d = new Date(ms + madridOffsetMin(ms) * 60000); let y = d.getUTCFullYear(), m = d.getUTCMonth();
-  if (ms > cutMs(y, m)) { m++; if (m > 11) { m = 0; y++; } }
-  return { id: `${y}-${String(m + 1).padStart(2, "0")}`, y, m };
+  const py = m === 0 ? y - 1 : y, pm = m === 0 ? 11 : m - 1;
+  if (ms <= cutMs(py, pm)) { y = py; m = pm; }            // el corte del mes anterior aún no ha llegado (p. ej. 1 de diciembre)
+  else if (ms > cutMs(y, m)) { m++; if (m > 11) { m = 0; y++; } }
+  if (pid(y, m) < TORT_FIRST) { [y, m] = TORT_FIRST.split("-").map(Number); m--; } // todo lo anterior cuenta para el primer mes
+  return { id: pid(y, m), y, m };
 }
 function periodInfo(y, m) {
   const pm = m === 0 ? 11 : m - 1, py = m === 0 ? y - 1 : y;
-  const to = cutMs(y, m), from = cutMs(py, pm) + 1000, friday = to + 2 * 864e5;
+  const c = TORT_CUSTOM[pid(y, m)] || {};
+  const to = cutMs(y, m), from = pid(y, m) === TORT_FIRST ? madridMs(2026, 9, 31, 0, 0, 0) : cutMs(py, pm) + 1000; // la porra empezó el 31 de octubre
+  const friday = c.friday ? madridMs(c.friday[0], c.friday[1], c.friday[2], 23, 59, 59) : to + 2 * 864e5;
   return { id: `${y}-${String(m + 1).padStart(2, "0")}`, label: `${MESES[m]} ${y}`, from, to, friday };
 }
 

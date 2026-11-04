@@ -1296,7 +1296,7 @@ function tortillaView() {
   const lista = (arr) => arr.map((n) => esc(withAlias(n))).join(", ").replace(/, ([^,]*)$/, " y $1");
   const aviso = p.closed
     ? `<div class="banner tort"><span style="font-size:30px">🍳</span><div><b>${p.losers.length ? `${lista(p.losers)}: entre ${p.losers.length > 1 ? "vosotros" : "tú"} una tortilla el ${fmtDia(p.friday)}` : "Este mes no hay tortilla"}</b><span class="muted">${p.losers.includes(me) ? "¡Te toca! A pelar patatas 🥔🔪" : "¡Que aproveche!"}</span></div></div>`
-    : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los tres últimos se las apañan para traer una tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: miércoles ${new Date(p.to).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
+    : `<div class="banner tort"><span style="font-size:30px">⚠️</span><div><b>Los tres últimos se las apañan para traer una tortilla el ${fmtDia(p.friday)}</b><span class="muted">Cierre: ${new Date(p.to).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })} a las 23:59 · quedan ${fmtLeft(left)}</span></div></div>`;
   return `
   <h2 class="sec">🍳 Clasificación tortilla del mes</h2>
   <div class="card">
@@ -1331,7 +1331,7 @@ function normasView() {
     <li>🚫 <b>Partidos aplazados</b>: si aplazan un partido, queda <b>anulado</b>. No suma puntos a nadie, no cuenta para los plenos y, si le pusiste el comodín, se te devuelve.</li>
     <li>📅 <b>Cambios de fecha</b>: si un partido se adelanta o se retrasa, pasa a la <b>jornada más cercana</b> a la fecha en que se juega.</li>
     <li>ℹ️ <b>Aclaración</b>: el jugador <b>Castelao</b> es <b>Pablo Gómez</b> a todos los efectos. Si Castelao pierde (tortilla, retos o lo que sea), <b>Pablo Gómez costea la derrota como suya</b>.</li>
-    <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>tres últimos</b> se las apañan <b>entre ellos</b> para traer <b>una tortilla</b> el viernes siguiente. Si hay empate abajo, entran en el reparto todos los que tengan la misma puntuación que el antepenúltimo o menos.</li>
+    <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>tres últimos</b> se las apañan <b>entre ellos</b> para traer <b>una tortilla</b> el viernes siguiente. <b>El primer corte es el martes 1 de diciembre</b> (cuenta todo lo jugado hasta entonces) y esa tortilla se trae el <b>viernes 11 de diciembre</b>. Si hay empate abajo, entran en el reparto todos los que tengan la misma puntuación que el antepenúltimo o menos.</li>
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
     <li>🔴 <b>Resultados en directo</b>: mientras se juega verás el marcador y el minuto. Al pitar el final, el resultado se pone solo (si hubiera algún error, lo corrige el administrador).</li>
     <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último.</li>
