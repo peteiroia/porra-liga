@@ -341,6 +341,9 @@ async function migrations() {
   if (ok) await redis(["DEL", P + "retos"]);
   // Llamada a todos: «¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.» (una sola vez)
   const ok2 = await redis(["SET", P + "mig:llamada1", String(Date.now()), "NX"]);
+  // Quitar el aviso fijo de la portada («27 del 11… la primera tortilla está en juego…») (una sola vez)
+  const ok3 = await redis(["SET", P + "mig:quitarAviso1", String(Date.now()), "NX"]);
+  if (ok3) await redis(["DEL", P + "anuncio"]);
   if (ok2) await startCall("¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.", "tortilla1");
 }
 async function startCall(text, id) {
