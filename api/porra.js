@@ -166,7 +166,8 @@ const madridMs = (y, m, d, hh, mi, ss) => { const g = Date.UTC(y, m, d, hh, mi, 
 // Primer mes de la tortilla y fechas especiales (mes 0-11):
 // el primer corte es el martes 1 de diciembre de 2026 a las 23:59 y esa tortilla se trae el viernes 11 de diciembre.
 const TORT_FIRST = "2026-11";
-const TORT_CUSTOM = { "2026-11": { cut: [2026, 11, 1], friday: [2026, 11, 11] } };
+// el segundo, el viernes 1 de enero de 2027 a las 23:59 y esa tortilla se trae el viernes 15 de enero.
+const TORT_CUSTOM = { "2026-11": { cut: [2026, 11, 1], friday: [2026, 11, 11] }, "2026-12": { cut: [2027, 0, 1], friday: [2027, 0, 15] } };
 const pid = (y, m) => `${y}-${String(m + 1).padStart(2, "0")}`;
 function cutMs(y, m) { // fin del periodo (y, m)
   const c = TORT_CUSTOM[pid(y, m)];
