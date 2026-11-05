@@ -466,10 +466,8 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .vad video{width:100%;height:100%;object-fit:contain;background:#000}
 .vad .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;
   background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:46px;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 0 2px rgba(255,255,255,.35)}
-.vad .snd{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);border:0;border-radius:999px;padding:12px 20px;cursor:pointer;
-  background:rgba(0,0,0,.6);color:#fff;font:700 15px/1 Inter,system-ui,sans-serif;white-space:nowrap;box-shadow:0 0 0 2px rgba(255,255,255,.3);animation:blink 1.6s infinite}
-.vad .again{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);border:0;border-radius:999px;padding:13px 22px;cursor:pointer;
-  background:#ffd23f;color:#1b1200;font:800 16px/1 Inter,system-ui,sans-serif;display:none}
+.vad .snd{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:20px;line-height:40px;text-align:center;pointer-events:none}
+.vad video::-webkit-media-controls,.vad video::-webkit-media-controls-start-playback-button,.vad video::-webkit-media-controls-overlay-play-button,.vad video::-webkit-media-controls-panel{display:none!important;-webkit-appearance:none;opacity:0}
 @keyframes vadIn{from{opacity:0}to{opacity:1}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
@@ -1796,26 +1794,22 @@ function showAnuncio(an) {
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
 /* ---------- Anuncio en vídeo: sale nada más entrar (una vez por apertura) hasta el día de la tortilla ---------- */
-const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4", poster: "media/oswalfri.jpg", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
+const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4?v=4", poster: "media/oswalfri.jpg?v=4", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
 function showVideoAd() {
   const el = document.createElement("div"); el.className = "vad";
-  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" playsinline webkit-playsinline preload="auto"></video>
-    <button class="x" aria-label="Cerrar anuncio">✕</button><button class="snd" style="display:none">🔊 Toca para oír el sonido</button><button class="again">↻ Ver otra vez</button>`;
+  // autoplay + muted + playsinline: así los móviles lo arrancan solos, sin pulsar nada
+  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" autoplay muted playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
+    <button class="x" aria-label="Cerrar anuncio">✕</button><span class="snd">🔇</span>`;
   document.body.appendChild(el);
-  const v = el.querySelector("video"), snd = el.querySelector(".snd"), again = el.querySelector(".again");
+  const v = el.querySelector("video"), snd = el.querySelector(".snd");
+  v.muted = true; v.defaultMuted = true;
   const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); if (S.data && S.data.me && S.data.me.profileDone) checkDuels(); }, 260); };
   el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
-  // se reproduce directamente: primero con sonido; si el móvil no lo deja, sin sonido y el sonido entra al primer toque
-  const muted = (m) => { v.muted = m; v.defaultMuted = m; if (m) v.setAttribute("muted", ""); else v.removeAttribute("muted"); };
-  const start = () => {
-    muted(false);
-    v.play().catch(() => { muted(true); v.play().then(() => { snd.style.display = "block"; }).catch(() => { snd.textContent = "▶️ Toca para verlo"; snd.style.display = "block"; }); });
-  };
-  const unmute = () => { if (!v.muted && !v.paused) return; muted(false); snd.style.display = "none"; v.play().catch(() => {}); };
-  el.addEventListener("pointerdown", (e) => { if (e.target.closest(".x,.again")) return; unmute(); });
-  v.onended = () => { snd.style.display = "none"; again.style.display = "block"; };
-  again.onclick = (e) => { e.stopPropagation(); again.style.display = "none"; muted(false); v.currentTime = 0; v.play().catch(() => {}); };
-  start();
+  const go = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+  go(); v.addEventListener("canplay", go, { once: true }); setTimeout(go, 400); setTimeout(go, 1200);
+  // el sonido entra al primer toque en cualquier sitio (y si el móvil no dejó arrancarlo, arranca)
+  el.addEventListener("pointerdown", (e) => { if (e.target.closest(".x")) return; v.muted = false; snd.style.display = "none"; go(); });
+  v.onended = () => { v.currentTime = 0; go(); }; // en bucle hasta que lo cierren
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
