@@ -1797,19 +1797,24 @@ function showAnuncio(an) {
 const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4?v=9", poster: "media/oswalfri.jpg?v=9", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
 function showVideoAd() {
   const el = document.createElement("div"); el.className = "vad";
-  // autoplay + muted + playsinline: así los móviles lo arrancan solos, sin pulsar nada
-  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" autoplay muted playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
-    <button class="x" aria-label="Cerrar anuncio">✕</button><span class="snd">🔇</span>`;
+  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
+    <button class="x" aria-label="Cerrar anuncio">✕</button><span class="snd" style="display:none">🔇</span>`;
   document.body.appendChild(el);
   const v = el.querySelector("video"), snd = el.querySelector(".snd");
-  v.muted = true; v.defaultMuted = true;
   const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); if (S.data && S.data.me && S.data.me.profileDone) checkDuels(); }, 260); };
   el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
-  const go = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
-  go(); v.addEventListener("canplay", go, { once: true }); setTimeout(go, 400); setTimeout(go, 1200);
-  // el sonido entra al primer toque en cualquier sitio (y si el móvil no dejó arrancarlo, arranca)
-  el.addEventListener("pointerdown", (e) => { if (e.target.closest(".x")) return; v.muted = false; snd.style.display = "none"; go(); });
-  v.onended = () => { v.currentTime = 0; go(); }; // en bucle hasta que lo cierren
+  const setMuted = (m) => { v.muted = m; v.defaultMuted = m; if (m) v.setAttribute("muted", ""); else v.removeAttribute("muted"); snd.style.display = m ? "block" : "none"; };
+  // por defecto CON sonido; si el móvil no lo permite sin tocar la pantalla, arranca sin sonido y el sonido entra al primer toque
+  let started = false;
+  const start = () => {
+    if (started) return; started = true;
+    setMuted(false);
+    const p = v.play();
+    if (p && p.catch) p.catch(() => { setMuted(true); v.play().catch(() => {}); });
+  };
+  start(); v.addEventListener("canplay", () => { if (v.paused) { started = false; start(); } }, { once: true });
+  el.addEventListener("pointerdown", (e) => { if (e.target.closest(".x")) return; if (v.muted) { setMuted(false); } if (v.paused) v.play().catch(() => {}); });
+  v.onended = () => { v.currentTime = 0; v.play().catch(() => {}); }; // en bucle hasta que lo cierren
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
