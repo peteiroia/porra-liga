@@ -1803,7 +1803,7 @@ function showVideoAd() {
     <button class="x" aria-label="Cerrar anuncio">✕</button><button class="snd" style="display:none">🔊 Toca para oír el sonido</button><button class="again">↻ Ver otra vez</button>`;
   document.body.appendChild(el);
   const v = el.querySelector("video"), snd = el.querySelector(".snd"), again = el.querySelector(".again");
-  const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => el.remove(), 260); };
+  const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); if (S.data && S.data.me && S.data.me.profileDone) checkDuels(); }, 260); };
   el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
   // se reproduce directamente: primero con sonido; si el móvil no lo deja, sin sonido y el sonido entra al primer toque
   const muted = (m) => { v.muted = m; v.defaultMuted = m; if (m) v.setAttribute("muted", ""); else v.removeAttribute("muted"); };
@@ -1819,10 +1819,8 @@ function showVideoAd() {
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
-  // anuncio en vídeo: nada más entrar, una vez por apertura, hasta el día de la tortilla
-  if (!S.vadShown && serverNow() < VAD.hasta && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call,.vad")) {
-    S.vadShown = true; showVideoAd(); return;
-  }
+  // mientras se ve el anuncio en vídeo, el resto de pantallas esperan a que se cierre
+  if (document.querySelector(".vad")) return;
   // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
   { const c = S.data.llamada;
     if (c && !S.callShown && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) {
@@ -2290,6 +2288,8 @@ setInterval(() => {
   const playing = S.data.jornadas.some((j) => j.matches.some((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) <= now && now - Date.parse(m.kickoff) < 4 * 3600e3));
   if (playing && (!document.activeElement || !document.activeElement.matches("input"))) refresh(true);
 }, 45000);
+// anuncio en vídeo: sale nada más abrir la app (una vez por apertura), hasta el día de la tortilla
+if (S.token && Date.now() < VAD.hasta) { S.vadShown = true; showVideoAd(); }
 refresh();
 </script>
 </body>
