@@ -1799,18 +1799,23 @@ function showAnuncio(an) {
 const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4", poster: "media/oswalfri.jpg", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
 function showVideoAd() {
   const el = document.createElement("div"); el.className = "vad";
-  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" autoplay muted playsinline webkit-playsinline preload="auto"></video>
-    <button class="x" aria-label="Cerrar anuncio">✕</button><button class="snd">🔊 Toca para oír el sonido</button><button class="again">↻ Ver otra vez</button>`;
+  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" playsinline webkit-playsinline preload="auto"></video>
+    <button class="x" aria-label="Cerrar anuncio">✕</button><button class="snd" style="display:none">🔊 Toca para oír el sonido</button><button class="again">↻ Ver otra vez</button>`;
   document.body.appendChild(el);
   const v = el.querySelector("video"), snd = el.querySelector(".snd"), again = el.querySelector(".again");
   const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => el.remove(), 260); };
   el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
-  const unmute = () => { v.muted = false; snd.style.display = "none"; if (v.ended || v.currentTime > 0.5) v.currentTime = 0; v.play().catch(() => {}); };
-  snd.onclick = (e) => { e.stopPropagation(); unmute(); };
-  v.onclick = () => { if (v.muted) unmute(); };
+  // se reproduce directamente: primero con sonido; si el móvil no lo deja, sin sonido y el sonido entra al primer toque
+  const muted = (m) => { v.muted = m; v.defaultMuted = m; if (m) v.setAttribute("muted", ""); else v.removeAttribute("muted"); };
+  const start = () => {
+    muted(false);
+    v.play().catch(() => { muted(true); v.play().then(() => { snd.style.display = "block"; }).catch(() => { snd.textContent = "▶️ Toca para verlo"; snd.style.display = "block"; }); });
+  };
+  const unmute = () => { if (!v.muted && !v.paused) return; muted(false); snd.style.display = "none"; v.play().catch(() => {}); };
+  el.addEventListener("pointerdown", (e) => { if (e.target.closest(".x,.again")) return; unmute(); });
   v.onended = () => { snd.style.display = "none"; again.style.display = "block"; };
-  again.onclick = (e) => { e.stopPropagation(); again.style.display = "none"; v.currentTime = 0; v.play().catch(() => {}); };
-  const p = v.play(); if (p && p.catch) p.catch(() => { snd.textContent = "▶️ Toca para verlo"; });
+  again.onclick = (e) => { e.stopPropagation(); again.style.display = "none"; muted(false); v.currentTime = 0; v.play().catch(() => {}); };
+  start();
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
