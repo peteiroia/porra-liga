@@ -1,5 +1,5 @@
 // La Porra · service worker: app instalable, funciona offline la portada y recibe avisos
-const CACHE = "porra-v23";
+const CACHE = "porra-v24";
 const SHELL = ["./", "index.html", "manifest.json", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/logo.png", "img/cracks.webp", "img/cracks.jpg", "img/duel-l.jpg", "img/duel-r.jpg", "img/tortilla.jpg"];
 
 self.addEventListener("install", (e) => {
@@ -10,7 +10,7 @@ self.addEventListener("activate", (e) => {
 });
 self.addEventListener("fetch", (e) => {
   const u = new URL(e.request.url);
-  if (e.request.method !== "GET" || u.origin !== location.origin || u.pathname.startsWith("/api/")) return;
+  if (e.request.method !== "GET" || u.origin !== location.origin || u.pathname.startsWith("/api/") || u.pathname.startsWith("/media/")) return; // los vídeos van directos (el móvil los pide por trozos)
   // Primero red (para tener siempre la última versión), si no hay conexión, la copia guardada
   e.respondWith(
     fetch(e.request).then((r) => {

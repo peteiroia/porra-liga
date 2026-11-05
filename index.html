@@ -461,33 +461,16 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 @keyframes wink{0%{opacity:0;transform:scale(.3) rotate(-30deg)}40%{opacity:1;transform:scale(1.25) rotate(10deg)}60%{transform:scale(.95) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
 .aftercall .btn-tort{animation-delay:1.4s}
 
-/* ---------- Encuesta ---------- */
-.enc{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:22px 16px;overflow:hidden;
-  background:radial-gradient(ellipse at 50% 35%,#3a1d6e 0%,#16082e 55%,#07020f 100%);animation:encIn .45s cubic-bezier(.2,1.4,.4,1)}
-.enc .rays{position:absolute;left:50%;top:38%;width:180vmax;height:180vmax;margin:-90vmax 0 0 -90vmax;opacity:.22;
-  background:repeating-conic-gradient(from 0deg,#ffd666 0 8deg,transparent 8deg 22deg);animation:encSpin 18s linear infinite;pointer-events:none}
-.enc .box{position:relative;max-width:400px;width:100%;text-align:center;color:#fff}
-.enc .mega{font-size:86px;line-height:1;display:inline-block;animation:encShake 1.1s ease-in-out infinite;filter:drop-shadow(0 6px 18px rgba(255,214,102,.5))}
-.enc .tag{display:inline-block;margin-top:10px;padding:5px 14px;border-radius:999px;background:#ff3b5c;font:800 14px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.14em;animation:blink 1s infinite}
-.enc h2{font:900 46px/.95 "Barlow Condensed",sans-serif;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.01em;
-  background:linear-gradient(180deg,#fff6c9,#ffd666 45%,#ff9f1c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.45))}
-.enc p{font-size:17px;line-height:1.45;margin:8px 0 0;color:#efe6ff}
-.enc .go{display:block;margin:22px auto 0;width:100%;padding:18px 10px;border:0;border-radius:18px;cursor:pointer;text-decoration:none;
-  font:900 24px/1 "Barlow Condensed",sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#1b0b00;
-  background:linear-gradient(180deg,#ffe58a,#ffbf1f);box-shadow:0 0 0 0 rgba(255,214,102,.7),0 10px 26px rgba(0,0,0,.45);animation:encPulse 1.4s infinite}
-.enc .later{margin-top:14px;background:none;border:0;color:#b9a8d9;font-size:14px;text-decoration:underline;cursor:pointer}
-.enc .left{display:block;margin-top:6px;font-size:12px;color:#8f7fb0}
-.encban{display:flex;gap:12px;align-items:center;margin:0 0 14px;padding:14px;border-radius:18px;text-decoration:none;color:#fff;cursor:pointer;
-  background:linear-gradient(110deg,#5b21b6,#db2777 55%,#f59e0b);background-size:200% 100%;animation:encSlide 4s ease-in-out infinite;box-shadow:0 8px 24px rgba(219,39,119,.35)}
-.encban .e{font-size:34px;animation:encShake 1.1s ease-in-out infinite}
-.encban b{display:block;font:900 21px/1 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.03em}
-.encban span{font-size:13px;opacity:.92}
-.encban .arr{margin-left:auto;font-size:26px;font-weight:900}
-@keyframes encIn{from{opacity:0;transform:scale(1.15)}to{opacity:1;transform:none}}
-@keyframes encSpin{to{transform:rotate(360deg)}}
-@keyframes encShake{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(10deg) scale(1.08)}}
-@keyframes encPulse{0%{box-shadow:0 0 0 0 rgba(255,214,102,.75),0 10px 26px rgba(0,0,0,.45)}70%{box-shadow:0 0 0 22px rgba(255,214,102,0),0 10px 26px rgba(0,0,0,.45)}100%{box-shadow:0 0 0 0 rgba(255,214,102,0),0 10px 26px rgba(0,0,0,.45)}}
-@keyframes encSlide{0%,100%{background-position:0 0}50%{background-position:100% 0}}
+/* ---------- Anuncio en vídeo ---------- */
+.vad{position:fixed;inset:0;z-index:9600;background:#000;display:flex;align-items:center;justify-content:center;animation:vadIn .3s ease}
+.vad video{width:100%;height:100%;object-fit:contain;background:#000}
+.vad .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;
+  background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:46px;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.vad .snd{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);border:0;border-radius:999px;padding:12px 20px;cursor:pointer;
+  background:rgba(0,0,0,.6);color:#fff;font:700 15px/1 Inter,system-ui,sans-serif;white-space:nowrap;box-shadow:0 0 0 2px rgba(255,255,255,.3);animation:blink 1.6s infinite}
+.vad .again{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);border:0;border-radius:999px;padding:13px 22px;cursor:pointer;
+  background:#ffd23f;color:#1b1200;font:800 16px/1 Inter,system-ui,sans-serif;display:none}
+@keyframes vadIn{from{opacity:0}to{opacity:1}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1025,7 +1008,6 @@ function jornadaView() {
     <div class="jt"><b>${esc(jName(j))}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}${j.extra ? ` · <span style="color:var(--gold);font-weight:700">jornada extra</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
-  ${encBanner()}
   ${S.data.anuncio ? `<div class="banner" style="border-color:rgba(255,214,102,.45)"><span style="font-size:24px">📢</span><div><b>${esc(S.data.anuncio.title)}</b><span class="muted">${esc(S.data.anuncio.body)}</span></div></div>` : ""}
   ${myResources(j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0))}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
@@ -1813,38 +1795,28 @@ function showAnuncio(an) {
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
-/* ---------- Encuesta (sale las próximas 10 veces que se abre la app, hasta que la hagan) ---------- */
-const ENC = { id: "quehar1", url: "https://que-harias-29n.vercel.app/", veces: 10 };
-const encN = () => { try { return Number(ls.get("porra_enc_" + ENC.id) || 0); } catch (e) { return 0; } };
-const encDone = () => { try { return ls.get("porra_enc_done_" + ENC.id) === "1"; } catch (e) { return false; } };
-const encActive = () => !encDone() && encN() <= ENC.veces;
-function encOpen() { ls.set("porra_enc_done_" + ENC.id, "1"); const w = window.open(ENC.url, "_blank", "noopener"); if (!w) location.href = ENC.url; }
-function encBanner() {
-  if (!encActive()) return "";
-  return `<a class="encban" href="${ENC.url}" target="_blank" rel="noopener" data-enc><span class="e">📣</span><div><b>¡Cubre la encuesta!</b><span>Tu respuesta cuenta. Toca aquí y hazla ya 👉</span></div><span class="arr">›</span></a>`;
-}
-function showEncuesta() {
-  const n = encN(), quedan = Math.max(0, ENC.veces - n);
-  const el = document.createElement("div"); el.className = "enc";
-  el.innerHTML = `<div class="rays"></div><div class="box">
-    <div class="mega">📣</div><br><span class="tag">● ATENCIÓN, PORRISTAS</span>
-    <h2>¡Encuesta<br>de La Porra!</h2>
-    <p><b>¿Qué harías tú?</b> Queremos saberlo.<br>Entra, contesta y no te quedes fuera. 🔥</p>
-    <a class="go" href="${ENC.url}" target="_blank" rel="noopener">✍️ Hacer la encuesta</a>
-    <button class="later">Ahora no</button>
-    <span class="left">${quedan ? `Te lo recordaremos ${quedan === 1 ? "1 vez más" : quedan + " veces más"} 😏` : "Último aviso 😏"}</span></div>`;
+/* ---------- Anuncio en vídeo: sale nada más entrar (una vez por apertura) hasta el día de la tortilla ---------- */
+const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4", poster: "media/oswalfri.jpg", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
+function showVideoAd() {
+  const el = document.createElement("div"); el.className = "vad";
+  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" autoplay muted playsinline webkit-playsinline preload="auto"></video>
+    <button class="x" aria-label="Cerrar anuncio">✕</button><button class="snd">🔊 Toca para oír el sonido</button><button class="again">↻ Ver otra vez</button>`;
   document.body.appendChild(el);
-  const close = () => { el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => el.remove(), 260); };
-  el.querySelector(".go").onclick = () => { ls.set("porra_enc_done_" + ENC.id, "1"); setTimeout(() => { close(); render(); }, 300); };
-  el.querySelector(".later").onclick = close;
-  try { if (typeof fx !== "undefined" && fx.firework) { fx.firework(.25, .2); setTimeout(() => fx.firework(.75, .25), 350); } } catch (e) {}
-  if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  const v = el.querySelector("video"), snd = el.querySelector(".snd"), again = el.querySelector(".again");
+  const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => el.remove(), 260); };
+  el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
+  const unmute = () => { v.muted = false; snd.style.display = "none"; if (v.ended || v.currentTime > 0.5) v.currentTime = 0; v.play().catch(() => {}); };
+  snd.onclick = (e) => { e.stopPropagation(); unmute(); };
+  v.onclick = () => { if (v.muted) unmute(); };
+  v.onended = () => { snd.style.display = "none"; again.style.display = "block"; };
+  again.onclick = (e) => { e.stopPropagation(); again.style.display = "none"; v.currentTime = 0; v.play().catch(() => {}); };
+  const p = v.play(); if (p && p.catch) p.catch(() => { snd.textContent = "▶️ Toca para verlo"; });
 }
 function checkDuels() {
   if (!S.data || !S.data.me) return;
-  // encuesta: una vez por apertura, las próximas 10 veces (deja de salir al hacerla)
-  if (!S.encShown && !encDone() && encN() < ENC.veces && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call,.enc")) {
-    S.encShown = true; ls.set("porra_enc_" + ENC.id, String(encN() + 1)); showEncuesta(); return;
+  // anuncio en vídeo: nada más entrar, una vez por apertura, hasta el día de la tortilla
+  if (!S.vadShown && serverNow() < VAD.hasta && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call,.vad")) {
+    S.vadShown = true; showVideoAd(); return;
   }
   // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
   { const c = S.data.llamada;
@@ -2025,7 +1997,6 @@ function maybeAskPush() {
 
 /* ---------- Eventos ---------- */
 function bindMain() {
-  document.querySelectorAll("[data-enc]").forEach((b) => (b.onclick = () => { ls.set("porra_enc_done_" + ENC.id, "1"); setTimeout(render, 400); }));
   document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { S.tab = b.dataset.tab; history.replaceState(null, "", "#" + S.tab); render(); window.scrollTo(0, 0); }));
   document.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { S.tab = b.dataset.go; render(); }));
   $("#meBtn").onclick = profileSheet;
