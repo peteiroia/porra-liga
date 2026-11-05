@@ -1794,7 +1794,7 @@ function showAnuncio(an) {
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
 /* ---------- Anuncio en vídeo: sale nada más entrar (una vez por apertura) hasta el día de la tortilla ---------- */
-const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4?v=4", poster: "media/oswalfri.jpg?v=4", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
+const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4?v=5", poster: "media/oswalfri.jpg?v=5", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
 function showVideoAd() {
   const el = document.createElement("div"); el.className = "vad";
   // autoplay + muted + playsinline: así los móviles lo arrancan solos, sin pulsar nada
