@@ -461,14 +461,6 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 @keyframes wink{0%{opacity:0;transform:scale(.3) rotate(-30deg)}40%{opacity:1;transform:scale(1.25) rotate(10deg)}60%{transform:scale(.95) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
 .aftercall .btn-tort{animation-delay:1.4s}
 
-/* ---------- Anuncio en vídeo ---------- */
-.vad{position:fixed;inset:0;z-index:9600;background:#000;display:flex;align-items:center;justify-content:center;animation:vadIn .3s ease}
-.vad video{width:100%;height:100%;object-fit:contain;background:#000}
-.vad .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;
-  background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:46px;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 0 2px rgba(255,255,255,.35)}
-.vad .snd{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:20px;line-height:40px;text-align:center;pointer-events:none}
-.vad video::-webkit-media-controls,.vad video::-webkit-media-controls-start-playback-button,.vad video::-webkit-media-controls-overlay-play-button,.vad video::-webkit-media-controls-panel{display:none!important;-webkit-appearance:none;opacity:0}
-@keyframes vadIn{from{opacity:0}to{opacity:1}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1793,33 +1785,8 @@ function showAnuncio(an) {
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
-/* ---------- Anuncio en vídeo: sale nada más entrar (una vez por apertura) hasta el día de la tortilla ---------- */
-const VAD = { id: "oswalfri1", src: "media/oswalfri.mp4?v=9", poster: "media/oswalfri.jpg?v=9", hasta: Date.parse("2026-12-12T00:00:00+01:00") };
-function showVideoAd() {
-  const el = document.createElement("div"); el.className = "vad";
-  el.innerHTML = `<video src="${VAD.src}" poster="${VAD.poster}" playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
-    <button class="x" aria-label="Cerrar anuncio">✕</button><span class="snd" style="display:none">🔇</span>`;
-  document.body.appendChild(el);
-  const v = el.querySelector("video"), snd = el.querySelector(".snd");
-  const close = () => { try { v.pause(); } catch (e) {} el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); if (S.data && S.data.me && S.data.me.profileDone) checkDuels(); }, 260); };
-  el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
-  const setMuted = (m) => { v.muted = m; v.defaultMuted = m; if (m) v.setAttribute("muted", ""); else v.removeAttribute("muted"); snd.style.display = m ? "block" : "none"; };
-  // por defecto CON sonido; si el móvil no lo permite sin tocar la pantalla, arranca sin sonido y el sonido entra al primer toque
-  let started = false;
-  const start = () => {
-    if (started) return; started = true;
-    setMuted(false);
-    const p = v.play();
-    if (p && p.catch) p.catch(() => { setMuted(true); v.play().catch(() => {}); });
-  };
-  start(); v.addEventListener("canplay", () => { if (v.paused) { started = false; start(); } }, { once: true });
-  el.addEventListener("pointerdown", (e) => { if (e.target.closest(".x")) return; if (v.muted) { setMuted(false); } if (v.paused) v.play().catch(() => {}); });
-  v.onended = () => { v.currentTime = 0; v.play().catch(() => {}); }; // en bucle hasta que lo cierren
-}
 function checkDuels() {
   if (!S.data || !S.data.me) return;
-  // mientras se ve el anuncio en vídeo, el resto de pantallas esperan a que se cierre
-  if (document.querySelector(".vad")) return;
   // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
   { const c = S.data.llamada;
     if (c && !S.callShown && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) {
@@ -2287,8 +2254,6 @@ setInterval(() => {
   const playing = S.data.jornadas.some((j) => j.matches.some((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) <= now && now - Date.parse(m.kickoff) < 4 * 3600e3));
   if (playing && (!document.activeElement || !document.activeElement.matches("input"))) refresh(true);
 }, 45000);
-// anuncio en vídeo: sale nada más abrir la app (una vez por apertura), hasta el día de la tortilla
-if (S.token && Date.now() < VAD.hasta) { S.vadShown = true; showVideoAd(); }
 refresh();
 </script>
 </body>
