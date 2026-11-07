@@ -1,7 +1,7 @@
 {
- "version": "2026-11-03.1",
+ "version": "2026-11-07.1",
  "season": "2026-27",
- "note": "Horas oficiales hasta la jornada 13. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
+ "note": "Horas oficiales hasta la jornada 14. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
  "jornadas": [
   {
    "num": 11,
@@ -106,20 +106,20 @@
     {
      "home": "Real Madrid",
      "away": "Alavés",
-     "kickoff": "2026-11-29T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-11-28T21:00:00+01:00",
+     "tbc": false
     },
     {
      "home": "Celta",
      "away": "Villarreal",
-     "kickoff": "2026-11-29T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-11-29T18:30:00+01:00",
+     "tbc": false
     },
     {
      "home": "Deportivo",
      "away": "FC Barcelona",
-     "kickoff": "2026-11-29T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-11-29T16:15:00+01:00",
+     "tbc": false
     }
    ]
   },
@@ -343,8 +343,8 @@
     {
      "home": "FC Barcelona",
      "away": "Atlético de Madrid",
-     "kickoff": "2027-02-07T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-12-02T21:30:00+01:00",
+     "tbc": false
     },
     {
      "home": "Alavés",
@@ -361,8 +361,8 @@
     {
      "home": "Real Sociedad",
      "away": "Real Madrid",
-     "kickoff": "2027-02-07T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-12-02T19:00:00+01:00",
+     "tbc": false
     }
    ]
   },
