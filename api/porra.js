@@ -151,7 +151,9 @@ function matchStatus(j, m, now, curId) {
   if (isLocked(m, now)) return "closed";
   if (!j.extra && j.id !== curId) return "next";
   if (m.tbc) return "tbc"; // hora por confirmar: no se abre hasta saber la hora
-  if (!m.kickoff || Date.parse(m.kickoff) - OPEN_BEFORE > now) return "soon";
+  if (!m.kickoff) return "soon";
+  if (j.extra) return "open"; // las jornadas extra se pueden pronosticar desde que se crean
+  if (Date.parse(m.kickoff) - OPEN_BEFORE > now) return "soon";
   return "open";
 }
 function goals(v) {
