@@ -16,7 +16,7 @@ const { AsyncLocalStorage } = require("async_hooks");
 const ligaCtx = new AsyncLocalStorage();
 const LIGAS = {
   "1": { prefix: "porra:", tortilla: true, unico: true, name: "La Porra", code: "112233" },
-  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, retosExtra: true, desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
+  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, retosExtra: true, retoSiempre: true, comodines: 5, desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, 5 comodines, se puede retar siempre (varios retos por jornada), retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
 };
 const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
 const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
@@ -490,7 +490,10 @@ function buildState(me, data) {
       const pa = A.byJ[j.id] || 0, pb = B.byJ[j.id] || 0;
       o.ptsFrom = pa; o.ptsTo = pb;
       if (pa !== pb) {
-        const W = pa > pb ? A : B, L = pa > pb ? B : A, gain = Math.min(pa, pb);
+        const W = pa > pb ? A : B, L = pa > pb ? B : A;
+        // lo que el perdedor aún conserva de esa jornada (si pierde varios retos, no baja de 0)
+        L.retoLost = L.retoLost || {}; const left = Math.max(0, Math.min(pa, pb) - (L.retoLost[j.id] || 0));
+        const gain = left; L.retoLost[j.id] = (L.retoLost[j.id] || 0) + gain;
         o.winner = W.name; o.loser = L.name; o.gain = gain;
         W.retoJ = W.retoJ || {}; W.retoJ[j.id] = (W.retoJ[j.id] || 0) + gain;
         W.retoPts = (W.retoPts || 0) + gain;
@@ -612,7 +615,7 @@ function buildState(me, data) {
 
   return {
     me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
-      comodines: { total: COMODINES + (extraX2[myKey] || 0) + (me.bonusX2 || 0), extra: (extraX2[myKey] || 0) + (me.bonusX2 || 0), used: Object.entries(preds[myKey] || {}).filter(([mid, p]) => p && p.x2 && !cancelledIds.has(mid)).length },
+      comodines: { total: (LIGA().comodines || COMODINES) + (extraX2[myKey] || 0) + (me.bonusX2 || 0), extra: (extraX2[myKey] || 0) + (me.bonusX2 || 0), used: Object.entries(preds[myKey] || {}).filter(([mid, p]) => p && p.x2 && !cancelledIds.has(mid)).length },
       retos: { total: RETOS, max: retosMismo(), used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
     // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
@@ -627,7 +630,7 @@ function buildState(me, data) {
     anuncio: data.anuncio || null,
     llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
     tortilla: tortillaOut,
-    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico, retosExtra: !!LIGA().retosExtra },
+    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico, retosExtra: !!LIGA().retosExtra, retoSiempre: !!LIGA().retoSiempre, comodines: LIGA().comodines || COMODINES },
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
@@ -893,11 +896,16 @@ async function handle(body) {
       const target = users.find((u) => u.name.toLowerCase() === normName(body.to).toLowerCase());
       if (!target) bad("Jugador no encontrado");
       if (target.key === myK) bad("No puedes retarte a ti mismo");
-      // Un solo reto por jornada y jugador: si retas no te pueden retar, y si te retan no puedes retar
-      const busy = (k) => list.some((r) => r.jornada === j.id && (r.from === k || r.to === k));
-      if (list.some((r) => r.jornada === j.id && r.to === myK)) bad("Ya te han retado en esta jornada: solo puedes tener un reto por jornada");
-      if (busy(myK)) bad("Ya tienes un reto en esta jornada");
-      if (busy(target.key)) bad(`${target.name} ya tiene un reto esta jornada. Reta a otro`);
+      if (LIGA().retoSiempre) {
+        // Se puede retar siempre (varios retos por jornada), pero no dos veces la misma pareja en la misma jornada
+        if (list.some((r) => r.jornada === j.id && ((r.from === myK && r.to === target.key) || (r.from === target.key && r.to === myK)))) bad(`Ya tienes un reto con ${target.name} en esta jornada`);
+      } else {
+        // Un solo reto por jornada y jugador: si retas no te pueden retar, y si te retan no puedes retar
+        const busy = (k) => list.some((r) => r.jornada === j.id && (r.from === k || r.to === k));
+        if (list.some((r) => r.jornada === j.id && r.to === myK)) bad("Ya te han retado en esta jornada: solo puedes tener un reto por jornada");
+        if (busy(myK)) bad("Ya tienes un reto en esta jornada");
+        if (busy(target.key)) bad(`${target.name} ya tiene un reto esta jornada. Reta a otro`);
+      }
       if (list.filter((r) => r.from === myK).length >= RETOS) bad(`Ya has usado tus ${RETOS} retos de la temporada`);
       if (list.filter((r) => r.from === myK && r.to === target.key).length >= retosMismo()) bad(`Ya has retado ${retosMismo()} veces a ${target.name}`);
       list.push({ id: crypto.randomBytes(4).toString("hex"), jornada: j.id, from: myK, to: target.key, at: now });

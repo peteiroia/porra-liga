@@ -20,7 +20,7 @@ Porra online para pronosticar cada jornada de Primera los partidos del Real Madr
 ## Grupos
 - La app tiene **dos grupos** independientes (jugadores, pronósticos, retos, clasificación, código y administrador propios). Arriba, el botón 👥 permite **cambiar de grupo** al momento; cada grupo recuerda su sesión, así que se puede estar dentro con un usuario en cada uno.
 - **Grupo 1 (La Porra)**: el original, con la clasificación de la tortilla. Código por defecto `112233`.
-- **Grupo 2 · Liga Democratic**: igual pero **sin tortilla** , **sin el punto extra por acierto único** 🦄 y **sin límite de retos al mismo jugador** (se mantienen 10 por temporada y uno por jornada). Empieza con la jornada extra de la **Nations League** (13-15 nov, con retos) y sigue en la **jornada 13**. Anuncio para invitar: `democratic.html` (con vista previa para WhatsApp). Código por defecto `445566`. El primero que se registra en ese grupo es su administrador y puede ponerle nombre (Admin → Nombre del grupo).
+- **Grupo 2 · Liga Democratic**: igual pero **sin tortilla** , **sin el punto extra por acierto único** 🦄 , **5 comodines**, **10 retos** y se puede **retar siempre** (varios retos por jornada, uno con cada rival; si pierdes varios te quedas a 0 en esa jornada, nunca en negativo). Empieza con la jornada extra de la **Nations League** (13-15 nov, con retos) y sigue en la **jornada 13**. Anuncio para invitar: `democratic.html` (con vista previa para WhatsApp). Código por defecto `445566`. El primero que se registra en ese grupo es su administrador y puede ponerle nombre (Admin → Nombre del grupo).
 - Enlace directo al grupo 2: `?liga=2` (el enlace de invitación ya lo incluye).
 
 ## Cómo funciona
