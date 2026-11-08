@@ -16,7 +16,7 @@ const { AsyncLocalStorage } = require("async_hooks");
 const ligaCtx = new AsyncLocalStorage();
 const LIGAS = {
   "1": { prefix: "porra:", tortilla: true, unico: true, name: "La Porra", code: "112233" },
-  "2": { prefix: "porra2:", tortilla: false, unico: false, name: "Liga Democratic", code: "445566" }, // sin tortilla y sin bonus de acierto único
+  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único y retos sin límite por rival
 };
 const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
 const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
@@ -100,7 +100,8 @@ function points(pred, res) {
 // Partidos de oro (valen doble): el Clásico y el derbi gallego
 const COMODINES = 3;
 const RETOS = 10;          // retos por jugador en toda la temporada
-const RETOS_MISMO = 2;     // máximo de retos a la misma persona
+const RETOS_MISMO_DEF = 2; // máximo de retos a la misma persona (Liga Democratic: sin límite)
+const retosMismo = () => LIGA().retosMismo || RETOS_MISMO_DEF;
 // Plazo para retar: hasta 1 minuto antes del primer partido de la jornada
 const retoDeadline = (j) => Math.min(...j.matches.filter((m) => !m.cancelled).map((m) => Date.parse(m.kickoff))) - CLOSE_BEFORE;
 const clubKey = (n) => {
@@ -574,7 +575,7 @@ function buildState(me, data) {
   return {
     me: { name: displayOf(me), username: me.username, email: me.email, admin: !!me.admin, photo: photo[displayOf(me)], profileDone: !!me.display,
       comodines: { total: COMODINES + (extraX2[myKey] || 0) + (me.bonusX2 || 0), extra: (extraX2[myKey] || 0) + (me.bonusX2 || 0), used: Object.entries(preds[myKey] || {}).filter(([mid, p]) => p && p.x2 && !cancelledIds.has(mid)).length },
-      retos: { total: RETOS, max: RETOS_MISMO, used: retos.filter((r) => r.from === myKey).length,
+      retos: { total: RETOS, max: retosMismo(), used: retos.filter((r) => r.from === myKey).length,
         porRival: retos.filter((r) => r.from === myKey).reduce((o, r) => ((o[nameOf[r.to]] = (o[nameOf[r.to]] || 0) + 1), o), {}) } },
     // Antes de empezar la jornada solo ves tus retos; en cuanto empieza, se ven todos
     retos: retoOut.filter((r) => r.started || r.from === displayOf(me) || r.to === displayOf(me)),
@@ -860,7 +861,7 @@ async function handle(body) {
       if (busy(myK)) bad("Ya tienes un reto en esta jornada");
       if (busy(target.key)) bad(`${target.name} ya tiene un reto esta jornada. Reta a otro`);
       if (list.filter((r) => r.from === myK).length >= RETOS) bad(`Ya has usado tus ${RETOS} retos de la temporada`);
-      if (list.filter((r) => r.from === myK && r.to === target.key).length >= RETOS_MISMO) bad(`Ya has retado ${RETOS_MISMO} veces a ${target.name}`);
+      if (list.filter((r) => r.from === myK && r.to === target.key).length >= retosMismo()) bad(`Ya has retado ${retosMismo()} veces a ${target.name}`);
       list.push({ id: crypto.randomBytes(4).toString("hex"), jornada: j.id, from: myK, to: target.key, at: now });
       // aviso al retado
       sendPush(target.key, { title: "⚔️ ¡TE HAN DESAFIADO!", body: `${displayOf(me)} te reta a muerte en la jornada ${j.num}. El que gane se lo lleva todo. Abre La Porra y prepara tu escudo 🛡️`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
