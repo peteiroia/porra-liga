@@ -1884,15 +1884,13 @@ function inviteText(code) {
     const ad = location.origin + location.pathname.replace(/index\.html$/, "") + "democratic.html?c=" + code;
     return `🏟️ *LIGA DEMOCRATIC* — ¡te estamos esperando!
 
-Un jugador. Un voto. Un pronóstico. 🗳️⚽
-🌍 Arrancamos el *viernes 13* con la Nations League (y el domingo, *España–Inglaterra* 🔥)
+Acierta tus pronósticos y podrás llevarte una cena gratis pagada por los 3 últimos 🥙🌮🥘
+🌍 Arrancamos el *viernes 13* con la Nations League y luego con la Liga: siempre con el Depor, Celta, Madrid y Barça 🔥
 ⚔️ Retos sin límite: reta a quien quieras, las veces que quieras
 🎯 Exacto 3 pts · 1X2 1 pt · ⚡ comodines x2
 
 👉 Apúntate aquí: ${ad}
-🔑 Código: ${code}
-
-¿Te atreves? 😎`;
+🔑 Código: ${code}`;
   }
   const url = location.origin + location.pathname.replace(/index\.html$/, "") + "?codigo=" + code + (LIGA_ID === "1" ? "" : "&liga=" + LIGA_ID);
   return `⚽🔥 ¡Estás convocado a LA PORRA!

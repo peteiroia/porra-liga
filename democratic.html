@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Liga Democratic · ¡Apúntate!</title>
-<meta name="description" content="Un jugador, un voto, un pronóstico. Arrancamos el viernes 13 con la Nations League. Retos sin límite. ¡Apúntate gratis!">
+<meta name="description" content="Acierta tus pronósticos y llévate una cena gratis pagada por los 3 últimos. Arrancamos el viernes 13 con la Nations League. ¡Apúntate!">
 <meta name="theme-color" content="#070b1f">
 <!-- Vista previa al compartir por WhatsApp -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="La Porra">
 <meta property="og:title" content="🏟️ LIGA DEMOCRATIC · ¡Te estamos esperando!">
-<meta property="og:description" content="Un jugador, un voto, un pronóstico. Arrancamos el viernes 13 con la Nations League. Retos sin límite. ¡Apúntate!">
+<meta property="og:description" content="Acierta tus pronósticos y llévate una cena gratis pagada por los 3 últimos 🥙🌮🥘 Arrancamos el viernes 13 con la Nations League. ¡Apúntate!">
 <meta property="og:image" content="https://porra-liga.vercel.app/img/og-democratic.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -34,9 +34,9 @@ body{min-height:100vh;overflow-x:hidden}
 .pitch{position:fixed;left:50%;bottom:-30vh;width:160vw;height:70vh;transform:translateX(-50%) perspective(600px) rotateX(58deg);z-index:0;pointer-events:none;opacity:.2;
   background:repeating-linear-gradient(90deg,#1d6b3a 0 9vw,#1a5f34 9vw 18vw);border-top:3px solid rgba(255,255,255,.6);
   mask-image:linear-gradient(180deg,#000,transparent 85%);-webkit-mask-image:linear-gradient(180deg,#000,transparent 85%)}
-.float{position:fixed;z-index:0;pointer-events:none;font-size:28px;opacity:.55;animation:up linear infinite}
+.float{position:fixed;z-index:1;pointer-events:none;font-size:28px;opacity:.3;animation:up linear infinite}
 @keyframes up{from{transform:translateY(110vh) rotate(0)}to{transform:translateY(-15vh) rotate(360deg)}}
-main{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 18px calc(env(safe-area-inset-bottom,0px) + 30px);text-align:center}
+main{position:relative;z-index:5;max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 18px calc(env(safe-area-inset-bottom,0px) + 30px);text-align:center}
 .pre{display:inline-flex;align-items:center;gap:8px;font:700 13px/1 Barlow,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 .pre img{width:26px;height:26px;border-radius:24%}
 h1{margin:14px 0 0;font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppercase;line-height:.82}
@@ -83,8 +83,8 @@ h1 .b::after{content:"";position:absolute;inset:0;background:linear-gradient(100
 <main>
   <div class="pre"><img src="icons/icon-192.png" alt="">La Porra presenta</div>
   <h1><span class="a">Liga</span><span class="b">Democratic</span></h1>
-  <p class="lema">Un jugador. Un voto. <b>Un pronóstico.</b> 🗳️⚽</p>
-  <p class="sub">Aquí no hay enchufes ni tortillas que valgan: solo puntos y gloria.</p>
+  <p class="lema">Acierta tus pronósticos y llévate una <b>cena gratis</b> pagada por los <b>3 últimos</b> 🥙🌮🥘</p>
+  <p class="sub">Arrancamos el viernes 13 con la Nations League y luego, la Liga: siempre con el Depor, Celta, Madrid y Barça 🔥</p>
 
   <div class="count">
     <div class="t">🌍 Arrancamos con la Nations League</div>
@@ -95,7 +95,7 @@ h1 .b::after{content:"";position:absolute;inset:0;background:linear-gradient(100
   <div class="cards">
     <div class="card hot"><div class="i">⚔️</div><b>Retos sin límite</b><span>Reta a quien quieras, las veces que quieras… ¡ya desde la Nations League! El que gana se lleva los puntos de los dos.</span></div>
     <div class="card"><div class="i">🎯</div><b>Exacto 3 · 1X2 1</b><span>Acierta el resultado y suma a lo grande.</span></div>
-    <div class="card"><div class="i">⚡</div><b>Comodín x2</b><span>3 por temporada para doblar tus puntos.</span></div>
+    <div class="card"><div class="i">⚡</div><b>5 comodines x2</b><span>Para doblar tus puntos cuando más lo necesites.</span></div>
     <div class="card"><div class="i">⭐</div><b>Clásico y derbi x2</b><span>Madrid, Barça, Depor y Celta. Los partidos gordos valen doble.</span></div>
     <div class="card"><div class="i">🔴</div><b>En directo</b><span>Marcador en vivo y aviso al móvil si te falta un pronóstico.</span></div>
   </div>
@@ -116,15 +116,13 @@ document.getElementById("go").href = base + "?liga=2&codigo=" + encodeURICompone
 const share = base + "democratic.html?c=" + encodeURIComponent(CODE);
 const text = `🏟️ *LIGA DEMOCRATIC* — ¡te estamos esperando!
 
-Un jugador. Un voto. Un pronóstico. 🗳️⚽
-🌍 Arrancamos el *viernes 13* con la Nations League (y el domingo, *España–Inglaterra* 🔥)
+Acierta tus pronósticos y podrás llevarte una cena gratis pagada por los 3 últimos 🥙🌮🥘
+🌍 Arrancamos el *viernes 13* con la Nations League y luego con la Liga: siempre con el Depor, Celta, Madrid y Barça 🔥
 ⚔️ Retos sin límite: reta a quien quieras, las veces que quieras
 🎯 Exacto 3 pts · 1X2 1 pt · ⚡ comodines x2
 
 👉 Apúntate aquí: ${share}
-🔑 Código: ${CODE}
-
-¿Te atreves? 😎`;
+🔑 Código: ${CODE}`;
 document.getElementById("wa").onclick = () => {
   if (navigator.share) navigator.share({ text }).catch(() => {});
   else window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
@@ -141,9 +139,12 @@ function tick() {
   document.getElementById("cs").textContent = pad(s % 60);
 }
 tick(); setInterval(tick, 1000);
+// el título siempre cabe en la pantalla
+function fit() { const b = document.querySelector("h1 .b"), w = document.querySelector("main").clientWidth - 8; b.style.fontSize = ""; let fs = parseFloat(getComputedStyle(b).fontSize); while (b.scrollWidth > w && fs > 30) { fs -= 2; b.style.fontSize = fs + "px"; } }
+fit(); addEventListener("resize", fit); if (document.fonts) document.fonts.ready.then(fit);
 // balones y papeletas subiendo
 const fl = document.getElementById("floaters");
-for (let i = 0; i < 14; i++) { const e = document.createElement("div"); e.className = "float"; e.textContent = i % 3 ? "⚽" : "🗳️";
+for (let i = 0; i < 14; i++) { const e = document.createElement("div"); e.className = "float"; e.textContent = i % 3 ? "⚽" : ["🥙", "🌮", "🥘"][i % 3 === 0 ? (i / 3) % 3 : 0];
   e.style.left = (Math.random() * 100) + "vw"; e.style.fontSize = (18 + Math.random() * 22) + "px"; e.style.animationDuration = (9 + Math.random() * 10) + "s"; e.style.animationDelay = (-Math.random() * 18) + "s"; fl.appendChild(e); }
 </script>
 </body>
