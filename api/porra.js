@@ -267,7 +267,7 @@ const EXTRA_LEAGUES = ["uefa.champions", "uefa.europa", "uefa.europa.conf", "esp
 const STOP = new Set(["fc", "cf", "rc", "cd", "ud", "sd", "sad", "club", "de", "del", "la", "el", "real", "ca", "rcd", "vigo", "balompie", "futbol", "the", "of"]);
 const ALIAS = { deportivo: "coruna", barca: "barcelona", bilbao: "athletic", vallecano: "rayo", santander: "racing", atletico: "atletico", atl: "atletico",
   espana: "spain", alemania: "germany", francia: "france", italia: "italy", inglaterra: "england", paises: "netherlands", holanda: "netherlands", croacia: "croatia",
-  belgica: "belgium", suiza: "switzerland", escocia: "scotland", gales: "wales", turquia: "turkey", noruega: "norway", suecia: "sweden", dinamarca: "denmark", brasil: "brazil", marruecos: "morocco", japon: "japan", mexico: "mexico" };
+  belgica: "belgium", suiza: "switzerland", escocia: "scotland", gales: "wales", turquia: "turkiye", turkey: "turkiye", noruega: "norway", suecia: "sweden", dinamarca: "denmark", brasil: "brazil", marruecos: "morocco", japon: "japan", mexico: "mexico" };
 const teamToks = (n) => {
   const raw = String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
   let t = raw.filter((w) => !STOP.has(w)); if (!t.length) t = raw;
@@ -367,8 +367,24 @@ async function startCall(text, id) {
   for (const k of keys) await sendPush(k, { title: "📞 Llamada entrante de La Porra", body: "Abre la app para contestar…", tag: "llamada-" + call.id, url: "./" }).catch(() => 0);
   return call;
 }
+// Jornada extra: UEFA Nations League (14 y 15 de noviembre de 2026), en todos los grupos (una sola vez)
+async function seedNations() {
+  const ok = await redis(["SET", P() + "mig:nations2611", String(Date.now()), "NX"]);
+  if (!ok) return;
+  const js = await getJSON(P() + "jornadas", []);
+  if (js.some((j) => j.extra && /nations/i.test(j.title || ""))) return;
+  const mk = (home, away, ko) => ({ id: crypto.randomBytes(5).toString("hex"), home, away, kickoff: new Date(ko).toISOString(), manual: true });
+  js.push({ id: crypto.randomBytes(5).toString("hex"), num: 1000 + js.filter((x) => x.extra).length + 1, extra: true, title: "Nations League", matches: [
+    mk("Portugal", "Dinamarca", "2026-11-14T20:45:00+01:00"),
+    mk("Bélgica", "Italia", "2026-11-15T20:45:00+01:00"),
+    mk("Francia", "Turquía", "2026-11-15T20:45:00+01:00"),
+    mk("España", "Inglaterra", "2026-11-15T20:45:00+01:00"),
+  ] });
+  await setJSON(P() + "jornadas", js);
+}
 async function loadAll() {
   await migrations();
+  await seedNations();
   await syncCalendar();
   if (LIGA().desde) { // grupo que empieza más tarde: fuera las jornadas de Liga anteriores
     const js = await getJSON(P() + "jornadas", []);

@@ -679,6 +679,15 @@ const KIT = [
   [/sporting/, "SPO", { st: ["#e2001a", "#ffffff"], n: 5, fg: "#fff" }],
   [/eibar/, "EIB", { st: ["#7a1631", "#005ca9"], n: 5, fg: "#fff" }],
   [/cadiz/, "CAD", { st: ["#ffe600"], band: ["#0045a5"], fg: "#0045a5" }],
+  // selecciones
+  [/^espana$|^spain$/, "ESP", { st: ["#c60b1e"], band: ["#ffc400"], fg: "#fff" }],
+  [/^inglaterra$|^england$/, "ENG", { st: ["#ffffff"], band: ["#ce1124"], fg: "#0b1f4b" }],
+  [/^francia$|^france$/, "FRA", { st: ["#0d2b6b"], band: ["#ffffff", "#e1000f"], fg: "#fff" }],
+  [/^turquia$|^turkiye$|^turkey$/, "TUR", { st: ["#e30a17"], band: ["#ffffff"], fg: "#fff" }],
+  [/^belgica$|^belgium$/, "BEL", { st: ["#e30613"], band: ["#111111", "#fdda24"], fg: "#fff" }],
+  [/^italia$|^italy$/, "ITA", { st: ["#1c64c8"], band: ["#ffffff"], fg: "#fff" }],
+  [/^portugal$/, "POR", { st: ["#c8102e"], band: ["#046a38"], fg: "#fff" }],
+  [/^dinamarca$|^denmark$/, "DEN", { st: ["#c8102e"], band: ["#ffffff"], fg: "#fff" }],
 ];
 const norm = (n) => String(n || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 function kitOf(name) {
@@ -821,7 +830,10 @@ function setData(d) {
   S.data = d;
   S.offset = d.now - Date.now();
   if (!S.jornada || !d.jornadas.some((j) => j.id === S.jornada)) {
-    const cur = d.jornadas.find((j) => j.current);
+    // se abre en la jornada (de Liga o extra) con el próximo partido por jugar
+    const now = d.now, prox = d.jornadas.map((j) => [j, Math.min(...j.matches.filter((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) > now - 4 * 3600e3).map((m) => Date.parse(m.kickoff)))])
+      .filter(([, t]) => isFinite(t)).sort((x, y) => x[1] - y[1]);
+    const cur = (prox[0] && prox[0][0]) || d.jornadas.find((j) => j.current);
     S.jornada = cur ? cur.id : d.jornadas.length ? d.jornadas[d.jornadas.length - 1].id : null;
   }
 }
