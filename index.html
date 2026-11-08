@@ -613,7 +613,7 @@ const ls = {
 const tokenDe = (id) => { try { return localStorage.getItem("porra_token" + (id === "1" ? "" : "@" + id)); } catch (e) { return null; } };
 function cambiarLiga(id) { try { localStorage.setItem("porra_liga", id); } catch (e) {} location.href = location.pathname.replace(/index\.html$/, "") + "?liga=" + id; }
 async function elegirLiga() {
-  let ligas = [{ id: "1", name: "La Porra" }, { id: "2", name: "La Porra · Grupo 2" }];
+  let ligas = [{ id: "1", name: "La Porra" }, { id: "2", name: "Liga Democratic" }];
   try { const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "ligas" }) }); const j = await r.json(); if (j.ligas) ligas = j.ligas; } catch (e) {}
   const el = document.createElement("div"); el.className = "ligasheet";
   el.innerHTML = `<div class="ls-box"><h3>Cambiar de grupo</h3>
@@ -923,7 +923,7 @@ function authView() {
   <div class="hero">
     <img src="icons/icon-512.png" alt="La Porra" style="display:block;width:min(56vw,220px);height:auto;margin:6px auto 10px;border-radius:24%;box-shadow:0 0 0 2px rgba(255,226,122,.6),0 14px 34px rgba(0,0,0,.55),0 0 46px rgba(245,197,66,.35)">
     <div style="text-align:center;margin-bottom:14px">
-      <button class="liga-sw big" id="ligaSwA" type="button">👥 Grupo: <b>${LIGA_ID === "1" ? "La Porra" : "Grupo " + LIGA_ID}</b> · cambiar ⇄</button>
+      <button class="liga-sw big" id="ligaSwA" type="button">👥 Grupo: <b>${LIGA_ID === "1" ? "La Porra" : LIGA_ID === "2" ? "Liga Democratic" : "Grupo " + LIGA_ID}</b> · cambiar ⇄</button>
       <p class="muted" style="margin:0">Pronostica los partidos de Madrid, Barça, Depor y Celta.<br>Resultado exacto <b style="color:var(--gold)">3 pts</b> · Acertar 1X2 <b style="color:var(--sign)">1 pt</b></p>
     </div>
   </div>
@@ -1203,7 +1203,7 @@ function tablaView(mode) {
       <table class="tbl"><thead><tr><th>#</th><th>Jugador</th><th>Pts</th></tr></thead><tbody>
       ${rowsJ.map((r, i) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${i + 1}</td><td class="who"><div>${avatar(r.name, r.photo, "sm")}<span class="wn"><b>${esc(r.name)}</b>${bdLine(r, tj)}</span>${started && r.jp === best && best > 0 ? " ⭐" : ""}${r.plenos && r.plenos[tj.id] ? (r.plenos[tj.id] === 3 ? " 🏆" : " 🎉") : ""}${r.retoJ && r.retoJ[tj.id] > 0 ? " ⚔️" : ""}${r.lostJ && r.lostJ[tj.id] ? " 💀" : ""}</div></td><td class="tot">${r.jp}</td></tr>`).join("")}
       </tbody></table>
-      <div class="legend"><span>⚽ puntos de los partidos (🎯 exactos · ✓ signos)</span><span><i class="gball" title="Acertado con comodín"></i> acertado con comodín</span><span>🦄 acierto único</span><span>🎉🏆 pleno</span><span>⚔️ reto ganado/perdido</span><span>⭐ mejor de la jornada</span><span>💀 perdió un reto</span></div>
+      <div class="legend"><span>⚽ puntos de los partidos (🎯 exactos · ✓ signos)</span><span><i class="gball" title="Acertado con comodín"></i> acertado con comodín</span>${S.data.liga && S.data.liga.unico === false ? "" : "<span>🦄 acierto único</span>"}<span>🎉🏆 pleno</span><span>⚔️ reto ganado/perdido</span><span>⭐ mejor de la jornada</span><span>💀 perdió un reto</span></div>
     </div>
     ${picksGrid(tj, rowsJ)}
     ${(() => {
@@ -1326,7 +1326,7 @@ function normasView() {
     <li>⚡ <b>Comodín x2</b>: empiezas con <b>3 comodines</b> para toda la temporada, y solo puedes usar <b>uno por jornada</b>. Actívalo en el partido que quieras antes de que cierre y ese partido te cuenta doble. Puedes moverlo a otro partido mientras siga abierto. Nadie sabe dónde lo has puesto, pero si aciertas con él, en la clasificación saldrá un <b>balón dorado</b>.</li>
     <li>🆘 <b>Comodín de consolación</b>: el <b>último</b> de cada jornada (entre los que han jugado) gana <b>un comodín x2 extra</b>. Si hay empate en la última plaza, se lo llevan todos los empatados.</li>
     <li>⭐ <b>Partidos de oro</b>: el <b>Clásico</b> (Madrid–Barça) y el <b>derbi gallego</b> (Depor–Celta) valen el doble para todos. En estos partidos <b>no se puede usar el comodín</b>.</li>
-    <li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>
+    ${S.data && S.data.liga && S.data.liga.unico === false ? "" : `<li>🦄 <b>Acierto único</b>: si eres el <b>único</b> que acierta el resultado exacto de un partido, sumas <b>1 punto extra</b>.</li>`}
     <li>🎉 <b>Pleno de signos</b>: si aciertas el 1X2 de <b>todos</b> los partidos de la jornada, <b>+1</b> extra.</li>
     <li>🏆 <b>Pleno de resultados</b>: si clavas el resultado exacto de <b>todos</b> los partidos de la jornada, <b>+3</b> extra (en lugar del +1).</li>
     <li>⚔️ <b>Retos</b>: tienes <b>10 retos</b> para toda la temporada. Cada jugador solo puede tener <b>un reto por jornada</b>: si retas a alguien ya no te pueden retar, y si te retan ya no puedes retar. Hay que retar antes de que empiece el primer partido y, <b>una vez lanzado, el reto no se puede cancelar</b>, y no puedes retar más de <b>2 veces</b> a la misma persona. Quien haga más puntos en esa jornada <b>se lleva todos los puntos del otro</b> (los suyos + los del rival) y <b>el que pierde se queda con 0</b> en esa jornada. Si empatan, <b>cada uno se queda con sus puntos</b> y nadie suma más.</li>

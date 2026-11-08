@@ -15,8 +15,8 @@ const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TO
 const { AsyncLocalStorage } = require("async_hooks");
 const ligaCtx = new AsyncLocalStorage();
 const LIGAS = {
-  "1": { prefix: "porra:", tortilla: true, name: "La Porra", code: "112233" },
-  "2": { prefix: "porra2:", tortilla: false, name: "La Porra · Grupo 2", code: "445566" },
+  "1": { prefix: "porra:", tortilla: true, unico: true, name: "La Porra", code: "112233" },
+  "2": { prefix: "porra2:", tortilla: false, unico: false, name: "Liga Democratic", code: "445566" }, // sin tortilla y sin bonus de acierto único
 };
 const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
 const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
@@ -124,7 +124,7 @@ function scoreFor(p, m, exactCount, extra) {
   if (!p || !m.result) return null;
   const base = points(p, m.result);
   const mult = goldenOf(m) ? 2 : p.x2 ? 2 : 1; // el comodín no se suma en partidos de oro
-  const unique = !extra && base === 3 && exactCount === 1 ? 1 : 0;
+  const unique = LIGA().unico && !extra && base === 3 && exactCount === 1 ? 1 : 0;
   // puntos que ha dado el comodín (solo si acertó algo; en partidos de oro no hay comodín)
   const comodin = p.x2 && !goldenOf(m) ? base : 0;
   return { base, pts: base * mult + unique, mult, unique: !!unique, comodin };
@@ -588,7 +588,7 @@ function buildState(me, data) {
     anuncio: data.anuncio || null,
     llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
     tortilla: tortillaOut,
-    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla },
+    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico },
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
@@ -1110,4 +1110,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 };
-module.exports._test = { enLiga, LIGAS, liveUpdate, parseEspn, sameTeam, setLiveFetch: (f) => (liveFetch = f), periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };
+module.exports._test = { enLiga, LIGAS, scoreFor, liveUpdate, parseEspn, sameTeam, setLiveFetch: (f) => (liveFetch = f), periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };
