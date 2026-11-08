@@ -16,6 +16,13 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="icons/icon-192.png">
+<!-- si la añaden a inicio desde aquí, se instala la app (y abre en la Liga Democratic) -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="La Porra">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@500;600;700&display=swap" rel="stylesheet">
@@ -108,6 +115,7 @@ h1 .b::after{content:"";position:absolute;inset:0;background:linear-gradient(100
 </main>
 <script>
 // Código y enlaces (el código puede venir en el enlace: democratic.html?c=XXXX)
+try { localStorage.setItem("porra_liga", "2"); } catch (e) {} // la app abrirá en la Liga Democratic
 const q = new URLSearchParams(location.search);
 const CODE = (q.get("c") || "445566").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12) || "445566";
 const base = location.origin + location.pathname.replace(/democratic\.html$/, "");
