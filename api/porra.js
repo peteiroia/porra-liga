@@ -10,7 +10,18 @@ try { webpush = require("web-push"); } catch (e) { /* sin avisos en local */ }
 
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-const P = "porra:";
+// ---------- Grupos (ligas): cada uno con sus jugadores, pronósticos, retos y admin ----------
+// El grupo 1 es el original (con la tortilla). El grupo 2 es otro grupo de gente, sin tortilla.
+const { AsyncLocalStorage } = require("async_hooks");
+const ligaCtx = new AsyncLocalStorage();
+const LIGAS = {
+  "1": { prefix: "porra:", tortilla: true, name: "La Porra", code: "112233" },
+  "2": { prefix: "porra2:", tortilla: false, name: "La Porra · Grupo 2", code: "445566" },
+};
+const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
+const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
+const enLiga = (id, fn) => ligaCtx.run({ id: ligaId(id), ...LIGAS[ligaId(id)] }, fn);
+const P = () => LIGA().prefix;
 const SESSION_TTL = 60 * 60 * 24 * 365 * 10; // la sesión no caduca (se renueva con cada uso)
 const CLOSE_BEFORE = 60 * 1000;             // se cierra 1 minuto antes del inicio
 const OPEN_BEFORE = 7 * 24 * 3600 * 1000;   // se abre como máximo 7 días antes
@@ -54,7 +65,7 @@ async function getJSON(key, def) {
   try { return JSON.parse(v); } catch (e) { return def; }
 }
 const setJSON = (key, val) => redis(["SET", key, JSON.stringify(val)]);
-const getUser = (name) => getJSON(P + "user:" + keyName(name), null);
+const getUser = (name) => getJSON(P() + "user:" + keyName(name), null);
 
 function hgetallObj(raw) {
   const out = {};
@@ -66,16 +77,16 @@ function hgetallObj(raw) {
 
 async function auth(token) {
   if (!token || typeof token !== "string" || token.length > 100) throw new HttpError(401, "Inicia sesión");
-  const k = await redis(["GET", P + "session:" + token]);
+  const k = await redis(["GET", P() + "session:" + token]);
   if (!k) throw new HttpError(401, "Sesión caducada, vuelve a entrar");
-  redis(["EXPIRE", P + "session:" + token, String(SESSION_TTL)]).catch(() => {});
+  redis(["EXPIRE", P() + "session:" + token, String(SESSION_TTL)]).catch(() => {});
   const u = await getUser(k);
   if (!u) throw new HttpError(401, "Usuario no encontrado");
   return u;
 }
 async function newSession(u) {
   const t = crypto.randomBytes(24).toString("hex");
-  await redis(["SET", P + "session:" + t, keyName(u.username), "EX", String(SESSION_TTL)]);
+  await redis(["SET", P() + "session:" + t, keyName(u.username), "EX", String(SESSION_TTL)]);
   return t;
 }
 
@@ -224,8 +235,8 @@ function regroup(jornadas) {
 const sameTeams = (a, b) => keyName(a.home) === keyName(b.home) && keyName(a.away) === keyName(b.away);
 async function syncCalendar(force) {
   if (!CAL || !Array.isArray(CAL.jornadas)) return false;
-  if (!force && (await redis(["GET", P + "calver"])) === CAL.version) return false;
-  const jornadas = await getJSON(P + "jornadas", []);
+  if (!force && (await redis(["GET", P() + "calver"])) === CAL.version) return false;
+  const jornadas = await getJSON(P() + "jornadas", []);
   for (const cj of CAL.jornadas) {
     let j = jornadas.find((x) => x.num === cj.num);
     if (!j) { j = { id: crypto.randomBytes(5).toString("hex"), num: cj.num, title: cj.title || "", matches: [] }; jornadas.push(j); }
@@ -240,8 +251,8 @@ async function syncCalendar(force) {
     j.matches.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
   }
   regroup(jornadas);
-  await setJSON(P + "jornadas", jornadas);
-  await redis(["SET", P + "calver", CAL.version]);
+  await setJSON(P() + "jornadas", jornadas);
+  await redis(["SET", P() + "calver", CAL.version]);
   return true;
 }
 
@@ -301,12 +312,12 @@ async function liveUpdate(jornadas, force) {
     if (ko - 2 * 60e3 <= now && now <= ko + 4 * 3600e3) cands.push({ j, m, ko });
   }
   const liveMap = {};
-  for (const [id, v] of Object.entries(hgetallObj(await redis(["HGETALL", P + "live"])))) if (v) liveMap[id] = v;
+  for (const [id, v] of Object.entries(hgetallObj(await redis(["HGETALL", P() + "live"])))) if (v) liveMap[id] = v;
   if (!cands.length) {
-    if (Object.keys(liveMap).length && !jornadas.some((j) => j.matches.some((m) => liveMap[m.id] && !m.result))) await redis(["DEL", P + "live"]);
+    if (Object.keys(liveMap).length && !jornadas.some((j) => j.matches.some((m) => liveMap[m.id] && !m.result))) await redis(["DEL", P() + "live"]);
     return { live: liveMap, changed: false };
   }
-  if (!force && !(await redis(["SET", P + "live:lock", "1", "NX", "EX", "40"]))) return { live: liveMap, changed: false };
+  if (!force && !(await redis(["SET", P() + "live:lock", "1", "NX", "EX", "40"]))) return { live: liveMap, changed: false };
   // qué ligas y qué días hay que mirar
   const reqs = new Map();
   for (const c of cands) for (const lg of c.j.extra ? EXTRA_LEAGUES : LIVE_LEAGUES) { const k = lg + "|" + etDate(c.ko); reqs.set(k, [lg, etDate(c.ko)]); }
@@ -317,39 +328,40 @@ async function liveUpdate(jornadas, force) {
     if (!e) continue;
     if (e.done) {
       m.result = { h: e.h90, a: e.a90 }; m.auto = true; changed = true;
-      await redis(["HDEL", P + "live", m.id]); delete liveMap[m.id];
+      await redis(["HDEL", P() + "live", m.id]); delete liveMap[m.id];
     } else if (e.state === "in" || e.ht) {
       const min = e.ht ? "Descanso" : (e.clock || "").replace(/'+$/, "'");
       liveMap[m.id] = { h: e.h, a: e.a, min, at: now };
-      await redis(["HSET", P + "live", m.id, JSON.stringify(liveMap[m.id])]);
+      await redis(["HSET", P() + "live", m.id, JSON.stringify(liveMap[m.id])]);
     }
   }
   if (changed) {
-    const fresh = await getJSON(P + "jornadas", []);
+    const fresh = await getJSON(P() + "jornadas", []);
     for (const j of fresh) for (const m of j.matches) {
       const src = cands.find((c) => c.m.id === m.id);
       if (src && src.m.result && !m.result && !m.noAuto) { m.result = src.m.result; m.auto = true; }
     }
-    await setJSON(P + "jornadas", fresh);
+    await setJSON(P() + "jornadas", fresh);
   }
   return { live: liveMap, changed };
 }
 
 async function migrations() {
+  if (LIGA().id !== "1") return; // las migraciones antiguas (tortilla, retos…) son solo del grupo original
   // Reinicio de retos pedido por el administrador (se ejecuta una sola vez)
-  const ok = await redis(["SET", P + "mig:retosReset1", String(Date.now()), "NX"]);
-  if (ok) await redis(["DEL", P + "retos"]);
+  const ok = await redis(["SET", P() + "mig:retosReset1", String(Date.now()), "NX"]);
+  if (ok) await redis(["DEL", P() + "retos"]);
   // Llamada a todos: «¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.» (una sola vez)
-  const ok2 = await redis(["SET", P + "mig:llamada1", String(Date.now()), "NX"]);
+  const ok2 = await redis(["SET", P() + "mig:llamada1", String(Date.now()), "NX"]);
   // Quitar el aviso fijo de la portada («27 del 11… la primera tortilla está en juego…») (una sola vez)
-  const ok3 = await redis(["SET", P + "mig:quitarAviso1", String(Date.now()), "NX"]);
-  if (ok3) await redis(["DEL", P + "anuncio"]);
+  const ok3 = await redis(["SET", P() + "mig:quitarAviso1", String(Date.now()), "NX"]);
+  if (ok3) await redis(["DEL", P() + "anuncio"]);
   if (ok2) await startCall("¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.", "tortilla1");
 }
 async function startCall(text, id) {
   const call = { id: id || crypto.randomBytes(4).toString("hex"), text, at: Date.now(), until: Date.now() + 3 * 864e5 };
-  await setJSON(P + "llamada", call);
-  const keys = (await redis(["SMEMBERS", P + "users"])) || [];
+  await setJSON(P() + "llamada", call);
+  const keys = (await redis(["SMEMBERS", P() + "users"])) || [];
   for (const k of keys) await sendPush(k, { title: "📞 Llamada entrante de La Porra", body: "Abre la app para contestar…", tag: "llamada-" + call.id, url: "./" }).catch(() => 0);
   return call;
 }
@@ -357,13 +369,13 @@ async function loadAll() {
   await migrations();
   await syncCalendar();
   const [jornadas, predsRaw, userKeys, crestsRaw, retos, anuncio, llamada] = await Promise.all([
-    getJSON(P + "jornadas", []),
-    redis(["HGETALL", P + "preds"]),
-    redis(["SMEMBERS", P + "users"]),
-    redis(["HGETALL", P + "crests"]),
-    getJSON(P + "retos", []),
-    getJSON(P + "anuncio", null),
-    getJSON(P + "llamada", null),
+    getJSON(P() + "jornadas", []),
+    redis(["HGETALL", P() + "preds"]),
+    redis(["SMEMBERS", P() + "users"]),
+    redis(["HGETALL", P() + "crests"]),
+    getJSON(P() + "retos", []),
+    getJSON(P() + "anuncio", null),
+    getJSON(P() + "llamada", null),
   ]);
   const crests = hgetallObj(crestsRaw);
   const preds = hgetallObj(predsRaw);
@@ -374,7 +386,8 @@ async function loadAll() {
   }
   let live = {};
   try { live = (await liveUpdate(jornadas)).live; } catch (e) { /* sin directo: no pasa nada */ }
-  return { jornadas, preds, users, crests, retos, anuncio, llamada, live };
+  const ligaName = (await redis(["GET", P() + "name"])) || null;
+  return { jornadas, preds, users, crests, retos, anuncio, llamada, live, ligaName };
 }
 
 function buildState(me, data) {
@@ -508,7 +521,8 @@ function buildState(me, data) {
     rankBy((r) => r.pts - (r.byJ[lastJ.id] || 0)).forEach((r, i) => (byKey[r.key].prevPos = i + 1));
   }
 
-  // Clasificación del mes de la tortilla
+  // Clasificación del mes de la tortilla (solo en los grupos con tortilla)
+  const conTortilla = LIGA().tortilla;
   const played = jornadas.flatMap((j) => live(j).filter((m) => m.result).map((m) => Date.parse(m.kickoff)));
   const curP = periodOf(now);
   const pids = new Set(played.map((t) => periodOf(t).id)); pids.add(curP.id);
@@ -521,6 +535,7 @@ function buildState(me, data) {
     if (rows.length >= 4) { const asc = rows.map((r) => r.pts).sort((a, b) => a - b); const th = asc[2]; losers = rows.filter((r) => r.pts <= th).map((r) => r.name); }
     return { ...info, closed: now > info.to, rows, losers };
   }) };
+  const tortillaOut = conTortilla ? tortilla : null;
 
   const curId = currentJornadaId(jornadas, now);
   const outJ = jornadas.map((j) => ({
@@ -572,7 +587,8 @@ function buildState(me, data) {
     users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username, bonusX2: u.bonusX2 } : {}) })),
     anuncio: data.anuncio || null,
     llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
-    tortilla,
+    tortilla: tortillaOut,
+    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla },
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
@@ -599,9 +615,9 @@ async function savePhoto(u, dataUrl) {
   const mt = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ""));
   if (!mt) bad("Imagen no válida");
   if (mt[2].length > 200000) bad("La imagen es demasiado grande");
-  await redis(["SET", P + "avatar:" + keyName(u.username), dataUrl]);
+  await redis(["SET", P() + "avatar:" + keyName(u.username), dataUrl]);
   u.photo = Date.now();
-  await setJSON(P + "user:" + keyName(u.username), u);
+  await setJSON(P() + "user:" + keyName(u.username), u);
 }
 
 // ---------- Código de invitación de la liga ----------
@@ -613,43 +629,44 @@ function newCode() {
 // Código fijo y fácil por defecto: 112233 (el admin puede cambiarlo o poner uno propio)
 const DEFAULT_CODE = "112233";
 async function leagueCode(regen, custom) {
-  if (custom) { await redis(["SET", P + "code2", custom]); return custom; }
-  let c = regen ? null : await redis(["GET", P + "code2"]);
-  if (regen) { c = newCode(); await redis(["SET", P + "code2", c]); }
-  return c || DEFAULT_CODE;
+  if (custom) { await redis(["SET", P() + "code2", custom]); return custom; }
+  let c = regen ? null : await redis(["GET", P() + "code2"]);
+  if (regen) { c = newCode(); await redis(["SET", P() + "code2", c]); }
+  return c || LIGA().code || DEFAULT_CODE;
 }
 
 // ---------- Avisos push ----------
 async function vapid() {
-  let k = await getJSON(P + "vapid", null);
+  let k = await getJSON("porra:vapid", null);
   if (!k && webpush) {
     k = webpush.generateVAPIDKeys();
-    const ok = await redis(["SET", P + "vapid", JSON.stringify(k), "NX"]);
-    if (!ok) k = await getJSON(P + "vapid", null);
+    const ok = await redis(["SET", "porra:vapid", JSON.stringify(k), "NX"]);
+    if (!ok) k = await getJSON("porra:vapid", null);
   }
   return k;
 }
 async function sendPush(userKey, payload) {
+  if (LIGA().id !== "1" && payload && payload.url) { const u = String(payload.url); const i = u.indexOf("#"); payload = { ...payload, title: payload.title, url: (i >= 0 ? u.slice(0, i) : u).replace(/\?.*$/, "") + "?liga=" + LIGA().id + (i >= 0 ? u.slice(i) : "") }; }
   const k = await vapid();
   if (!k || !webpush) return 0;
   webpush.setVapidDetails("mailto:porra@example.com", k.publicKey, k.privateKey);
-  const subs = (hgetallObj(await redis(["HGETALL", P + "push"]))[userKey]) || [];
+  const subs = (hgetallObj(await redis(["HGETALL", P() + "push"]))[userKey]) || [];
   let sent = 0;
   const keep = [];
   for (const s of subs) {
     try { await webpush.sendNotification(s, JSON.stringify(payload), { TTL: 3600 }); sent++; keep.push(s); }
     catch (e) { if (e.statusCode !== 404 && e.statusCode !== 410) keep.push(s); }
   }
-  if (keep.length !== subs.length) await redis(["HSET", P + "push", userKey, JSON.stringify(keep)]);
+  if (keep.length !== subs.length) await redis(["HSET", P() + "push", userKey, JSON.stringify(keep)]);
   return sent;
 }
 async function tortillaNotify(all) {
-  if (!all.users.length) return 0;
+  if (!LIGA().tortilla || !all.users.length) return 0;
   const anyone = await getUser(all.users[0].key); if (!anyone) return 0;
   const st = buildState(anyone, all), now = Date.now(); let sent = 0;
   for (const p of st.tortilla.periods) {
     if (!p.closed || now - p.to > 3 * 864e5 || !p.losers.length) continue;
-    const ok = await redis(["SET", P + "tortilla:notified:" + p.id, "1", "NX", "EX", "864000"]);
+    const ok = await redis(["SET", P() + "tortilla:notified:" + p.id, "1", "NX", "EX", "864000"]);
     if (!ok) continue;
     const dia = new Date(p.friday).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" });
     const ALIAS = { castelao: "Pablo Gómez" };
@@ -666,7 +683,7 @@ async function runReminders() {
   let sent0 = await tortillaNotify(all0).catch(() => 0);
   const { jornadas, preds, users } = all0;
   const curId = currentJornadaId(jornadas, now);
-  const subs = hgetallObj(await redis(["HGETALL", P + "push"]));
+  const subs = hgetallObj(await redis(["HGETALL", P() + "push"]));
   let sent = 0;
   for (const j of jornadas) {
     for (const m of j.matches) {
@@ -676,7 +693,7 @@ async function runReminders() {
       for (const u of users) {
         if (!(subs[u.key] || []).length) continue;
         if ((preds[u.key] || {})[m.id]) continue;
-        const once = await redis(["SET", P + "reminded:" + m.id + ":" + u.key, "1", "NX", "EX", "172800"]);
+        const once = await redis(["SET", P() + "reminded:" + m.id + ":" + u.key, "1", "NX", "EX", "172800"]);
         if (!once) continue;
         const mins = Math.max(1, Math.round((ko - now) / 60000));
         sent += await sendPush(u.key, {
@@ -695,6 +712,12 @@ async function runReminders() {
 async function handle(body) {
   const a = body.action;
 
+  if (a === "ligas") {
+    const out = [];
+    for (const id of Object.keys(LIGAS)) out.push({ id, name: (await enLiga(id, () => redis(["GET", P() + "name"]))) || LIGAS[id].name });
+    return { ligas: out };
+  }
+
   if (a === "register") {
     const username = normName(body.username);
     const pass = String(body.pass || "");
@@ -703,8 +726,8 @@ async function handle(body) {
     const email = "";
     if (pass.length < 6) bad("La contraseña debe tener al menos 6 caracteres");
     const k = keyName(username);
-    if (await redis(["GET", P + "user:" + k])) bad("Ese usuario ya existe. Elige otro.");
-    const count = await redis(["SCARD", P + "users"]);
+    if (await redis(["GET", P() + "user:" + k])) bad("Ese usuario ya existe. Elige otro.");
+    const count = await redis(["SCARD", P() + "users"]);
     // Para entrar en la liga hace falta el código de invitación (el primero, el admin, no)
     if (count) {
       const code = await leagueCode();
@@ -712,16 +735,16 @@ async function handle(body) {
     }
     const salt = crypto.randomBytes(12).toString("hex");
     const user = { username, email, salt, hash: hashPass(pass, salt), admin: !count, created: Date.now(), photo: 0, display: "" };
-    const ok = await redis(["SET", P + "user:" + k, JSON.stringify(user), "NX"]);
+    const ok = await redis(["SET", P() + "user:" + k, JSON.stringify(user), "NX"]);
     if (!ok) bad("Ese usuario ya existe. Elige otro.");
-    await redis(["SADD", P + "users", k]);
+    await redis(["SADD", P() + "users", k]);
     return { token: await newSession(user), admin: user.admin };
   }
 
   if (a === "login") {
     const id = String(body.username || body.email || "").trim();
     let k = keyName(id);
-    if (id.includes("@")) k = (await redis(["GET", P + "email:" + normEmail(id)])) || "";
+    if (id.includes("@")) k = (await redis(["GET", P() + "email:" + normEmail(id)])) || "";
     const u = k && (await getUser(k));
     if (!u || hashPass(body.pass || "", u.salt) !== u.hash) bad("Usuario o contraseña incorrectos. Si la olvidaste, pide al administrador una nueva.");
     return { token: await newSession(u), admin: !!u.admin };
@@ -730,13 +753,13 @@ async function handle(body) {
   // Recuperar contraseña: 1) pide código por correo  2) código + nueva contraseña
   if (a === "forgot") {
     const email = normEmail(body.email);
-    const k = validEmail(email) && (await redis(["GET", P + "email:" + email]));
+    const k = validEmail(email) && (await redis(["GET", P() + "email:" + email]));
     if (k) {
-      const tries = await redis(["INCR", P + "forgotrl:" + email]);
-      if (tries === 1) await redis(["EXPIRE", P + "forgotrl:" + email, "3600"]);
+      const tries = await redis(["INCR", P() + "forgotrl:" + email]);
+      if (tries === 1) await redis(["EXPIRE", P() + "forgotrl:" + email, "3600"]);
       if (tries > 5) bad("Demasiados intentos. Prueba dentro de una hora.");
       const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
-      await redis(["SET", P + "reset:" + email, JSON.stringify({ k, code, n: 0 }), "EX", "900"]);
+      await redis(["SET", P() + "reset:" + email, JSON.stringify({ k, code, n: 0 }), "EX", "900"]);
       const u = await getUser(k);
       const sent = await sendMail(email, "Tu código para La Porra: " + code,
         `Hola ${displayOf(u)},\n\nTu código para cambiar la contraseña de La Porra es: ${code}\n\nCaduca en 15 minutos. Tu usuario es: ${u.username}\n\nSi no lo has pedido tú, ignora este correo.`);
@@ -746,12 +769,12 @@ async function handle(body) {
   }
   if (a === "reset") {
     const email = normEmail(body.email);
-    const r = await getJSON(P + "reset:" + email, null);
+    const r = await getJSON(P() + "reset:" + email, null);
     if (!r) bad("El código ha caducado. Pide uno nuevo.");
     if (String(body.code || "").trim() !== r.code) {
       r.n++;
-      if (r.n >= 5) await redis(["DEL", P + "reset:" + email]);
-      else await redis(["SET", P + "reset:" + email, JSON.stringify(r), "KEEPTTL"]);
+      if (r.n >= 5) await redis(["DEL", P() + "reset:" + email]);
+      else await redis(["SET", P() + "reset:" + email, JSON.stringify(r), "KEEPTTL"]);
       bad("Código incorrecto");
     }
     const pass = String(body.pass || "");
@@ -760,17 +783,17 @@ async function handle(body) {
     if (!u) bad("Usuario no encontrado");
     u.salt = crypto.randomBytes(12).toString("hex");
     u.hash = hashPass(pass, u.salt);
-    await setJSON(P + "user:" + r.k, u);
-    await redis(["DEL", P + "reset:" + email]);
+    await setJSON(P() + "user:" + r.k, u);
+    await redis(["DEL", P() + "reset:" + email]);
     return { token: await newSession(u), admin: !!u.admin };
   }
 
-  if (a === "cron") return { sent: await runReminders() };
+  if (a === "cron") { let sent = 0; for (const id of Object.keys(LIGAS)) sent += await enLiga(id, () => runReminders()).catch(() => 0); return { sent }; }
   if (a === "vapid") { const k = await vapid(); return { publicKey: k ? k.publicKey : null }; }
 
   const me = await auth(body.token);
 
-  if (a === "logout") { await redis(["DEL", P + "session:" + body.token]); return { ok: true }; }
+  if (a === "logout") { await redis(["DEL", P() + "session:" + body.token]); return { ok: true }; }
   if (a === "state") return buildState(me, await loadAll());
 
   if (a === "photo") { await savePhoto(me, body.photo); return buildState(me, await loadAll()); }
@@ -783,7 +806,7 @@ async function handle(body) {
     const { users } = await loadAll();
     if (users.some((x) => x.key !== keyName(me.username) && x.name.toLowerCase() === display.toLowerCase())) bad("Ese nombre ya lo usa otro participante");
     me.display = display;
-    await setJSON(P + "user:" + keyName(me.username), me);
+    await setJSON(P() + "user:" + keyName(me.username), me);
     if (body.photo) await savePhoto(me, body.photo);
     return buildState(me, await loadAll());
   }
@@ -794,7 +817,7 @@ async function handle(body) {
     if (pass.length < 6) bad("La contraseña debe tener al menos 6 caracteres");
     me.salt = crypto.randomBytes(12).toString("hex");
     me.hash = hashPass(pass, me.salt);
-    await setJSON(P + "user:" + keyName(me.username), me);
+    await setJSON(P() + "user:" + keyName(me.username), me);
     return { ok: true };
   }
 
@@ -802,10 +825,10 @@ async function handle(body) {
     const s = body.sub;
     if (!s || typeof s.endpoint !== "string" || !/^https:\/\//.test(s.endpoint)) bad("Suscripción no válida");
     const k = keyName(me.username);
-    let list = (hgetallObj(await redis(["HGETALL", P + "push"]))[k]) || [];
+    let list = (hgetallObj(await redis(["HGETALL", P() + "push"]))[k]) || [];
     list = list.filter((x) => x.endpoint !== s.endpoint);
     if (a === "subscribe") list.push({ endpoint: s.endpoint, keys: s.keys });
-    await redis(["HSET", P + "push", k, JSON.stringify(list.slice(-5))]);
+    await redis(["HSET", P() + "push", k, JSON.stringify(list.slice(-5))]);
     return { ok: true };
   }
   if (a === "testPush") {
@@ -842,18 +865,18 @@ async function handle(body) {
       // aviso al retado
       sendPush(target.key, { title: "⚔️ ¡TE HAN DESAFIADO!", body: `${displayOf(me)} te reta a muerte en la jornada ${j.num}. El que gane se lo lleva todo. Abre La Porra y prepara tu escudo 🛡️`, tag: "reto-" + j.id, url: "./#jornada" }).catch(() => {});
     }
-    await setJSON(P + "retos", list);
+    await setJSON(P() + "retos", list);
     return buildState(me, await loadAll());
   }
 
   if (a === "predict") {
-    const jornadas = await getJSON(P + "jornadas", []);
+    const jornadas = await getJSON(P() + "jornadas", []);
     const j = jornadas.find((x) => x.id === body.jornada);
     if (!j) bad("Jornada no encontrada");
     const now = Date.now();
     const k = keyName(me.username);
     let mine = {};
-    try { mine = JSON.parse((await redis(["HGET", P + "preds", k])) || "{}") || {}; } catch (e) { mine = {}; }
+    try { mine = JSON.parse((await redis(["HGET", P() + "preds", k])) || "{}") || {}; } catch (e) { mine = {}; }
     const curId = currentJornadaId(jornadas, now);
     let saved = 0, skipped = 0;
     for (const m of j.matches) {
@@ -875,7 +898,7 @@ async function handle(body) {
     const myTotal = buildState(me, allData).me.comodines.total;
     const cancelledNow = new Set(jornadas.flatMap((jj) => jj.matches.filter((m) => m.cancelled).map((m) => m.id)));
     if (Object.entries(mine).filter(([mid, x]) => x && x.x2 && !cancelledNow.has(mid)).length > myTotal) bad(`Solo tienes ${myTotal} comodines`);
-    await redis(["HSET", P + "preds", k, JSON.stringify(mine)]);
+    await redis(["HSET", P() + "preds", k, JSON.stringify(mine)]);
     return { saved, skipped, ...buildState(me, await loadAll()) };
   }
 
@@ -886,7 +909,7 @@ async function handle(body) {
     const x = users.find((q) => q.name.toLowerCase() === normName(n).toLowerCase());
     return x ? await getUser(x.key) : null;
   };
-  const jornadas = await getJSON(P + "jornadas", []);
+  const jornadas = await getJSON(P() + "jornadas", []);
 
   if (a === "saveJornada") {
     const isExtra = !!body.extra;
@@ -915,7 +938,7 @@ async function handle(body) {
       jornadas.push(j);
     }
     regroup(jornadas);
-    await setJSON(P + "jornadas", jornadas);
+    await setJSON(P() + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
 
@@ -923,12 +946,12 @@ async function handle(body) {
   if (a === "setCrest") {
     const team = keyName(body.team).slice(0, 40);
     if (!team) bad("Falta el equipo");
-    if (body.clear) { await redis(["DEL", P + "crest:" + team]); await redis(["HDEL", P + "crests", team]); }
+    if (body.clear) { await redis(["DEL", P() + "crest:" + team]); await redis(["HDEL", P() + "crests", team]); }
     else {
       const mt = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(body.photo || ""));
       if (!mt || mt[2].length > 200000) bad("Imagen no válida");
-      await redis(["SET", P + "crest:" + team, body.photo]);
-      await redis(["HSET", P + "crests", team, String(Date.now())]);
+      await redis(["SET", P() + "crest:" + team, body.photo]);
+      await redis(["HSET", P() + "crests", team, String(Date.now())]);
     }
     return buildState(me, await loadAll());
   }
@@ -943,12 +966,17 @@ async function handle(body) {
   }
 
   // Aviso a todos: notificación al móvil + mensaje dentro de la app
+  if (a === "ligaNombre") {
+    const n = String(body.name || "").trim().slice(0, 40);
+    if (n) await redis(["SET", P() + "name", n]); else await redis(["DEL", P() + "name"]);
+    return buildState(me, await loadAll());
+  }
   if (a === "broadcast") {
     const title = normName(body.title).slice(0, 60) || "📢 La Porra";
     const text = String(body.body || "").trim().slice(0, 300);
     if (!text) bad("Escribe el mensaje");
     const an = { id: crypto.randomBytes(4).toString("hex"), title, body: text, at: Date.now() };
-    await setJSON(P + "anuncio", an);
+    await setJSON(P() + "anuncio", an);
     const { users } = await loadAll();
     let sent = 0;
     for (const u of users) sent += await sendPush(u.key, { title, body: text, tag: "anuncio-" + an.id, url: "./" }).catch(() => 0);
@@ -960,18 +988,18 @@ async function handle(body) {
     await startCall(text);
     return buildState(me, await loadAll());
   }
-  if (a === "clearAnuncio") { await redis(["DEL", P + "anuncio"]); return buildState(me, await loadAll()); }
+  if (a === "clearAnuncio") { await redis(["DEL", P() + "anuncio"]); return buildState(me, await loadAll()); }
   // Regalar (o quitar) comodines a un jugador
   if (a === "giveX2") {
     const u = await findByDisplay(body.name);
     if (!u) bad("Usuario no encontrado");
     u.bonusX2 = Math.max(0, (u.bonusX2 || 0) + (Number(body.n) || 1));
-    await setJSON(P + "user:" + keyName(u.username), u);
+    await setJSON(P() + "user:" + keyName(u.username), u);
     if ((Number(body.n) || 1) > 0) sendPush(keyName(u.username), { title: "🎁 ¡Comodín extra!", body: "El administrador te ha regalado un comodín x2. ¡Úsalo bien!", tag: "regalo", url: "./" }).catch(() => {});
     return buildState(me, await loadAll());
   }
 
-  if (a === "resetRetos") { await redis(["DEL", P + "retos"]); return buildState(me, await loadAll()); }
+  if (a === "resetRetos") { await redis(["DEL", P() + "retos"]); return buildState(me, await loadAll()); }
 
   if (a === "syncCalendar") { await syncCalendar(true); return buildState(me, await loadAll()); }
 
@@ -979,7 +1007,7 @@ async function handle(body) {
     const i = jornadas.findIndex((x) => x.id === body.id);
     if (i < 0) bad("Jornada no encontrada");
     jornadas.splice(i, 1);
-    await setJSON(P + "jornadas", jornadas);
+    await setJSON(P() + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
 
@@ -988,7 +1016,7 @@ async function handle(body) {
     const m = j && j.matches.find((x) => x.id === body.match);
     if (!m) bad("Partido no encontrado");
     if (body.cancelled) { m.cancelled = true; delete m.result; } else delete m.cancelled;
-    await setJSON(P + "jornadas", jornadas);
+    await setJSON(P() + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
 
@@ -1003,7 +1031,7 @@ async function handle(body) {
       if (Date.parse(m.kickoff) > Date.now()) bad("El partido aún no ha empezado");
       m.result = { h: goals(body.h), a: goals(body.a) };
     }
-    await setJSON(P + "jornadas", jornadas);
+    await setJSON(P() + "jornadas", jornadas);
     return buildState(me, await loadAll());
   }
 
@@ -1012,7 +1040,7 @@ async function handle(body) {
     if (!u) bad("Usuario no encontrado");
     if (keyName(u.username) === keyName(me.username) && !body.admin) bad("No puedes quitarte el admin a ti mismo");
     u.admin = !!body.admin;
-    await setJSON(P + "user:" + keyName(u.username), u);
+    await setJSON(P() + "user:" + keyName(u.username), u);
     return buildState(me, await loadAll());
   }
 
@@ -1023,7 +1051,7 @@ async function handle(body) {
     if (pass.length < 6) bad("La contraseña debe tener al menos 6 caracteres");
     u.salt = crypto.randomBytes(12).toString("hex");
     u.hash = hashPass(pass, u.salt);
-    await setJSON(P + "user:" + keyName(u.username), u);
+    await setJSON(P() + "user:" + keyName(u.username), u);
     return { ok: true };
   }
 
@@ -1031,13 +1059,13 @@ async function handle(body) {
     const du = await findByDisplay(body.name);
     if (!du) bad("Usuario no encontrado");
     const k = keyName(du.username);
-    if (du.email) await redis(["DEL", P + "email:" + du.email]);
+    if (du.email) await redis(["DEL", P() + "email:" + du.email]);
     if (k === keyName(me.username)) bad("No puedes borrarte a ti mismo");
-    await redis(["DEL", P + "user:" + k]);
-    await redis(["DEL", P + "avatar:" + k]);
-    await redis(["SREM", P + "users", k]);
-    await redis(["HDEL", P + "preds", k]);
-    await redis(["HDEL", P + "push", k]);
+    await redis(["DEL", P() + "user:" + k]);
+    await redis(["DEL", P() + "avatar:" + k]);
+    await redis(["SREM", P() + "users", k]);
+    await redis(["HDEL", P() + "preds", k]);
+    await redis(["HDEL", P() + "push", k]);
     return buildState(me, await loadAll());
   }
 
@@ -1050,8 +1078,10 @@ module.exports = async (req, res) => {
   try {
     if (req.method === "GET") {
       const q = req.query || {};
+      const lg = ligaId(q.liga);
+      return await enLiga(lg, async () => {
       if (q.avatar) {
-        const d = await redis(["GET", P + "avatar:" + keyName(q.avatar)]);
+        const d = await redis(["GET", P() + "avatar:" + keyName(q.avatar)]);
         const mt = d && /^data:(image\/\w+);base64,(.+)$/.exec(d);
         if (!mt) return res.status(404).end();
         res.setHeader("Content-Type", mt[1]);
@@ -1059,23 +1089,25 @@ module.exports = async (req, res) => {
         return res.status(200).send(Buffer.from(mt[2], "base64"));
       }
       if (q.crest) {
-        const d = await redis(["GET", P + "crest:" + keyName(q.crest)]);
+        const d = await redis(["GET", P() + "crest:" + keyName(q.crest)]);
         const mt = d && /^data:(image\/\w+);base64,(.+)$/.exec(d);
         if (!mt) return res.status(404).end();
         res.setHeader("Content-Type", mt[1]);
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
         return res.status(200).send(Buffer.from(mt[2], "base64"));
       }
-      if (q.cron) return res.status(200).json({ sent: await runReminders() });
+      if (q.cron) { let sent = 0; for (const id of Object.keys(LIGAS)) sent += await enLiga(id, () => runReminders()).catch((e) => { console.error(e); return 0; }); return res.status(200).json({ sent }); }
       return res.status(405).json({ error: "Usa POST" });
+      });
     }
     let body = req.body;
     if (typeof body === "string") { try { body = JSON.parse(body); } catch (e) { body = {}; } }
-    res.status(200).json(await handle(body || {}));
+    body = body || {};
+    res.status(200).json(await enLiga(body.liga, () => handle(body)));
   } catch (e) {
     if (e instanceof HttpError) return res.status(e.code).json({ error: e.message });
     console.error(e);
     res.status(500).json({ error: "Error del servidor" });
   }
 };
-module.exports._test = { liveUpdate, parseEspn, sameTeam, setLiveFetch: (f) => (liveFetch = f), periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };
+module.exports._test = { enLiga, LIGAS, liveUpdate, parseEspn, sameTeam, setLiveFetch: (f) => (liveFetch = f), periodOf, periodInfo, cutMs, regroup, handle, setRedis: (f) => (redisImpl = f), points, runReminders };

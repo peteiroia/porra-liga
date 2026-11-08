@@ -17,6 +17,12 @@ Porra online para pronosticar cada jornada de Primera los partidos del Real Madr
 - 🍳 **Mes de la tortilla**: clasificación mensual con corte el último miércoles de cada mes (23:59). Los tres últimos (y los empatados con el antepenúltimo o por debajo) se las apañan entre ellos para traer una tortilla el viernes siguiente. El primer corte es el martes 1 de diciembre de 2026 (cuenta todo lo anterior) y esa tortilla se trae el viernes 11 de diciembre. El segundo corte es el 1 de enero de 2027 y esa tortilla se trae el viernes 15 de enero. Después, el último miércoles de cada mes. Castelao es Pablo Gómez: si pierde, paga Pablo Gómez.
 - 🏆 **Gana quien tenga más puntos al acabar la jornada 38 de la Liga 2026-2027.**
 
+## Grupos
+- La app tiene **dos grupos** independientes (jugadores, pronósticos, retos, clasificación, código y administrador propios). Arriba, el botón 👥 permite **cambiar de grupo** al momento; cada grupo recuerda su sesión, así que se puede estar dentro con un usuario en cada uno.
+- **Grupo 1 (La Porra)**: el original, con la clasificación de la tortilla. Código por defecto `112233`.
+- **Grupo 2**: igual pero **sin tortilla**. Código por defecto `445566`. El primero que se registra en ese grupo es su administrador y puede ponerle nombre (Admin → Nombre del grupo).
+- Enlace directo al grupo 2: `?liga=2` (el enlace de invitación ya lo incluye).
+
 ## Cómo funciona
 - `index.html` — la app (una sola página).
 - `api/porra.js` — servidor (Vercel) con base de datos Upstash Redis.
