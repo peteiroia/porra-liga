@@ -688,6 +688,10 @@ const KIT = [
   [/^italia$|^italy$/, "ITA", { st: ["#1c64c8"], band: ["#ffffff"], fg: "#fff" }],
   [/^portugal$/, "POR", { st: ["#c8102e"], band: ["#046a38"], fg: "#fff" }],
   [/^dinamarca$|^denmark$/, "DEN", { st: ["#c8102e"], band: ["#ffffff"], fg: "#fff" }],
+  [/^paises bajos$|^holanda$|^netherlands$/, "NED", { st: ["#ff6c00"], band: ["#21468b"], fg: "#fff" }],
+  [/^grecia$|^greece$/, "GRE", { st: ["#0d5eaf", "#ffffff"], n: 5, dir: "h", fg: "#fff" }],
+  [/^serbia$/, "SRB", { st: ["#c6363c"], band: ["#0c4076", "#ffffff"], fg: "#fff" }],
+  [/^alemania$|^germany$/, "GER", { st: ["#ffffff"], band: ["#1a1a1a", "#dd0000", "#ffce00"], fg: "#1a1a1a" }],
 ];
 const norm = (n) => String(n || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 function kitOf(name) {

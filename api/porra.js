@@ -266,7 +266,7 @@ const LIVE_LEAGUES = ["esp.1"];
 const EXTRA_LEAGUES = ["uefa.champions", "uefa.europa", "uefa.europa.conf", "esp.copa_del_rey", "esp.super_cup", "uefa.nations", "fifa.worldq.uefa", "fifa.world", "uefa.euro", "fifa.friendly"];
 const STOP = new Set(["fc", "cf", "rc", "cd", "ud", "sd", "sad", "club", "de", "del", "la", "el", "real", "ca", "rcd", "vigo", "balompie", "futbol", "the", "of"]);
 const ALIAS = { deportivo: "coruna", barca: "barcelona", bilbao: "athletic", vallecano: "rayo", santander: "racing", atletico: "atletico", atl: "atletico",
-  espana: "spain", alemania: "germany", francia: "france", italia: "italy", inglaterra: "england", paises: "netherlands", holanda: "netherlands", croacia: "croatia",
+  espana: "spain", alemania: "germany", grecia: "greece", francia: "france", italia: "italy", inglaterra: "england", paises: "netherlands", holanda: "netherlands", croacia: "croatia",
   belgica: "belgium", suiza: "switzerland", escocia: "scotland", gales: "wales", turquia: "turkiye", turkey: "turkiye", noruega: "norway", suecia: "sweden", dinamarca: "denmark", brasil: "brazil", marruecos: "morocco", japon: "japan", mexico: "mexico" };
 const teamToks = (n) => {
   const raw = String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
@@ -382,9 +382,23 @@ async function seedNations() {
   ] });
   await setJSON(P() + "jornadas", js);
 }
+// Más partidos para la jornada de la Nations League: viernes 13 (una sola vez)
+async function seedNations2() {
+  const ok = await redis(["SET", P() + "mig:nations2611b", String(Date.now()), "NX"]);
+  if (!ok) return;
+  const js = await getJSON(P() + "jornadas", []);
+  const j = js.find((x) => x.extra && /nations/i.test(x.title || ""));
+  if (!j) return;
+  const ko = new Date("2026-11-13T20:45:00+01:00").toISOString();
+  for (const [home, away] of [["Países Bajos", "Grecia"], ["Serbia", "Alemania"]])
+    if (!j.matches.some((m) => m.home === home && m.away === away)) j.matches.push({ id: crypto.randomBytes(5).toString("hex"), home, away, kickoff: ko, manual: true });
+  j.matches.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
+  await setJSON(P() + "jornadas", js);
+}
 async function loadAll() {
   await migrations();
   await seedNations();
+  await seedNations2();
   await syncCalendar();
   if (LIGA().desde) { // grupo que empieza más tarde: fuera las jornadas de Liga anteriores
     const js = await getJSON(P() + "jornadas", []);
