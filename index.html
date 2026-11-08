@@ -1131,11 +1131,11 @@ const jName = (j) => (j.extra ? `⭐ ${j.title || "Jornada extra"}` : `Jornada $
 const jNameLow = (j) => (j.extra ? (j.title || "jornada extra") : `jornada ${j.num}`);
 // ---------- Retos ----------
 function retosCard(j) {
-  if (j.extra) return `<div class="banner" style="border-color:rgba(255,214,102,.4)"><span style="font-size:24px">⭐</span><div><b>Jornada extra</b><span class="muted">Partido suelto: suma a la general. Se puede usar comodín, pero no hay retos ni bonus.</span></div></div>`;
+  if (j.extra && !(S.data.liga && S.data.liga.retosExtra)) return `<div class="banner" style="border-color:rgba(255,214,102,.4)"><span style="font-size:24px">⭐</span><div><b>Jornada extra</b><span class="muted">Partido suelto: suma a la general. Se puede usar comodín, pero no hay retos ni bonus.</span></div></div>`;
   const d = S.data, me = d.me, R = me.retos || { total: 10, max: 2, used: 0, porRival: {} };
   const list = (d.retos || []).filter((r) => r.jornada === j.id);
   const now = serverNow();
-  const canRet = j.current && j.retoDeadline && now < j.retoDeadline && !j.matches.some((m) => m.tbc);
+  const canRet = (j.current || j.extra) && j.retoDeadline && now < j.retoDeadline && !j.matches.some((m) => m.tbc);
   const mine = list.find((r) => r.from === me.name);
   const vsMe = list.find((r) => r.to === me.name);
   const ph = Object.fromEntries(d.users.map((u) => [u.name, u.photo]));
@@ -1352,7 +1352,7 @@ function normasView() {
     <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>tres últimos</b> se las apañan <b>entre ellos</b> para traer <b>una tortilla</b> el viernes siguiente. <b>El primer corte es el martes 1 de diciembre</b> (cuenta todo lo jugado hasta entonces) y esa tortilla se trae el <b>viernes 11 de diciembre</b>. El <b>segundo corte es el 1 de enero</b> y esa tortilla se trae el <b>viernes 15 de enero</b>. Después, el último miércoles de cada mes. Si hay empate abajo, entran en el reparto todos los que tengan la misma puntuación que el antepenúltimo o menos.</li>`}
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
     <li>🔴 <b>Resultados en directo</b>: mientras se juega verás el marcador y el minuto. Al pitar el final, el resultado se pone solo (si hubiera algún error, lo corrige el administrador).</li>
-    <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Se puede pronosticar <b>desde que aparece</b> hasta 1 minuto antes de empezar. Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último.</li>
+    <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Se puede pronosticar <b>desde que aparece</b> hasta 1 minuto antes de empezar. Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. ${S.data && S.data.liga && S.data.liga.retosExtra ? "Se puede usar <b>comodín x2</b> y <b>también se puede retar</b> (un reto por jugador en cada jornada extra), pero no hay bonus de pleno ni comodín para el último." : "Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último."}</li>
     <li>La clasificación suma todas las jornadas. <b>Empates a puntos</b>: si empatan <b>dos</b>, va delante quien haya <b>ganado más retos entre ellos</b>; si siguen empatados, quien tenga <b>más resultados exactos</b>. Si empatan <b>tres o más</b>, va delante quien tenga <b>más resultados exactos</b>.</li>
     <li>🏆 <b>Gana la porra quien tenga más puntos al acabar la última jornada (la 38) de la Liga 2026-2027.</b></li>
   </ol></div>
@@ -1399,7 +1399,8 @@ function adminView() {
     <p class="muted" style="font-size:14px;margin:6px 0 10px">Para darse de alta hace falta este código. Envíales la invitación y entrarán con él ya puesto.</p>
     <div class="code-box" id="leagueCode">${S.leagueCode ? esc(S.leagueCode) : "······"}</div>
     <button class="btn gold block" id="invShare" style="margin-top:10px">📤 Enviar invitación</button>
-    <div class="row" style="margin-top:8px"><button class="btn small" style="flex:1" id="invCopy">📋 Copiar mensaje</button><button class="btn small" style="flex:1" id="invRegen">✏️ Cambiar código</button></div></div>` : ""}
+    <div class="row" style="margin-top:8px"><button class="btn small" style="flex:1" id="invCopy">📋 Copiar mensaje</button><button class="btn small" style="flex:1" id="invRegen">✏️ Cambiar código</button></div>
+    ${LIGA_ID === "2" ? `<a class="btn small block" style="margin-top:8px;text-align:center;text-decoration:none" href="democratic.html?c=${esc(S.leagueCode || "445566")}" target="_blank" rel="noopener">👀 Ver el anuncio de la Liga Democratic</a>` : ""}</div>` : ""}
   ${!e ? `<div class="row"><button class="btn primary" style="flex:1" id="newJ">+ Nueva jornada</button><button class="btn gold" id="newX">⭐ Extra</button><button class="btn" id="syncCal" title="Volver a cargar el calendario oficial">🔄 Calendario</button></div>
   <p class="dim" style="font-size:12px;margin:8px 2px 0">Los partidos de Madrid, Barça, Depor y Celta se cargan solos del calendario oficial. Puedes añadir partidos extra o cambiar horas editando una jornada.</p>` : ""}
   <h2 class="sec">Resultados</h2>
@@ -1872,6 +1873,20 @@ function checkDuels() {
 
 /* ---------- Mensaje de invitación ---------- */
 function inviteText(code) {
+  if (LIGA_ID === "2") { // Liga Democratic: mensaje con hype y enlace al anuncio (con vista previa en WhatsApp)
+    const ad = location.origin + location.pathname.replace(/index\.html$/, "") + "democratic.html?c=" + code;
+    return `🏟️ *LIGA DEMOCRATIC* — ¡te estamos esperando!
+
+Un jugador. Un voto. Un pronóstico. 🗳️⚽
+🌍 Arrancamos el *viernes 13* con la Nations League (y el domingo, *España–Inglaterra* 🔥)
+⚔️ Retos sin límite: reta a quien quieras, las veces que quieras
+🎯 Exacto 3 pts · 1X2 1 pt · ⚡ comodines x2
+
+👉 Apúntate aquí: ${ad}
+🔑 Código: ${code}
+
+¿Te atreves? 😎`;
+  }
   const url = location.origin + location.pathname.replace(/index\.html$/, "") + "?codigo=" + code + (LIGA_ID === "1" ? "" : "&liga=" + LIGA_ID);
   return `⚽🔥 ¡Estás convocado a LA PORRA!
 

@@ -16,7 +16,7 @@ const { AsyncLocalStorage } = require("async_hooks");
 const ligaCtx = new AsyncLocalStorage();
 const LIGAS = {
   "1": { prefix: "porra:", tortilla: true, unico: true, name: "La Porra", code: "112233" },
-  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
+  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, retosExtra: true, desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
 };
 const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
 const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
@@ -627,7 +627,7 @@ function buildState(me, data) {
     anuncio: data.anuncio || null,
     llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
     tortilla: tortillaOut,
-    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico },
+    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico, retosExtra: !!LIGA().retosExtra },
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };
@@ -881,8 +881,8 @@ async function handle(body) {
     const now = Date.now();
     const j = jornadas.find((x) => x.id === body.jornada);
     if (!j) bad("Jornada no encontrada");
-    if (j.extra) bad("En las jornadas extra no hay retos");
-    if (j.id !== currentJornadaId(jornadas, now)) bad("Solo puedes retar en la jornada que está abierta");
+    if (j.extra && !LIGA().retosExtra) bad("En las jornadas extra no hay retos");
+    if (!j.extra && j.id !== currentJornadaId(jornadas, now)) bad("Solo puedes retar en la jornada que está abierta");
     if (j.matches.some((m) => m.tbc)) bad("Aún faltan horarios por confirmar en esta jornada");
     if (now >= retoDeadline(j)) bad("Ya no se puede: la jornada ha empezado");
     const myK = keyName(me.username);
