@@ -16,7 +16,7 @@ const { AsyncLocalStorage } = require("async_hooks");
 const ligaCtx = new AsyncLocalStorage();
 const LIGAS = {
   "1": { prefix: "porra:", tortilla: true, unico: true, name: "La Porra", code: "112233" },
-  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, retosExtra: true, retoSiempre: true, comodines: 5, desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, 5 comodines, se puede retar siempre (varios retos por jornada), retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
+  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, retosExtra: true, retoSiempre: true, comodines: 5, cena: [50, 30, 20], desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, 5 comodines, se puede retar siempre (varios retos por jornada), retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
 };
 const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
 const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
@@ -630,7 +630,7 @@ function buildState(me, data) {
     anuncio: data.anuncio || null,
     llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
     tortilla: tortillaOut,
-    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico, retosExtra: !!LIGA().retosExtra, retoSiempre: !!LIGA().retoSiempre, comodines: LIGA().comodines || COMODINES },
+    liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico, retosExtra: !!LIGA().retosExtra, retoSiempre: !!LIGA().retoSiempre, comodines: LIGA().comodines || COMODINES, cena: LIGA().cena || null },
     crests: crests || {},
     rules: { openDays: OPEN_BEFORE / 864e5, closeMin: CLOSE_BEFORE / 6e4, remindMin: REMIND_BEFORE / 6e4 },
   };

@@ -472,6 +472,8 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 .ls-ic{font-size:26px}.ls-n{flex:1;min-width:0}.ls-n b{display:block;font-size:16px}.ls-n small{color:#9fb0c8;font-size:12px}
 .ls-close{width:100%;margin-top:4px;padding:12px;border-radius:12px;border:0;background:rgba(255,255,255,.08);color:#cdd6e4;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
 @keyframes vadIn{from{opacity:0}to{opacity:1}}
+.cenarow td{background:rgba(255,159,67,.08)}
+.cenachip{background:rgba(255,159,67,.2)!important;color:#ffb36b!important;border-color:rgba(255,159,67,.5)!important;font-size:11px}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1186,6 +1188,8 @@ function jornadaPoints(j) {
 }
 
 /* ---------- Clasificación ---------- */
+// Liga con cena: % que paga cada uno de los 3 últimos (posición i de n)
+function cenaPct(i, n) { const c = S.data.liga && S.data.liga.cena; if (!c || n < 4) return 0; const fromEnd = n - 1 - i; return fromEnd < 3 ? c[fromEnd] : 0; }
 function tablaView(mode) {
   const d = S.data, t = d.table;
   if (!t.length) return `<div class="card empty">Todavía no hay jugadores.</div>`;
@@ -1244,6 +1248,7 @@ function tablaView(mode) {
   }
   if (mode === "jornada") return tj ? jornadaBlock : `<div class="card empty"><span class="ball">⚽</span><p class="muted">Aún no hay jornadas en juego.</p></div>`;
   return `
+  ${d.liga && d.liga.cena ? `<div class="banner" style="border-color:rgba(255,159,67,.55);background:linear-gradient(110deg,rgba(255,159,67,.16),rgba(255,59,92,.1))"><span style="font-size:30px">🥙</span><div><b>La cena la pagan los 3 últimos</b><span class="muted">Al acabar la jornada 38: último <strong style="color:#ffb36b">${d.liga.cena[0]}%</strong> · penúltimo <strong style="color:#ffb36b">${d.liga.cena[1]}%</strong> · antepenúltimo <strong style="color:#ffb36b">${d.liga.cena[2]}%</strong>. ¡El resto, a comer gratis! 🌮</span></div></div>` : ""}
   <h2 class="sec">Clasificación general ${doneLiga.length ? `<span class="chip">tras ${doneLiga.length} jornada${doneLiga.length > 1 ? "s" : ""}</span>` : ""}</h2>
   ${finished ? `<div class="banner" style="justify-content:center;text-align:center"><span style="font-size:30px">🏆</span><div><b style="font-size:18px">¡${esc(t[0].name)}, campeón de La Porra 2026-27!</b><span class="muted">${t[0].pts} puntos tras la jornada 38</span></div></div>`
     : `<p class="dim" style="font-size:13px;margin:-4px 2px 10px">🏆 Gana quien más puntos tenga al acabar la jornada 38 de la Liga 2026-27.</p>`}
@@ -1252,9 +1257,9 @@ function tablaView(mode) {
   ${done.length ? `<div class="card"><div class="podium">${pod(podium[1], 2)}${pod(podium[0], 1)}${pod(podium[2], 3)}</div></div>` : ""}
   <div class="card">
     <table class="tbl gen"><thead><tr><th>#</th><th>Jugador</th><th title="Resultados exactos">🎯<small>Exactos</small></th><th title="Jornadas ganadas">🏆<small>Jornadas</small></th><th title="Retos ganados">⚔️<small>Retos</small></th><th>Pts</th></tr></thead>
-    <tbody>${t.map((r) => `<tr class="${r.name === d.me.name ? "me" : ""}"><td class="pos">${r.pos}${mv(r)}</td>
-      <td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b></div></td>
-      <td>${r.exact}</td><td>${r.jWins || 0}</td><td>${r.retoWins || 0}</td><td class="tot">${r.pts}</td></tr>`).join("")}</tbody></table>
+    <tbody>${t.map((r, i) => { const cz = cenaPct(i, t.length); return `<tr class="${r.name === d.me.name ? "me" : ""}${cz ? " cenarow" : ""}"><td class="pos">${r.pos}${mv(r)}</td>
+      <td class="who"><div>${avatar(r.name, r.photo, "sm")}<b>${esc(r.name)}</b>${cz ? ` <span class="chip cenachip">🥙 ${cz}%</span>` : ""}</div></td>
+      <td>${r.exact}</td><td>${r.jWins || 0}</td><td>${r.retoWins || 0}</td><td class="tot">${r.pts}</td></tr>`; }).join("")}</tbody></table>
     <div class="legend"><span>🎯 resultados exactos</span><span>🏆 veces campeón de jornada</span><span>⚔️ retos ganados</span><span>Los puntos incluyen comodines, bonus y retos · empate entre 2: retos entre ellos y luego exactos · entre 3 o más: exactos</span></div>
   </div>
   ${done.length > 1 ? `<h2 class="sec">Jornada a jornada</h2><div class="card"><div class="scrollx"><table class="tbl matrix"><thead><tr><th>#</th><th>Jugador</th>${done.map((j) => `<th>${j.extra ? "⭐" : "J" + j.num}</th>`).join("")}<th>Total</th></tr></thead>
@@ -1357,6 +1362,7 @@ function normasView() {
     <li>📅 <b>Cambios de fecha</b>: si un partido se adelanta o se retrasa, pasa a la <b>jornada más cercana</b> a la fecha en que se juega.</li>
     ${!(!S.data || !S.data.liga || S.data.liga.tortilla) ? "" : `<li>ℹ️ <b>Aclaración</b>: el jugador <b>Castelao</b> es <b>Pablo Gómez</b> a todos los efectos. Si Castelao pierde (tortilla, retos o lo que sea), <b>Pablo Gómez costea la derrota como suya</b>.</li>
     <li>🍳 <b>Mes de la tortilla</b>: hay una clasificación aparte por meses que se cierra el <b>último miércoles de cada mes a las 23:59</b>. Los <b>tres últimos</b> se las apañan <b>entre ellos</b> para traer <b>una tortilla</b> el viernes siguiente. <b>El primer corte es el martes 1 de diciembre</b> (cuenta todo lo jugado hasta entonces) y esa tortilla se trae el <b>viernes 11 de diciembre</b>. El <b>segundo corte es el 1 de enero</b> y esa tortilla se trae el <b>viernes 15 de enero</b>. Después, el último miércoles de cada mes. Si hay empate abajo, entran en el reparto todos los que tengan la misma puntuación que el antepenúltimo o menos.</li>`}
+    ${S.data && S.data.liga && S.data.liga.cena ? `<li>🥙 <b>La cena</b>: al acabar la <b>jornada 38</b> (final de la Liga), los <b>3 últimos</b> de la general pagan la cena al resto: el <b>último el ${S.data.liga.cena[0]}%</b>, el <b>penúltimo el ${S.data.liga.cena[1]}%</b> y el <b>antepenúltimo el ${S.data.liga.cena[2]}%</b>.</li>` : ""}
     <li>⏱️ <b>Resultado a los 90 minutos</b>: siempre cuenta el marcador al final del tiempo reglamentario (con el añadido). <b>No cuentan la prórroga ni los penaltis.</b></li>
     <li>🔴 <b>Resultados en directo</b>: mientras se juega verás el marcador y el minuto. Al pitar el final, el resultado se pone solo (si hubiera algún error, lo corrige el administrador).</li>
     <li>⭐ <b>Jornadas extra</b>: de vez en cuando puede haber un partido especial fuera de la Liga (selecciones, final de Champions, eliminatorias, Copa del Rey…). Se puede pronosticar <b>desde que aparece</b> hasta 1 minuto antes de empezar. Es un <b>partido suelto</b>, no cuenta como jornada de Liga: sus puntos <b>suman a la general y ya está</b>. ${S.data && S.data.liga && S.data.liga.retosExtra ? "Se puede usar <b>comodín x2</b> y <b>también se puede retar</b> (un reto por jugador en cada jornada extra), pero no hay bonus de pleno ni comodín para el último." : "Se puede usar <b>comodín x2</b>, pero <b>no hay retos</b>, ni bonus de pleno o de acierto único, ni comodín para el último."}</li>
