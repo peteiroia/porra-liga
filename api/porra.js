@@ -16,7 +16,7 @@ const { AsyncLocalStorage } = require("async_hooks");
 const ligaCtx = new AsyncLocalStorage();
 const LIGAS = {
   "1": { prefix: "porra:", tortilla: true, unico: true, name: "La Porra", code: "112233" },
-  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único y retos sin límite por rival
+  "2": { prefix: "porra2:", tortilla: false, unico: false, retosMismo: 999, desde: 13, name: "Liga Democratic", code: "445566" }, // sin tortilla, sin bonus de acierto único, retos sin límite por rival y empieza en la jornada 13 (antes, la de selecciones que cree el admin)
 };
 const ligaId = (x) => (LIGAS[String(x || "1")] ? String(x || "1") : "1");
 const LIGA = () => ligaCtx.getStore() || { id: "1", ...LIGAS["1"] };
@@ -239,6 +239,7 @@ async function syncCalendar(force) {
   if (!force && (await redis(["GET", P() + "calver"])) === CAL.version) return false;
   const jornadas = await getJSON(P() + "jornadas", []);
   for (const cj of CAL.jornadas) {
+    if (LIGA().desde && cj.num < LIGA().desde) continue; // este grupo empieza más tarde
     let j = jornadas.find((x) => x.num === cj.num);
     if (!j) { j = { id: crypto.randomBytes(5).toString("hex"), num: cj.num, title: cj.title || "", matches: [] }; jornadas.push(j); }
     for (const cm of cj.matches) {
@@ -369,6 +370,11 @@ async function startCall(text, id) {
 async function loadAll() {
   await migrations();
   await syncCalendar();
+  if (LIGA().desde) { // grupo que empieza más tarde: fuera las jornadas de Liga anteriores
+    const js = await getJSON(P() + "jornadas", []);
+    const f = js.filter((j) => j.extra || j.num >= LIGA().desde);
+    if (f.length !== js.length) await setJSON(P() + "jornadas", f);
+  }
   const [jornadas, predsRaw, userKeys, crestsRaw, retos, anuncio, llamada] = await Promise.all([
     getJSON(P() + "jornadas", []),
     redis(["HGETALL", P() + "preds"]),
