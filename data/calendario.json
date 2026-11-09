@@ -1,5 +1,5 @@
 {
- "version": "2026-11-08.1",
+ "version": "2026-11-09.1",
  "season": "2026-27",
  "note": "Horas oficiales hasta la jornada 14. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
  "jornadas": [
@@ -75,13 +75,21 @@
      "home": "Celta",
      "away": "Levante",
      "kickoff": "2026-11-08T18:30:00+01:00",
-     "tbc": false
+     "tbc": false,
+     "result": {
+      "h": 0,
+      "a": 0
+     }
     },
     {
      "home": "Atlético de Madrid",
      "away": "FC Barcelona",
      "kickoff": "2026-11-08T21:00:00+01:00",
-     "tbc": false
+     "tbc": false,
+     "result": {
+      "h": 1,
+      "a": 2
+     }
     }
    ]
   },
