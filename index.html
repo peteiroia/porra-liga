@@ -1476,7 +1476,8 @@ function adminView() {
     <label class="field" style="margin-top:0"><span>Título</span><input class="input" id="anTitle" maxlength="60" placeholder="Ej. 🎁 ¡Comodín extra en juego!"></label>
     <label class="field"><span>Mensaje</span><textarea class="input" id="anBody" rows="4" maxlength="300" placeholder="Escribe aquí el mensaje para todos los participantes…" style="resize:vertical"></textarea></label>
     <button class="btn gold block" id="anSend">📢 Enviar a todos</button>
-    ${d.anuncio ? `<p class="dim" style="font-size:12px;margin:10px 0 0">Aviso activo en la app: «${esc(d.anuncio.title)}» <button class="btn small" id="anClear" style="margin-left:6px">Quitar</button></p>` : ""}
+    ${d.anuncio ? `<p class="dim" style="font-size:12px;margin:10px 0 0">Aviso activo en la app: «${esc(d.anuncio.title)}» <button class="btn small" id="anEdit" style="margin-left:6px">Corregir</button> <button class="btn small" id="anClear">Quitar</button></p>
+    <button class="btn block" id="anFix" style="margin-top:8px;display:none">💾 Guardar corrección (sin volver a notificar)</button>` : ""}
     <p class="dim" style="font-size:12px;margin:8px 0 0">Llega como notificación a quien tenga los avisos activados, y a todos les sale dentro de la app la próxima vez que la abran.</p>
   </div>
   <h2 class="sec">📞 Llamada a todos</h2>
@@ -2243,6 +2244,13 @@ function bindMain() {
     if (!confirm("¿Enviar este aviso a todos los participantes?")) return;
     as.disabled = true;
     try { const r = await api("broadcast", { title, body }); setData(r); render(); toast(`Aviso enviado (${r.sent} notificaciones al móvil)`); } catch (err) { toast(err.message, true); as.disabled = false; }
+  };
+  const ae = $("#anEdit"); if (ae) ae.onclick = () => { const an0 = S.data.anuncio || {}; $("#anTitle").value = an0.title || ""; $("#anBody").value = an0.body || ""; $("#anFix").style.display = ""; $("#anBody").focus(); };
+  const af = $("#anFix"); if (af) af.onclick = async () => {
+    const title = $("#anTitle").value.trim(), body = $("#anBody").value.trim();
+    if (!body) { toast("Escribe el mensaje", true); return; }
+    af.disabled = true;
+    try { setData(await api("editAnuncio", { title, body })); render(); toast("Aviso corregido (sin notificar)"); } catch (err) { toast(err.message, true); af.disabled = false; }
   };
   const ac = $("#anClear"); if (ac) ac.onclick = async () => { try { setData(await api("clearAnuncio")); render(); } catch (err) { toast(err.message, true); } };
   document.querySelectorAll("[data-gift]").forEach((b) => (b.onclick = async () => {

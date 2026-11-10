@@ -416,6 +416,18 @@ async function loadAll() {
     getJSON(P() + "anuncio", null),
     getJSON(P() + "llamada", null),
   ]);
+  // Corrección pedida por el administrador: en los avisos publicados hasta el 14/11 va «recuerda», no «recuerdo» (en los dos grupos; se guarda una vez)
+  if (anuncio && (anuncio.at || 0) < Date.parse("2026-11-15T00:00:00+01:00")) {
+    const fix = (t) => String(t || "").replace(/\b([Rr])ecuerdo\b/g, "$1ecuerda").replace(/\bRECUERDO\b/g, "RECUERDA");
+    if (fix(anuncio.title) !== (anuncio.title || "") || fix(anuncio.body) !== (anuncio.body || "")) {
+      anuncio.title = fix(anuncio.title); anuncio.body = fix(anuncio.body);
+      await setJSON(P() + "anuncio", anuncio);
+    }
+  }
+  if (llamada && llamada.text && (llamada.at || 0) < Date.parse("2026-11-15T00:00:00+01:00")) {
+    const t = String(llamada.text).replace(/\b([Rr])ecuerdo\b/g, "$1ecuerda").replace(/\bRECUERDO\b/g, "RECUERDA");
+    if (t !== llamada.text) { llamada.text = t; await setJSON(P() + "llamada", llamada); }
+  }
   const crests = hgetallObj(crestsRaw);
   const preds = hgetallObj(predsRaw);
   const users = [];
@@ -1028,6 +1040,15 @@ async function handle(body) {
     let sent = 0;
     for (const u of users) sent += await sendPush(u.key, { title, body: text, tag: "anuncio-" + an.id, url: "./" }).catch(() => 0);
     return { sent, ...buildState(me, await loadAll()) };
+  }
+  // Corregir el aviso activo sin volver a notificar (mantiene el mismo id: no vuelve a salir a quien ya lo vio)
+  if (a === "editAnuncio") {
+    const an = await getJSON(P() + "anuncio", null);
+    if (!an) bad("No hay ningún aviso activo");
+    const text = String(body.body || "").trim().slice(0, 300);
+    if (!text) bad("Escribe el mensaje");
+    await setJSON(P() + "anuncio", { ...an, title: normName(body.title).slice(0, 60) || an.title, body: text });
+    return buildState(me, await loadAll());
   }
   if (a === "llamar") {
     const text = String(body.text || "").trim().slice(0, 200);
