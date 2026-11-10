@@ -583,6 +583,36 @@ nav.tabs button.on{color:var(--accent)}
 .toast.bad{border-color:rgba(255,107,107,.5);background:#2d1212}
 .banner{display:flex;gap:12px;align-items:center;padding:12px 14px;margin-bottom:12px;border-radius:16px;background:linear-gradient(135deg,rgba(245,197,66,.16),rgba(61,220,132,.1));border:1px solid rgba(245,197,66,.35);font-size:14px}
 .banner b{display:block}
+.megaan{position:relative;margin:0 0 14px;padding:3px;border-radius:20px;overflow:hidden;background:linear-gradient(90deg,#ffd166,#ff3b5c,#7b5cff,#3ddc84,#ffd166);background-size:300% 100%;animation:megaBorde 3s linear infinite,megaLatido 1.6s ease-in-out infinite;box-shadow:0 0 22px rgba(255,209,102,.55),0 0 46px rgba(255,59,92,.3)}
+.megaan-in{position:relative;border-radius:17px;padding:16px 16px 18px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(255,209,102,.28),transparent 65%),linear-gradient(160deg,#2a1640,#120c22 70%);overflow:hidden}
+.megaan-in::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:skewX(-20deg);animation:megaBrillo 2.8s ease-in-out infinite;pointer-events:none}
+.megaan-ic{font-size:44px;line-height:1;animation:megaBote 1s ease-in-out infinite;display:inline-block}
+.megaan-tag{display:inline-block;margin:8px 0 4px;padding:3px 12px;border-radius:99px;background:#ffd166;color:#1a1030;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.megaan h2{margin:6px 0 6px;font-family:inherit;font-size:clamp(22px,6.5vw,30px);line-height:1.1;font-weight:900;text-transform:uppercase;color:#fff;text-shadow:0 0 14px rgba(255,209,102,.8),0 2px 0 #ff3b5c}
+.megaan p{margin:0;font-size:16px;line-height:1.45;color:#fff;white-space:pre-line}
+@keyframes megaBorde{to{background-position:300% 0}}
+@keyframes megaLatido{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+@keyframes megaBrillo{0%{left:-60%}60%,100%{left:130%}}
+@keyframes megaBote{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-6px) rotate(8deg)}}
+.portada{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));overflow-y:auto;background:radial-gradient(circle at 50% 30%,#3a1f5e 0,#160c2a 55%,#07040f 100%);animation:ptIn .45s ease-out}
+.portada.out{animation:ptOut .38s ease-in forwards}
+.pt-rays{position:fixed;left:50%;top:30%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;background:repeating-conic-gradient(rgba(255,209,102,.09) 0 8deg,transparent 8deg 20deg);animation:spin 40s linear infinite;pointer-events:none}
+.pt-stars{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.pt-stars i{position:absolute;top:-30px;font-style:normal;animation:ptFall var(--d) linear var(--w) infinite;opacity:.85}
+.pt-box{position:relative;width:100%;max-width:440px;text-align:center;margin:auto}
+.pt-ic{font-size:76px;line-height:1;display:inline-block;animation:megaBote 1s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(255,209,102,.7))}
+.pt-tag{display:inline-block;margin:10px 0 4px;padding:4px 14px;border-radius:99px;background:#ffd166;color:#1a1030;font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 18px rgba(255,209,102,.6)}
+.pt-j{font-size:clamp(34px,11vw,54px);font-weight:900;line-height:1;margin:6px 0 16px;text-transform:uppercase;letter-spacing:.01em;background:linear-gradient(90deg,#fff3c4,#ffd166,#ff8a3d,#ffd166,#fff3c4);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:megaBorde 2.5s linear infinite;filter:drop-shadow(0 3px 0 rgba(255,59,92,.7))}
+.pt-ms{display:grid;gap:8px;margin:14px 0 8px}
+.pt-m{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,209,102,.35)}
+.pt-m b{display:block;font-size:17px;color:#fff}.pt-m b span{color:#ffd166;font-size:13px;margin:0 4px}.pt-m small{color:#cdbfe8;font-size:13px}
+.pt-cd{margin:6px 0 16px;color:#ffd166;font-size:15px}.pt-cd b{font-size:18px}
+.pt-go{font-size:20px;padding:16px;animation:megaLatido 1.2s ease-in-out infinite;box-shadow:0 0 26px rgba(61,220,132,.55)}
+.pt-skip{margin-top:12px;border:0;background:none;color:#a99bc7;font-size:14px;padding:8px 16px}
+@keyframes ptIn{from{opacity:0;transform:scale(1.08)}}
+@keyframes ptOut{to{opacity:0;transform:scale(.96)}}
+@keyframes ptFall{to{transform:translateY(110vh) rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.portada,.pt-rays,.pt-stars i,.pt-ic,.pt-j,.pt-go,.megaan,.megaan-in::after,.megaan-ic{animation:none}}
 .banner .x{border:0;background:none;color:var(--mut);font-size:20px;padding:4px}
 .spin{width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);animation:sp 0.8s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -831,10 +861,20 @@ async function api(action, payload = {}) {
   if (!r.ok) throw new Error(j.error || "Error " + r.status);
   return j;
 }
+// Hasta el sábado 14/11 (incluido) la app se abre en la jornada extra con el aviso publicado bien a la vista
+const EXTRA_DESTACADA_HASTA = Date.parse("2026-11-15T00:00:00+01:00");
+const extraDestacada = (d) => {
+  if (!d || !d.jornadas || d.now >= EXTRA_DESTACADA_HASTA) return null;
+  const xs = d.jornadas.filter((j) => j.extra && j.matches.some((m) => !m.result && !m.cancelled));
+  const t = (j) => Math.min(...j.matches.filter((m) => !m.result && !m.cancelled && m.kickoff).map((m) => Date.parse(m.kickoff)));
+  return xs.sort((a, b) => t(a) - t(b))[0] || null;
+};
 function setData(d) {
   if (!d || !d.jornadas) return;
   S.data = d;
   S.offset = d.now - Date.now();
+  const xd = !S.jornada && extraDestacada(d);
+  if (xd) { S.jornada = xd.id; if (!S.xdTab) { S.xdTab = true; S.tab = "jornada"; history.replaceState(null, "", "#jornada"); } }
   if (!S.jornada || !d.jornadas.some((j) => j.id === S.jornada)) {
     // se abre en la jornada (de Liga o extra) con el próximo partido por jugar
     const now = d.now, prox = d.jornadas.map((j) => [j, Math.min(...j.matches.filter((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) > now - 4 * 3600e3).map((m) => Date.parse(m.kickoff)))])
@@ -1046,7 +1086,8 @@ function jornadaView() {
     <div class="jt"><b>${esc(jName(j))}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}${j.extra ? ` · <span style="color:var(--gold);font-weight:700">jornada extra</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
-  ${S.data.anuncio ? `<div class="banner" style="border-color:rgba(255,214,102,.45)"><span style="font-size:24px">📢</span><div><b>${esc(S.data.anuncio.title)}</b><span class="muted">${esc(S.data.anuncio.body)}</span></div></div>` : ""}
+  ${S.data.anuncio && j.extra && serverNow() < EXTRA_DESTACADA_HASTA ? `<div class="megaan"><div class="megaan-in"><div class="megaan-ic">📢</div><div class="megaan-tag">⭐ ¡Atención, ${esc(jName(j).replace(/^⭐\s*/, ""))}! ⭐</div><h2>${esc(S.data.anuncio.title)}</h2><p>${esc(S.data.anuncio.body)}</p></div></div>`
+    : S.data.anuncio ? `<div class="banner" style="border-color:rgba(255,214,102,.45)"><span style="font-size:24px">📢</span><div><b>${esc(S.data.anuncio.title)}</b><span class="muted">${esc(S.data.anuncio.body)}</span></div></div>` : ""}
   ${myResources(j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0))}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
   ${retosCard(j)}
@@ -1843,19 +1884,47 @@ function showAfterCall() {
   document.body.appendChild(el);
   el.querySelector(".btn-tort").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
 }
-function showAnuncio(an) {
+// Portada a pantalla completa al abrir la app (hasta el 14/11): la jornada extra y el aviso publicado
+function portadaExtra(an, j) {
+  const el = document.createElement("div"); el.className = "portada";
+  const ms = j.matches.filter((m) => !m.result && !m.cancelled && m.kickoff).sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
+  const stars = Array.from({ length: 26 }, () => `<i style="left:${(Math.random() * 100).toFixed(1)}%;--d:${(4 + Math.random() * 6).toFixed(1)}s;--w:${(-Math.random() * 8).toFixed(1)}s;font-size:${(10 + Math.random() * 16).toFixed(0)}px">${Math.random() < .5 ? "⭐" : "✨"}</i>`).join("");
+  el.innerHTML = `<div class="pt-rays"></div><div class="pt-stars">${stars}</div>
+    <div class="pt-box">
+      <div class="pt-ic">📢</div>
+      <div class="pt-tag">⭐ Jornada extra ⭐</div>
+      <div class="pt-j">${esc(jName(j).replace(/^⭐\s*/, ""))}</div>
+      ${an ? `<div class="megaan"><div class="megaan-in"><h2>${esc(an.title)}</h2><p>${esc(an.body)}</p></div></div>` : ""}
+      ${ms.length ? `<div class="pt-ms">${ms.map((m) => `<div class="pt-m"><b>${esc(m.home)} <span>vs</span> ${esc(m.away)}</b><small>${esc(fmtWhen(m.kickoff))}</small></div>`).join("")}</div>
+      <div class="pt-cd">⏱️ Se cierra en <b id="ptLeft"></b></div>` : ""}
+      <button class="btn primary block pt-go">⚽ ¡A pronosticar!</button>
+      <button class="pt-skip">Ahora no</button>
+    </div>`;
+  document.body.appendChild(el);
+  const close = (go) => { clearInterval(tm); el.classList.add("out"); setTimeout(() => el.remove(), 380);
+    if (go) { S.tab = "jornada"; S.jornada = j.id; history.replaceState(null, "", "#jornada"); render(); window.scrollTo(0, 0); }
+    setTimeout(checkDuels, 500); };
+  const tick = () => { const t = $("#ptLeft", el); if (t && ms[0]) t.textContent = fmtLeft(Date.parse(ms[0].kickoff) - 6e4 - serverNow()); };
+  const tm = setInterval(tick, 1000); tick();
+  el.querySelector(".pt-go").onclick = () => close(true);
+  el.querySelector(".pt-skip").onclick = () => close(false);
+}
+function showAnuncio(an, mega) {
+  if (mega) { portadaExtra(an, mega); return; }
   openSheet(`<div style="text-align:center"><div style="font-size:46px">📢</div><h2 class="cond" style="margin:6px 0;font-size:26px">${esc(an.title)}</h2>
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
 function checkDuels() {
-  if (!S.data || !S.data.me) return;
+  if (!S.data || !S.data.me || document.querySelector(".portada")) return;
   // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
   { const c = S.data.llamada;
     if (c && !S.callShown && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) {
       let n = 0; try { n = Number(ls.get("porra_call_" + c.id) || 0); } catch (e) {}
       if (n < 5) { ls.set("porra_call_" + c.id, String(n + 1)); S.callShown = true; showCall(c); return; }
     } }
+  { const an = S.data.anuncio, xd = extraDestacada(S.data);
+    if (xd && !S.megaShown && !document.querySelector(".duel,.heist,.champ,.final,.sheet-bg,.portada")) { S.megaShown = true; let sa = []; try { sa = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {} if (an && !sa.includes("an:" + an.id)) { sa.push("an:" + an.id); ls.set("porra_duels", JSON.stringify(sa.slice(-80))); } showAnuncio(an, xd); return; } }
   { const an = S.data.anuncio; let seenA = []; try { seenA = JSON.parse(ls.get("porra_duels") || "[]"); } catch (e) {}
     if (an && !seenA.includes("an:" + an.id) && !document.querySelector(".duel,.heist,.champ,.final,.sheet-bg")) { seenA.push("an:" + an.id); ls.set("porra_duels", JSON.stringify(seenA.slice(-80))); showAnuncio(an); return; } }
   let seen = [];
