@@ -599,7 +599,7 @@ nav.tabs button.on{color:var(--accent)}
 .pt-rays{position:fixed;left:50%;top:30%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;background:repeating-conic-gradient(rgba(255,209,102,.09) 0 8deg,transparent 8deg 20deg);animation:spin 40s linear infinite;pointer-events:none}
 .pt-stars{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .pt-stars i{position:absolute;top:-30px;font-style:normal;animation:ptFall var(--d) linear var(--w) infinite;opacity:.85}
-.pt-box{position:relative;width:100%;max-width:440px;text-align:center;margin:auto}
+.pt-box{position:relative;z-index:1;width:100%;max-width:440px;text-align:center;margin:auto}
 .pt-ic{font-size:76px;line-height:1;display:inline-block;animation:megaBote 1s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(255,209,102,.7))}
 .pt-tag{display:inline-block;margin:10px 0 4px;padding:4px 14px;border-radius:99px;background:#ffd166;color:#1a1030;font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 18px rgba(255,209,102,.6)}
 .pt-j{font-size:clamp(34px,11vw,54px);font-weight:900;line-height:1;margin:6px 0 16px;text-transform:uppercase;letter-spacing:.01em;background:linear-gradient(90deg,#fff3c4,#ffd166,#ff8a3d,#ffd166,#fff3c4);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:megaBorde 2.5s linear infinite;filter:drop-shadow(0 3px 0 rgba(255,59,92,.7))}
@@ -1086,7 +1086,7 @@ function jornadaView() {
     <div class="jt"><b>${esc(jName(j))}</b><small>${sub}${j.current ? ` · <span style="color:var(--ok);font-weight:700">abierta</span>` : ""}${j.extra ? ` · <span style="color:var(--gold);font-weight:700">jornada extra</span>` : ""}</small></div>
     <button class="btn" data-j="${idx + 1}" ${idx >= js.length - 1 ? "disabled" : ""} aria-label="Jornada siguiente">›</button>
   </div>
-  ${S.data.anuncio && j.extra && serverNow() < EXTRA_DESTACADA_HASTA ? `<div class="megaan"><div class="megaan-in"><div class="megaan-ic">📢</div><div class="megaan-tag">⭐ ¡Atención, ${esc(jName(j).replace(/^⭐\s*/, ""))}! ⭐</div><h2>${esc(S.data.anuncio.title)}</h2><p>${esc(S.data.anuncio.body)}</p></div></div>`
+  ${j.extra && serverNow() < EXTRA_DESTACADA_HASTA ? (() => { const tx = portadaTexto(j); return `<div class="megaan"><div class="megaan-in"><div class="megaan-ic">📢</div><div class="megaan-tag">${esc(tx.tag)}</div><h2>${esc(tx.title)}</h2><p>${esc(tx.body)}</p></div></div>`; })()
     : S.data.anuncio ? `<div class="banner" style="border-color:rgba(255,214,102,.45)"><span style="font-size:24px">📢</span><div><b>${esc(S.data.anuncio.title)}</b><span class="muted">${esc(S.data.anuncio.body)}</span></div></div>` : ""}
   ${myResources(j.matches.reduce((n, m) => { const d = drafts[m.id]; if (!d || liveStatus(m) !== "open") return n; return n + (d.x2 ? 1 : 0) - (m.mine && m.mine.x2 ? 1 : 0); }, 0))}
   ${pending ? `<div class="banner" style="background:rgba(61,220,132,.08);border-color:rgba(61,220,132,.35)"><span style="font-size:24px">✍️</span><div><b>Te ${pending === 1 ? "falta 1 partido" : `faltan ${pending} partidos`} por pronosticar</b><span class="muted">Se cierra cada uno 1 minuto antes de empezar.</span></div></div>` : ""}
@@ -1885,17 +1885,27 @@ function showAfterCall() {
   document.body.appendChild(el);
   el.querySelector(".btn-tort").onclick = () => { el.style.transition = "opacity .35s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); checkDuels(); }, 350); };
 }
-// Portada a pantalla completa al abrir la app (hasta el 14/11): la jornada extra y el aviso publicado
+// Textos de la portada según el grupo: en la Liga Democratic arranca la liga; en La Porra, jornada extra para salir del pozo
+function portadaTexto(j) {
+  const n = jName(j).replace(/^⭐\s*/, "");
+  return LIGA_ID === "2"
+    ? { tag: "⭐ Liga Democratic ⭐", big: "¡Empieza la liga!", title: "🔥 Arranca la Liga Democratic",
+        body: `Primera jornada: ${n}. Pronostica, usa tus comodines x2 y lanza tus retos. Recuerda: después seguimos con la jornada 13 de LaLiga. ¡Que empiece el espectáculo!` }
+    : { tag: "⭐ La Porra · Jornada extra ⭐", big: "¡Sal del pozo!", title: `💥 Jornada extra espectacular: ${n}`,
+        body: "Puntos que suman a la general y se puede usar el comodín x2. Recuerda: es la ocasión perfecta para remontar y salir del pozo. ¡A por ello!" };
+}
+// Portada a pantalla completa al abrir la app (hasta el 14/11): la jornada extra con su mensaje para cada grupo
 function portadaExtra(an, j) {
+  const tx = portadaTexto(j);
   const el = document.createElement("div"); el.className = "portada";
   const ms = j.matches.filter((m) => !m.result && !m.cancelled && m.kickoff).sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
   const stars = Array.from({ length: 26 }, () => `<i style="left:${(Math.random() * 100).toFixed(1)}%;--d:${(4 + Math.random() * 6).toFixed(1)}s;--w:${(-Math.random() * 8).toFixed(1)}s;font-size:${(10 + Math.random() * 16).toFixed(0)}px">${Math.random() < .5 ? "⭐" : "✨"}</i>`).join("");
   el.innerHTML = `<div class="pt-rays"></div><div class="pt-stars">${stars}</div>
     <div class="pt-box">
       <div class="pt-ic">📢</div>
-      <div class="pt-tag">⭐ Jornada extra ⭐</div>
-      <div class="pt-j">${esc(jName(j).replace(/^⭐\s*/, ""))}</div>
-      ${an ? `<div class="megaan"><div class="megaan-in"><h2>${esc(an.title)}</h2><p>${esc(an.body)}</p></div></div>` : ""}
+      <div class="pt-tag">${esc(tx.tag)}</div>
+      <div class="pt-j">${esc(tx.big)}</div>
+      <div class="megaan"><div class="megaan-in"><h2>${esc(tx.title)}</h2><p>${esc(tx.body)}</p></div></div>
       ${ms.length ? `<div class="pt-ms">${ms.map((m) => `<div class="pt-m"><b>${esc(m.home)} <span>vs</span> ${esc(m.away)}</b><small>${esc(fmtWhen(m.kickoff))}</small></div>`).join("")}</div>
       <div class="pt-cd">⏱️ Se cierra en <b id="ptLeft"></b></div>` : ""}
       <button class="btn primary block pt-go">⚽ ¡A pronosticar!</button>
