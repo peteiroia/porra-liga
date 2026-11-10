@@ -604,11 +604,17 @@ nav.tabs button.on{color:var(--accent)}
 .pt-tag{display:inline-block;margin:10px 0 4px;padding:4px 14px;border-radius:99px;background:#ffd166;color:#1a1030;font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 0 18px rgba(255,209,102,.6)}
 .pt-j{font-size:clamp(34px,11vw,54px);font-weight:900;line-height:1;margin:6px 0 16px;text-transform:uppercase;letter-spacing:.01em;background:linear-gradient(90deg,#fff3c4,#ffd166,#ff8a3d,#ffd166,#fff3c4);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:megaBorde 2.5s linear infinite;filter:drop-shadow(0 3px 0 rgba(255,59,92,.7))}
 .pt-ms{display:grid;gap:8px;margin:14px 0 8px}
-.pt-m{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,209,102,.35)}
+.pt-m{padding:10px 12px;border-radius:14px;background:#24163d;border:1px solid rgba(255,209,102,.35)}
 .pt-m b{display:block;font-size:17px;color:#fff}.pt-m b span{color:#ffd166;font-size:13px;margin:0 4px}.pt-m small{color:#cdbfe8;font-size:13px}
-.pt-cd{margin:6px 0 16px;color:#ffd166;font-size:15px}.pt-cd b{font-size:18px}
+.pt-cd{position:relative;margin:6px 0 16px;color:#ffd166;font-size:15px}.pt-cd b{font-size:18px}
 .pt-go{font-size:20px;padding:16px;animation:megaLatido 1.2s ease-in-out infinite;box-shadow:0 0 26px rgba(61,220,132,.55)}
 .pt-skip{margin-top:12px;border:0;background:none;color:#a99bc7;font-size:14px;padding:8px 16px}
+.pt-ms.pt-many{grid-template-columns:1fr 1fr;gap:6px}
+.pt-many .pt-m{padding:6px 6px;border-radius:11px}
+.pt-many .pt-m b{font-size:13px;line-height:1.2}.pt-many .pt-m b span{font-size:11px;margin:0 2px}.pt-many .pt-m small{font-size:11px}
+.pt-m b,.pt-m small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-many .pt-m:last-child:nth-child(odd){grid-column:1/-1}
+@media (max-height:760px){.pt-ic{font-size:54px}.pt-tag{margin-top:6px}.pt-j{font-size:clamp(28px,9vw,44px);margin:4px 0 10px}.portada .megaan{margin-bottom:10px}.portada .megaan-in{padding:12px 12px 14px}.portada .megaan h2{font-size:clamp(18px,5.5vw,24px)}.portada .megaan p{font-size:14px;line-height:1.38}.pt-ms{margin:10px 0 6px}.pt-cd{margin:4px 0 10px;font-size:14px}.pt-go{padding:13px;font-size:18px}.pt-skip{margin-top:6px;padding:6px 16px}}
 @keyframes ptIn{from{opacity:0;transform:scale(1.08)}}
 @keyframes ptOut{to{opacity:0;transform:scale(.96)}}
 @keyframes ptFall{to{transform:translateY(110vh) rotate(360deg)}}
@@ -1906,7 +1912,7 @@ function portadaExtra(an, j) {
       <div class="pt-tag">${esc(tx.tag)}</div>
       <div class="pt-j">${esc(tx.big)}</div>
       <div class="megaan"><div class="megaan-in"><h2>${esc(tx.title)}</h2><p>${esc(tx.body)}</p></div></div>
-      ${ms.length ? `<div class="pt-ms">${ms.map((m) => `<div class="pt-m"><b>${esc(m.home)} <span>vs</span> ${esc(m.away)}</b><small>${esc(fmtWhen(m.kickoff))}</small></div>`).join("")}</div>
+      ${ms.length ? `<div class="pt-ms${ms.length > 2 ? " pt-many" : ""}">${ms.map((m) => `<div class="pt-m"><b>${esc(m.home)} <span>vs</span> ${esc(m.away)}</b><small>${esc(fmtWhen(m.kickoff))}</small></div>`).join("")}</div>
       <div class="pt-cd">⏱️ Se cierra en <b id="ptLeft"></b></div>` : ""}
       <button class="btn primary block pt-go">⚽ ¡A pronosticar!</button>
       <button class="pt-skip">Ahora no</button>
@@ -1917,6 +1923,12 @@ function portadaExtra(an, j) {
     setTimeout(checkDuels, 500); };
   const tick = () => { const t = $("#ptLeft", el); if (t && ms[0]) t.textContent = fmtLeft(Date.parse(ms[0].kickoff) - 6e4 - serverNow()); };
   const tm = setInterval(tick, 1000); tick();
+  // que quepa todo en la pantalla del móvil sin desplazarse: si no cabe, se encoge la portada
+  const box = el.querySelector(".pt-box");
+  const fit = () => { if (!el.isConnected) return window.removeEventListener("resize", fit); box.style.zoom = "";
+    const cs = getComputedStyle(el), avail = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom), h = box.offsetHeight;
+    if (h > avail) box.style.zoom = String(Math.max(.55, avail / h)); };
+  fit(); window.addEventListener("resize", fit); setTimeout(fit, 300);
   el.querySelector(".pt-go").onclick = () => close(true);
   el.querySelector(".pt-skip").onclick = () => close(false);
 }
