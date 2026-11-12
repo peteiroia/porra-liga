@@ -474,6 +474,48 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 @keyframes vadIn{from{opacity:0}to{opacity:1}}
 .cenarow td{background:rgba(255,159,67,.08)}
 .cenachip{background:rgba(255,159,67,.2)!important;color:#ffb36b!important;border-color:rgba(255,159,67,.5)!important;font-size:11px}
+/* ---------- Anuncio HEADWAY.CO ---------- */
+.hwy{position:fixed;inset:0;z-index:9700;overflow-y:auto;-webkit-overflow-scrolling:touch;color:#fff;font-family:Inter,system-ui,sans-serif;
+  background:radial-gradient(ellipse at 50% 0%,#3b1d8f 0%,#1a0f4a 40%,#07051a 85%);animation:hwyIn .4s ease}
+.hwy .stars{position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 70% 20%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 40% 70%,#cfe 50%,transparent 51%),radial-gradient(1px 1px at 85% 60%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 10% 85%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 60% 45%,#ffd 50%,transparent 51%);animation:hwyTw 3s ease-in-out infinite}
+.hwy .x{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:3;width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;font-size:22px;line-height:44px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+.hwy .in{position:relative;z-index:2;max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 26px) 18px calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center}
+.hwy .globe{position:relative;width:150px;height:150px;margin:6px auto 0}
+.hwy .globe .g{font-size:118px;line-height:150px;display:block;animation:hwyFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 30px rgba(90,200,255,.55))}
+.hwy .globe .orb{position:absolute;inset:-14px;animation:hwySpin 4s linear infinite}
+.hwy .globe .orb span{position:absolute;top:0;left:50%;font-size:34px;transform:translateX(-50%) rotate(90deg)}
+.hwy .q{margin:10px 0 0;font:800 21px/1.25 Inter,system-ui,sans-serif;color:#d9ccff}
+.hwy h2{margin:10px 0 0;font:900 clamp(40px,13vw,58px)/.9 "Barlow Condensed",sans-serif;white-space:nowrap;letter-spacing:.02em;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff 0%,#9ff3ff 50%,#4fc3ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 rgba(0,0,0,.35)) drop-shadow(0 0 22px rgba(79,195,255,.45))}
+.hwy .tag{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;background:#ff3b8d;font:800 12px/1.2 Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;animation:blink 1.2s infinite}
+.hwy .lead{margin:14px 0 0;font:600 17px/1.4 Inter,sans-serif;color:#efeaff}
+.hwy .lead b{color:#ffd23f}
+.hwy .dest{display:flex;justify-content:center;gap:8px;margin:16px 0 0}
+.hwy .dest div{width:62px;height:78px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(180deg,#2a1d6e,#160e40);border:2px solid rgba(255,255,255,.18);box-shadow:0 6px 16px rgba(0,0,0,.4);animation:hwyFlip 4.8s ease-in-out infinite}
+.hwy .dest div:nth-child(2){animation-delay:.6s}.hwy .dest div:nth-child(3){animation-delay:1.2s}.hwy .dest div:nth-child(4){animation-delay:1.8s}.hwy .dest div:nth-child(5){animation-delay:2.4s}
+.hwy .miss{margin:16px 0 0;text-align:left;border-radius:18px;padding:12px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
+.hwy .miss h4{margin:0 0 6px;font:800 13px/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9ff3ff}
+.hwy .miss p{margin:7px 0;font:600 16px/1.3 Inter,sans-serif}
+.hwy .lvl{margin:16px 0 0;text-align:left}
+.hwy .lvl .bar{position:relative;height:16px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.hwy .lvl .bar i{position:absolute;inset:0;width:0;border-radius:999px;background:linear-gradient(90deg,#4fc3ff,#a66bff,#ffd23f);animation:hwyBar 3.2s ease-in-out infinite}
+.hwy .lvl .lb{display:flex;justify-content:space-between;margin-top:6px;font:800 12px Inter,sans-serif;color:#cbbcff}
+.hwy .chk{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 0;text-align:left}
+.hwy .chk div{padding:10px 10px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font:700 14px/1.25 Inter,sans-serif}
+.hwy .chk div.free{grid-column:1/-1;text-align:center;font-size:20px;background:linear-gradient(110deg,rgba(255,59,141,.3),rgba(255,210,63,.25));border-color:rgba(255,210,63,.6)}
+.hwy .medals{margin:12px 0 0;font-size:34px;letter-spacing:6px}
+.hwy .medals span{display:inline-block;animation:hwyFloat 2.4s ease-in-out infinite}.hwy .medals span:nth-child(2){animation-delay:.3s}.hwy .medals span:nth-child(3){animation-delay:.6s}
+.hwy .go{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:2;display:block;margin:16px 0 0;padding:18px 10px;border-radius:20px;text-decoration:none;color:#14063a;font:900 25px/1 "Barlow Condensed",sans-serif;letter-spacing:.05em;text-transform:uppercase;
+  background:linear-gradient(180deg,#9ff3ff,#4fc3ff);box-shadow:0 0 0 0 rgba(79,195,255,.7),0 12px 28px rgba(0,0,0,.45);animation:hwyPulse 1.5s infinite}
+.hwy .tip{margin:12px 0 0;font:600 13px/1.4 Inter,sans-serif;color:#b9aee0}
+.hwy .dare{margin:14px 0 0;font:900 30px/1 "Barlow Condensed",sans-serif;text-transform:uppercase}
+@keyframes hwyIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:none}}
+@keyframes hwySpin{to{transform:rotate(360deg)}}
+@keyframes hwyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes hwyTw{50%{opacity:.5}}
+@keyframes hwyFlip{0%,70%,100%{transform:rotateY(0)}80%{transform:rotateY(180deg)}90%{transform:rotateY(360deg)}}
+@keyframes hwyBar{0%{width:4%}70%,100%{width:100%}}
+@keyframes hwyPulse{0%{box-shadow:0 0 0 0 rgba(79,195,255,.7),0 12px 28px rgba(0,0,0,.45)}70%{box-shadow:0 0 0 20px rgba(79,195,255,0),0 12px 28px rgba(0,0,0,.45)}100%{box-shadow:0 0 0 0 rgba(79,195,255,0),0 12px 28px rgba(0,0,0,.45)}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -1938,7 +1980,34 @@ function showAnuncio(an, mega) {
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
+/* ---------- Anuncio HEADWAY.CO: sale nada más entrar (una vez por apertura); con ✕ para cerrar ---------- */
+const HWY = { url: "https://headwayco.pages.dev" };
+function showHeadway() {
+  const el = document.createElement("div"); el.className = "hwy";
+  el.innerHTML = `<div class="stars"></div><button class="x" aria-label="Cerrar">✕</button><div class="in">
+    <div class="globe"><span class="g">🌍</span><div class="orb"><span>✈️</span></div></div>
+    <p class="q">¿Y si aprender inglés fuera como jugar a un videojuego?</p>
+    <h2>HEADWAY.CO</h2><span class="tag">🚀 Nuevo · Gratis</span>
+    <p class="lead">Das <b>la vuelta al mundo</b> en inglés… pero no sabrás cuál es tu próximo destino hasta que lo <b>desbloquees</b> 🔒👀</p>
+    <div class="dest"><div>🔒</div><div>🗽</div><div>🔒</div><div>🗼</div><div>🔒</div></div>
+    <div class="miss"><h4>🎮 Tus misiones</h4>
+      <p>🍝 Pides en un restaurante</p><p>🚗 Alquilas un coche <span style="opacity:.75">(y el comercial te la intenta colar)</span></p><p>🏨 Te quejas en el hotel</p><p>👀 Hasta cotilleas conversaciones ajenas 😏</p></div>
+    <div class="lvl"><div class="bar"><i></i></div><div class="lb"><span>A1</span><span>A2</span><span>B1</span><span>B2</span><span>C1 🏆</span></div></div>
+    <div class="chk"><div>⏱️ 10 minutos al día</div><div>📈 Del nivel A1 al C1</div><div>🥇 Medallas bronce, plata y oro</div><div>🎭 Tú eres un personaje de la historia</div><div class="free">🎁 GRATIS</div></div>
+    <div class="medals"><span>🥉</span><span>🥈</span><span>🥇</span></div>
+    <a class="go" href="${HWY.url}" target="_blank" rel="noopener">✈️ ¡Empiezo el viaje! Gratis</a>
+    <p class="tip">👉 Te creas la cuenta en 1 minuto · <b style="color:#9ff3ff">headwayco.pages.dev</b><br>📲 Truco: ábrelo en Safari o Chrome y dale a «Añadir a pantalla de inicio». ¡Se queda como una app!</p>
+    <p class="dare">¿Te atreves a dar la vuelta al mundo? 🔥</p></div>`;
+  document.body.appendChild(el);
+  const h2 = el.querySelector("h2"), fit = () => { h2.style.fontSize = ""; let fs = parseFloat(getComputedStyle(h2).fontSize); while (h2.scrollWidth > el.querySelector(".in").clientWidth - 36 && fs > 28) { fs -= 2; h2.style.fontSize = fs + "px"; } };
+  fit(); if (document.fonts) document.fonts.ready.then(fit);
+  const close = () => { el.style.transition = "opacity .25s"; el.style.opacity = "0"; setTimeout(() => { el.remove(); if (S.data && S.data.me && S.data.me.profileDone) checkDuels(); }, 260); };
+  el.querySelector(".x").onclick = close;
+  el.querySelector(".go").addEventListener("click", () => setTimeout(close, 400));
+}
 function checkDuels() {
+  // mientras se ve el anuncio de HEADWAY.CO, el resto de pantallas esperan a que se cierre
+  if (document.querySelector(".hwy")) return;
   if (!S.data || !S.data.me || document.querySelector(".portada")) return;
   // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
   { const c = S.data.llamada;
@@ -2430,6 +2499,8 @@ setInterval(() => {
   const playing = S.data.jornadas.some((j) => j.matches.some((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) <= now && now - Date.parse(m.kickoff) < 4 * 3600e3));
   if (playing && (!document.activeElement || !document.activeElement.matches("input"))) refresh(true);
 }, 45000);
+// anuncio HEADWAY.CO nada más abrir la app (en los dos grupos)
+if (S.token) showHeadway();
 refresh();
 </script>
 </body>
