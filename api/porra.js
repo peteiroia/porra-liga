@@ -350,6 +350,9 @@ async function liveUpdate(jornadas, force) {
   return { live: liveMap, changed };
 }
 
+const FIN_AVISO_EXTRA = Date.parse("2026-11-13T21:00:00+01:00");
+const avisoCaducado = (av, now) => now >= FIN_AVISO_EXTRA && (av.at || 0) < FIN_AVISO_EXTRA;
+
 async function migrations() {
   if (LIGA().id !== "1") return; // las migraciones antiguas (tortilla, retos…) son solo del grupo original
   // Reinicio de retos pedido por el administrador (se ejecuta una sola vez)
@@ -639,8 +642,9 @@ function buildState(me, data) {
     // los retos y comodines de cada uno son secretos: no se envían los de los demás
     table: table.map(({ key, retoPts, ...r }) => ({ ...r, photo: photo[r.name] })),
     users: users.map((u) => ({ name: u.name, admin: u.admin, photo: photo[u.name], ...(me.admin ? { username: u.username, bonusX2: u.bonusX2 } : {}) })),
-    anuncio: data.anuncio || null,
-    llamada: data.llamada && data.llamada.until > now ? data.llamada : null,
+    // desde el viernes 13/11 a las 21:00 (hora española) ya no sale el anuncio de la jornada extra en ningún grupo: fuera los avisos y llamadas publicados antes
+    anuncio: data.anuncio && !avisoCaducado(data.anuncio, now) ? data.anuncio : null,
+    llamada: data.llamada && data.llamada.until > now && !avisoCaducado(data.llamada, now) ? data.llamada : null,
     tortilla: tortillaOut,
     liga: { id: LIGA().id, name: data.ligaName || LIGA().name, tortilla: conTortilla, unico: !!LIGA().unico, retosExtra: !!LIGA().retosExtra, retoSiempre: !!LIGA().retoSiempre, comodines: LIGA().comodines || COMODINES, cena: LIGA().cena || null },
     crests: crests || {},

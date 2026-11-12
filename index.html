@@ -910,7 +910,8 @@ async function api(action, payload = {}) {
   return j;
 }
 // Hasta el sábado 14/11 (incluido) la app se abre en la jornada extra con el aviso publicado bien a la vista
-const EXTRA_DESTACADA_HASTA = Date.parse("2026-11-15T00:00:00+01:00");
+// el anuncio de la jornada extra deja de salir en todos los grupos el viernes 13/11 a las 21:00 (hora española)
+const EXTRA_DESTACADA_HASTA = Date.parse("2026-11-13T21:00:00+01:00");
 const extraDestacada = (d) => {
   if (!d || !d.jornadas || d.now >= EXTRA_DESTACADA_HASTA) return null;
   const xs = d.jornadas.filter((j) => j.extra && j.matches.some((m) => !m.result && !m.cancelled));
@@ -1942,7 +1943,7 @@ function portadaTexto(j) {
     : { tag: "⭐ La Porra · Jornada extra ⭐", big: "¡Sal del pozo!", title: `💥 Jornada extra espectacular: ${n}`,
         body: "Puntos que suman a la general y se puede usar el comodín x2. Recuerda: es la ocasión perfecta para remontar y salir del pozo. ¡A por ello!" };
 }
-// Portada a pantalla completa al abrir la app (hasta el 14/11): la jornada extra con su mensaje para cada grupo
+// Portada a pantalla completa al abrir la app (hasta el viernes 13/11 a las 21:00): la jornada extra con su mensaje para cada grupo
 function portadaExtra(an, j) {
   const tx = portadaTexto(j);
   const el = document.createElement("div"); el.className = "portada";
