@@ -2499,8 +2499,8 @@ setInterval(() => {
   const playing = S.data.jornadas.some((j) => j.matches.some((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) <= now && now - Date.parse(m.kickoff) < 4 * 3600e3));
   if (playing && (!document.activeElement || !document.activeElement.matches("input"))) refresh(true);
 }, 45000);
-// anuncio HEADWAY.CO nada más abrir la app (en los dos grupos)
-if (S.token) showHeadway();
+// anuncio HEADWAY.CO nada más abrir la app (solo en La Porra, no en la Liga Democratic)
+if (S.token && LIGA_ID === "1") showHeadway();
 refresh();
 </script>
 </body>
