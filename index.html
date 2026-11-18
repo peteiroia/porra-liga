@@ -516,6 +516,18 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 @keyframes sgEq{from{height:8px}to{height:42px}}
 @keyframes sgPulse{0%{box-shadow:0 0 0 0 rgba(255,210,63,.8)}70%{box-shadow:0 0 0 18px rgba(255,210,63,0)}100%{box-shadow:0 0 0 0 rgba(255,210,63,0)}}
 @media (prefers-reduced-motion:reduce){.song *,.songbar *{animation:none!important}}
+/* ---------- Banner publi HEADWAY.CO al final de las clasificaciones ---------- */
+.hwyb{position:relative;display:flex;align-items:center;gap:12px;margin:16px 0 12px;padding:14px 14px 14px 12px;border-radius:18px;text-decoration:none;color:#fff;overflow:hidden;
+  background:linear-gradient(120deg,#3b1d8f 0%,#1a0f4a 55%,#0c2a5a 100%);border:1px solid rgba(159,243,255,.45);box-shadow:0 0 22px rgba(79,195,255,.22)}
+.hwyb::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.18),transparent);animation:hwybShine 3.2s ease-in-out infinite}
+.hwyb .pb{position:absolute;top:6px;right:10px;font:700 9px/1 Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.hwyb .gl{flex:none;font-size:42px;line-height:1;animation:sgBeat 1.4s ease-in-out infinite alternate;filter:drop-shadow(0 0 12px rgba(90,200,255,.6))}
+.hwyb .tx{flex:1;min-width:0}
+.hwyb .tx small{display:block;color:#d9ccff;font:600 13px/1.3 Inter,sans-serif}
+.hwyb .tx b{display:block;margin:2px 0;font:900 24px/1 "Barlow Condensed",sans-serif;letter-spacing:.03em;background:linear-gradient(180deg,#fff,#9ff3ff 60%,#4fc3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hwyb .tx em{font-style:normal;color:#ffd23f;font:700 12px/1.3 Inter,sans-serif}
+.hwyb .cta{flex:none;padding:10px 12px;border-radius:999px;background:linear-gradient(180deg,#9ff3ff,#4fc3ff);color:#14063a;font:900 14px/1 Inter,sans-serif;white-space:nowrap}
+@keyframes hwybShine{0%,60%{left:-60%}100%{left:130%}}
 .combar{margin:0 0 12px;padding:9px 12px;border-radius:12px;font-size:14px;background:rgba(255,214,102,.07);border:1px solid rgba(255,214,102,.3);color:#fff}
 .combar b{color:var(--gold)}
 .lockmsg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
@@ -993,7 +1005,7 @@ function render() {
     <div class="brand"><h1>La <span>Porra</span></h1><button class="liga-sw" id="ligaSw" aria-label="Cambiar de grupo">👥 ${esc((d.liga && d.liga.name) || "La Porra")} <b>⇄</b></button></div>
     <button class="me-btn" id="meBtn" aria-label="Mi perfil">${avatar(d.me.name, d.me.photo)}</button>
   </div></header>
-  <main>${installBanner()}${songBar()}${body}</main>
+  <main>${installBanner()}${songBar()}${body}${S.tab === "tabla" || S.tab === "jtabla" ? hwyBanner() : ""}</main>
   <nav class="tabs"><div class="in">${tabs.map(([k, l, ic]) => `<button data-tab="${k}" class="${S.tab === k ? "on" : ""}"><svg viewBox="0 0 24 24">${ic}</svg>${l}</button>`).join("")}</div></nav>`;
   bindMain();
 }
@@ -2036,6 +2048,11 @@ function showSong(then) {
   el.querySelector(".go").onclick = close;
 }
 document.addEventListener("click", (e) => { if (e.target.closest("[data-song]")) showSong(); });
+// Publi HEADWAY.CO (curso de inglés): banner al final de las clasificaciones, en todas las ligas
+function hwyBanner() {
+  return `<a class="hwyb" href="https://headwayco.pages.dev" target="_blank" rel="noopener"><span class="pb">Publi</span><span class="gl">🌍</span>
+    <span class="tx"><small>🎮 Aprende inglés como en un videojuego</small><b>HEADWAY.CO</b><em>⏱️ 10 min al día · A1 → C1 · 🎁 Gratis</em></span><span class="cta">✈️ Probar</span></a>`;
+}
 function songBar() {
   return LIGA_ID === "1" && S.tab === "jornada" ? `<button class="songbar" data-song type="button"><span class="ic">🎶</span><span><b>El temazo de La Porra</b><small>¡Estreno! Dale al play y sube el volumen 🔊</small></span><span class="pl">▶ Play</span></button>` : "";
 }
