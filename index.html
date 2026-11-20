@@ -1993,8 +1993,8 @@ function showAnuncio(an, mega) {
     <p style="font-size:16px;line-height:1.45">${esc(an.body)}</p></div><button class="btn primary block" data-close>¡Entendido!</button>`,
     (el, close) => { $("[data-close]", el).onclick = close; });
 }
-/* ---------- Temazo de La Porra: canción promo a pantalla completa al abrir la app (solo en La Porra, no en la Liga Democratic) ---------- */
-const SONG = { id: "7rgYxKOlwo8", url: "https://youtube.com/shorts/7rgYxKOlwo8" };
+/* ---------- Temazo de La Porra: canción promo a pantalla completa al tocar la barra 🎶 (solo en La Porra, no en la Liga Democratic) ---------- */
+const SONG = { id: "Yicu98W0eZ0", url: "https://youtu.be/Yicu98W0eZ0" };
 let songYT = null;
 function loadYT() {
   return new Promise((res) => {
@@ -2550,8 +2550,7 @@ setInterval(() => {
   const playing = S.data.jornadas.some((j) => j.matches.some((m) => !m.result && !m.cancelled && m.kickoff && Date.parse(m.kickoff) <= now && now - Date.parse(m.kickoff) < 4 * 3600e3));
   if (playing && (!document.activeElement || !document.activeElement.matches("input"))) refresh(true);
 }, 45000);
-// al abrir la app en La Porra sale el temazo (canción promo); en la Liga Democratic, no
-if (S.token && LIGA_ID === "1") showSong();
+// el temazo ya no sale solo al abrir la app: se abre desde la barra 🎶 de la jornada (solo en La Porra)
 refresh();
 </script>
 </body>

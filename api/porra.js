@@ -363,7 +363,34 @@ async function migrations() {
   // Quitar el aviso fijo de la portada («27 del 11… la primera tortilla está en juego…») (una sola vez)
   const ok3 = await redis(["SET", P() + "mig:quitarAviso1", String(Date.now()), "NX"]);
   if (ok3) await redis(["DEL", P() + "anuncio"]);
+  // Quitar el aviso principal publicado en La Porra (20/11/2026, una sola vez)
+  const ok4 = await redis(["SET", P() + "mig:quitarAviso2", String(Date.now()), "NX"]);
+  if (ok4) await redis(["DEL", P() + "anuncio"]);
   if (ok2) await startCall("¡A batir los huevos! La primera tortilla está en juego. Los tres últimos invitan.", "tortilla1");
+}
+// Liga Democratic: todos a cero antes de la jornada 13 (pedido por el administrador, una sola vez).
+// La jornada de la Nations League se queda como historial, pero sin pronósticos ni retos, así que no suma.
+// Se devuelven los comodines y retos gastados en ella. Copia de seguridad en porra2:backup:reset1.
+const RESET_DEMO = Date.parse("2026-11-21T00:00:00+01:00");
+async function resetDemocratic() {
+  if (LIGA().id !== "2") return;
+  const ok = await redis(["SET", P() + "mig:reset1", String(Date.now()), "NX"]);
+  if (!ok) return;
+  const [jornadas, predsRaw, retos] = await Promise.all([getJSON(P() + "jornadas", []), redis(["HGETALL", P() + "preds"]), getJSON(P() + "retos", [])]);
+  const viejos = new Set(jornadas.flatMap((j) => j.matches.filter((m) => m.kickoff && Date.parse(m.kickoff) < RESET_DEMO).map((m) => m.id)));
+  const jViejas = new Set(jornadas.filter((j) => j.matches.some((m) => viejos.has(m.id))).map((j) => j.id));
+  const preds = {};
+  if (Array.isArray(predsRaw)) for (let i = 0; i < predsRaw.length; i += 2) preds[predsRaw[i]] = predsRaw[i + 1];
+  else if (predsRaw) Object.assign(preds, predsRaw);
+  await setJSON(P() + "backup:reset1", { at: Date.now(), preds, retos });
+  for (const [k, raw] of Object.entries(preds)) {
+    let mine; try { mine = JSON.parse(raw || "{}") || {}; } catch (e) { continue; }
+    let cambio = false;
+    for (const mid of Object.keys(mine)) if (viejos.has(mid)) { delete mine[mid]; cambio = true; }
+    if (cambio) await redis(["HSET", P() + "preds", k, JSON.stringify(mine)]);
+  }
+  const quedan = retos.filter((r) => !jViejas.has(r.jornada));
+  if (quedan.length !== retos.length) await setJSON(P() + "retos", quedan);
 }
 async function startCall(text, id) {
   const call = { id: id || crypto.randomBytes(4).toString("hex"), text, at: Date.now(), until: Date.now() + 3 * 864e5 };
@@ -402,6 +429,7 @@ async function seedNations2() {
 }
 async function loadAll() {
   await migrations();
+  await resetDemocratic();
   await seedNations();
   await seedNations2();
   await syncCalendar();
