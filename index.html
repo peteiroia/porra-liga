@@ -516,6 +516,38 @@ h2.sec .chip{font-family:Barlow;letter-spacing:0;text-transform:none}
 @keyframes sgEq{from{height:8px}to{height:42px}}
 @keyframes sgPulse{0%{box-shadow:0 0 0 0 rgba(255,210,63,.8)}70%{box-shadow:0 0 0 18px rgba(255,210,63,0)}100%{box-shadow:0 0 0 0 rgba(255,210,63,0)}}
 @media (prefers-reduced-motion:reduce){.song *,.songbar *{animation:none!important}}
+/* ---------- Última jornada del mes: ¿quién trae la tortilla? (solo La Porra, al abrir la app) ---------- */
+.ult{position:fixed;inset:0;z-index:9850;height:100vh;height:100dvh;overflow:hidden;color:#fff;font-family:Inter,system-ui,sans-serif;text-align:center;
+  background:radial-gradient(ellipse at 50% 0%,#ff3b30 0%,#c2185b 30%,#3a0a2a 66%,#0a0205 100%);animation:sgIn .45s ease;
+  display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px calc(env(safe-area-inset-bottom,0px) + 10px)}
+.ult .lz{position:absolute;inset:0;pointer-events:none;background:conic-gradient(from 0deg at 50% 110%,transparent 0 40deg,rgba(255,210,63,.2) 45deg,transparent 50deg 80deg,rgba(255,159,28,.18) 85deg,transparent 90deg 130deg,rgba(255,255,255,.12) 135deg,transparent 140deg 360deg);animation:sgSweep 4s ease-in-out infinite alternate}
+.ult .siren{position:absolute;inset:0;pointer-events:none;animation:ulSiren 1.2s steps(2) infinite}
+.ult .nt{position:absolute;bottom:-40px;pointer-events:none;font-size:var(--s,22px);opacity:.85;animation:sgUp var(--d,7s) linear infinite;animation-delay:var(--w,0s)}
+.ult .x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:10px;z-index:4;width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;background:rgba(0,0,0,.35);color:#fff;font-size:22px;line-height:44px;box-shadow:0 0 0 2px rgba(255,255,255,.4)}
+.ult .in{position:relative;z-index:2;width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:clamp(5px,1.4vh,12px)}
+.ult .tag{display:inline-block;padding:6px 14px;border-radius:999px;background:#ffd23f;color:#3a0a2a;font:900 clamp(13px,2vh,16px)/1.1 Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;animation:blink 1s infinite;box-shadow:0 0 22px rgba(255,210,63,.7)}
+.ult h2{margin:0;font:900 clamp(44px,min(15vw,8.6vh),76px)/.86 "Barlow Condensed",sans-serif;text-transform:uppercase;
+  background:linear-gradient(180deg,#fff 0%,#ffe27a 55%,#ff9f1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 rgba(0,0,0,.4)) drop-shadow(0 0 24px rgba(255,159,28,.6));animation:sgBeat .5s ease-in-out infinite alternate}
+.ult .q{margin:0;font:900 clamp(22px,min(7vw,4.2vh),32px)/1 "Barlow Condensed",sans-serif;text-transform:uppercase;color:#fff;text-shadow:0 0 16px rgba(255,59,48,.9)}
+.ult .tort{position:relative;width:clamp(96px,19vh,170px);aspect-ratio:1;border-radius:50%;overflow:hidden;box-shadow:0 0 0 4px #ffd23f,0 0 40px rgba(255,210,63,.7);animation:ulSpin 6s linear infinite}
+.ult .tort img{width:100%;height:100%;object-fit:cover}
+.ult .tw{position:relative}.ult .tw .q1,.ult .tw .q2{position:absolute;top:50%;font-size:clamp(26px,5vh,40px);animation:sgBeat .45s ease-in-out infinite alternate}
+.ult .tw .q1{left:-46px}.ult .tw .q2{right:-46px}
+.ult .card{width:100%;padding:clamp(8px,1.4vh,12px) 12px;border-radius:16px;background:rgba(0,0,0,.32);border:2px dashed rgba(255,210,63,.75);font:700 clamp(14px,2.1vh,17px)/1.3 Inter,sans-serif}
+.ult .card b{display:block;color:#ffe27a;font:900 clamp(22px,3.8vh,30px)/1.05 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.ult .hype{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;text-align:left}
+.ult .hype div{padding:clamp(6px,1.1vh,9px) 8px;border-radius:12px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);font:700 clamp(12px,1.8vh,14px)/1.2 Inter,sans-serif}
+.ult .cd{font:700 clamp(13px,1.9vh,15px)/1.2 Inter,sans-serif;color:#ffd9e6}.ult .cd b{color:#fff}
+.ult .eq{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:26px;overflow:hidden}
+.ult .eq i{width:6px;border-radius:3px;background:linear-gradient(180deg,#ffd23f,#ff3b30);animation:sgEq .9s ease-in-out infinite alternate}
+.ult.quiet .eq i{animation-play-state:paused}
+.ult .snd{display:none;width:100%;padding:10px;border:0;border-radius:14px;cursor:pointer;color:#3a0a2a;font:900 18px/1 "Barlow Condensed",sans-serif;letter-spacing:.05em;text-transform:uppercase;background:linear-gradient(180deg,#fff27a,#ffd23f);animation:sgPulse 1.2s infinite}
+.ult.quiet .snd{display:block}
+.ult .go{width:100%;padding:clamp(12px,2vh,16px) 8px;border-radius:16px;border:0;cursor:pointer;font:900 clamp(19px,3vh,23px)/1 "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;background:linear-gradient(180deg,#9ff3ff,#4fc3ff);color:#14063a;box-shadow:0 6px 0 rgba(0,0,0,.3)}
+.ult .yt{position:absolute;left:-9999px;top:0;width:200px;height:200px;opacity:0;pointer-events:none}
+@keyframes ulSiren{0%{box-shadow:inset 0 0 70px 10px rgba(255,40,40,.55)}100%{box-shadow:inset 0 0 70px 10px rgba(40,120,255,.5)}}
+@keyframes ulSpin{0%{transform:rotate(0) scale(1)}25%{transform:rotate(90deg) scale(1.05)}50%{transform:rotate(180deg) scale(1)}75%{transform:rotate(270deg) scale(1.05)}100%{transform:rotate(360deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){.ult *{animation:none!important}}
 /* ---------- Banner publi HEADWAY.CO al final de las clasificaciones ---------- */
 .hwyb{position:relative;display:flex;align-items:center;gap:12px;margin:16px 0 12px;padding:14px 14px 14px 12px;border-radius:18px;text-decoration:none;color:#fff;overflow:hidden;
   background:linear-gradient(120deg,#3b1d8f 0%,#1a0f4a 55%,#0c2a5a 100%);border:1px solid rgba(159,243,255,.45);box-shadow:0 0 22px rgba(79,195,255,.22)}
@@ -2048,6 +2080,59 @@ function showSong(then) {
   el.querySelector(".go").onclick = close;
 }
 document.addEventListener("click", (e) => { if (e.target.closest("[data-song]")) showSong(); });
+/* ---------- Última jornada del mes de la tortilla: aviso a pantalla completa al abrir la app (solo La Porra) ----------
+   Sale cada vez que se abre la app hasta el corte del mes (martes 1/12/2026 a las 23:59), con «Perreo por la paz» sonando de fondo. */
+const ULT = { until: Date.parse("2026-12-01T23:59:59+01:00"), jnum: 14, song: "Yya_QI6TQMk" };
+function showUltima() {
+  if (document.querySelector(".ult")) return;
+  const j = (S.data.jornadas || []).find((x) => !x.extra && x.num === ULT.jnum);
+  const first = j ? j.matches.filter((m) => m.kickoff && !m.cancelled).map((m) => Date.parse(m.kickoff)).sort((a, b) => a - b)[0] : 0;
+  const notes = Array.from({ length: 16 }, () => `<i class="nt" style="left:${(Math.random() * 96).toFixed(1)}%;--d:${(5 + Math.random() * 6).toFixed(1)}s;--w:${(-Math.random() * 9).toFixed(1)}s;--s:${(16 + Math.random() * 18).toFixed(0)}px">${["🍳", "🥔", "🥚", "🔥", "🎶", "🚨"][Math.floor(Math.random() * 6)]}</i>`).join("");
+  const el = document.createElement("div"); el.className = "ult quiet";
+  el.innerHTML = `<div class="lz"></div><div class="siren"></div>${notes}<button class="x" aria-label="Cerrar">✕</button><div class="yt"><div id="ultPl"></div></div>
+    <div class="in">
+      <span class="tag">🚨 Atención 🚨</span>
+      <h2>¡Última<br>jornada!</h2>
+      <p class="q">Se decide quién trae la tortilla 🍳</p>
+      <div class="tw"><span class="q1">😱</span><div class="tort"><img src="img/tortilla.jpg" alt="Tortilla de patatas"></div><span class="q2">🥚</span></div>
+      <div class="card">Es la última jornada del mes: los 3 últimos cocinan 👨‍🍳<b>🗓️ Viernes 11 de diciembre</b>¡Tortilla jugosa y bien cuajadita en el centro! 🥔</div>
+      <div class="hype"><div>🔥 Jornada ${ULT.jnum}: todo o nada</div><div>⚡ Saca el comodín x2</div><div>🥚 Que no te toque batir</div><div>🏆 Los de arriba, a comer</div></div>
+      ${first && first > serverNow() ? `<div class="cd">⏱️ Arranca en <b id="ultLeft"></b></div>` : ""}
+      <div class="eq">${Array.from({ length: 13 }, (_, i) => `<i style="animation-delay:${(-(i * 0.37) % 0.9).toFixed(2)}s;animation-duration:${(0.55 + (i % 4) * 0.12).toFixed(2)}s"></i>`).join("")}</div>
+      <button class="snd" type="button">🔊 Toca y que suene el perreo</button>
+      <button class="go" type="button">⚽ ¡A salvarme de la tortilla!</button>
+    </div>`;
+  document.body.appendChild(el);
+  const tick = () => { const t = $("#ultLeft", el); if (t) t.textContent = fmtLeft(first - serverNow()); };
+  const tc = setInterval(tick, 1000); tick();
+  // que quepa entero en la pantalla del móvil sin bajar: si no cabe, se encoge
+  const box = el.querySelector(".in");
+  const fit = () => { if (!el.isConnected) return window.removeEventListener("resize", fit); box.style.zoom = "";
+    const cs = getComputedStyle(el), avail = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom), h = box.offsetHeight;
+    if (h > avail) box.style.zoom = String(Math.max(.5, avail / h)); };
+  fit(); window.addEventListener("resize", fit); setTimeout(fit, 300);
+  // música de fondo (vídeo de YouTube oculto); el navegador solo deja sonar tras un toque: al primer toque se activa
+  let pl = null, done = false;
+  const check = () => { if (!pl || !pl.getPlayerState) return; try { el.classList.toggle("quiet", pl.isMuted() || pl.getPlayerState() !== 1); } catch (e) {} };
+  const sound = () => { if (!pl || !pl.unMute) return; try { pl.unMute(); pl.setVolume(100); pl.playVideo(); } catch (e) {} setTimeout(check, 600); };
+  el.addEventListener("click", (e) => { if (e.target.closest(".x,.go")) return; sound(); });
+  const tm = setInterval(check, 1500);
+  loadYT().then((YT) => {
+    if (!YT || done) return;
+    pl = new YT.Player("ultPl", { videoId: ULT.song, width: 200, height: 200,
+      playerVars: { autoplay: 1, playsinline: 1, loop: 1, playlist: ULT.song, rel: 0, controls: 0 },
+      events: {
+        onReady: () => { try { pl.unMute(); pl.setVolume(100); pl.playVideo(); } catch (e) {}
+          setTimeout(() => { try { if (pl.getPlayerState() !== 1) { pl.mute(); pl.playVideo(); } } catch (e) {} check(); }, 900); },
+        onStateChange: check } });
+  });
+  const close = (go) => { done = true; clearInterval(tm); clearInterval(tc); try { pl && pl.stopVideo && pl.stopVideo(); pl && pl.destroy && pl.destroy(); } catch (e) {}
+    el.style.transition = "opacity .25s"; el.style.opacity = "0";
+    if (go && j) { S.tab = "jornada"; S.jornada = j.id; history.replaceState(null, "", "#jornada"); render(); window.scrollTo(0, 0); }
+    setTimeout(() => { el.remove(); checkDuels(); }, 260); };
+  el.querySelector(".x").onclick = () => close(false);
+  el.querySelector(".go").onclick = () => close(true);
+}
 // Publi HEADWAY.CO (curso de inglés): banner al final de las clasificaciones, en todas las ligas
 function hwyBanner() {
   return `<a class="hwyb" href="https://headwayco.pages.dev" target="_blank" rel="noopener"><span class="pb">Publi</span><span class="gl">🌍</span>
@@ -2060,6 +2145,9 @@ function checkDuels() {
   // mientras suena el temazo a pantalla completa, el resto de pantallas esperan a que se cierre
   if (document.querySelector(".song")) return;
   if (!S.data || !S.data.me || document.querySelector(".portada")) return;
+  // última jornada del mes de la tortilla: sale cada vez que se abre la app (solo La Porra, hasta el corte del 1/12)
+  if (LIGA_ID === "1" && !S.ultShown && S.data.me.profileDone && serverNow() < ULT.until && !document.querySelector(".duel,.heist,.champ,.final,.sheet-bg,.tort-show,.call")) { S.ultShown = true; showUltima(); return; }
+  if (document.querySelector(".ult")) return;
   // llamada: sale en las 5 primeras aperturas de la app (una vez por apertura)
   { const c = S.data.llamada;
     if (c && !S.callShown && !document.querySelector(".duel,.heist,.champ,.final,.tort-show,.call")) {
