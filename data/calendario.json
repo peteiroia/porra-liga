@@ -1,5 +1,5 @@
 {
- "version": "2026-11-16.1",
+ "version": "2026-11-22.1",
  "season": "2026-27",
  "note": "Horas oficiales hasta la jornada 15. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
  "jornadas": [
@@ -100,13 +100,21 @@
      "home": "Alavés",
      "away": "Deportivo",
      "kickoff": "2026-11-21T14:00:00+01:00",
-     "tbc": false
+     "tbc": false,
+     "result": {
+      "h": 3,
+      "a": 1
+     }
     },
     {
      "home": "Real Madrid",
      "away": "Celta",
      "kickoff": "2026-11-21T21:00:00+01:00",
-     "tbc": false
+     "tbc": false,
+     "result": {
+      "h": 2,
+      "a": 1
+     }
     },
     {
      "home": "FC Barcelona",
