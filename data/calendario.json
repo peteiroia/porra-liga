@@ -1,7 +1,7 @@
 {
- "version": "2026-11-23.1",
+ "version": "2026-11-24.1",
  "season": "2026-27",
- "note": "Horas oficiales hasta la jornada 15. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
+ "note": "Horas oficiales hasta la jornada 16. tbc=true: hora por confirmar (fecha aproximada del fin de semana).",
  "jornadas": [
   {
    "num": 11,
@@ -181,25 +181,25 @@
      "home": "Real Madrid",
      "away": "Osasuna",
      "kickoff": "2026-12-13T21:00:00+01:00",
-     "tbc": true
+     "tbc": false
     },
     {
      "home": "Deportivo",
      "away": "Athletic Club",
-     "kickoff": "2026-12-13T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-12-13T16:15:00+01:00",
+     "tbc": false
     },
     {
      "home": "Espanyol",
      "away": "Celta",
-     "kickoff": "2026-12-13T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-12-14T21:00:00+01:00",
+     "tbc": false
     },
     {
      "home": "Málaga",
      "away": "FC Barcelona",
-     "kickoff": "2026-12-13T21:00:00+01:00",
-     "tbc": true
+     "kickoff": "2026-12-12T18:30:00+01:00",
+     "tbc": false
     }
    ]
   },
